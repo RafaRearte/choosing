@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escáner de DNI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        #scanner-container {
+            max-width: 100%;
+            margin: 0 auto;
+            position: relative;
+        }
+        #interactive.viewport {
+            position: relative;
+            width: 100%;
+        }
+        canvas.drawing, canvas.drawingBuffer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        .btn {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .btn-blue {
+            background-color: #2196F3;
+        }
+        .hidden {
+            display: none;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        #guide-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 100px;
+            border: 3px dashed red;
+            box-sizing: border-box;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        #scanning-text {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            font-size: 16px;
+            z-index: 1000;
+        }
+        #debug-area {
+            margin-top: 20px;
+            text-align: left;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ccc;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        #scanner-container video {
+            width: 100%;
+        }
+        .person-info {
+            text-align: left;
+            margin: 5px 0;
+        }
+        .info-label {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Escáner de DNI Argentino</h1>
+    
+    <div id="scanner-container" class="hidden">
+        <div id="interactive" class="viewport"></div>
+        <div id="guide-box"></div>
+        <div id="scanning-text">Coloca el código de barras del DNI dentro del recuadro rojo</div>
+    </div>
+    
+    <button id="start-button" class="btn">Iniciar Escáner</button>
+    <button id="stop-button" class="btn hidden">Detener Escáner</button>
+    <button id="manual-button" class="btn btn-blue">Ingresar DNI manualmente</button>
+    
+    <div id="result" class="hidden">
+        <h3>Resultado:</h3>
+        <div id="person-details"></div>
+        <p id="status"></p>
+    </div>
+
+    <div id="manual-input" class="hidden">
+        <h3>Ingresa el DNI manualmente:</h3>
+        <input type="number" id="dni-input" placeholder="Ingresa el DNI" min="1000000" max="99999999">
+        <button id="submit-dni" class="btn">Enviar</button>
+    </div>
+    
+    <div id="debug-area" class="hidden"></div>
+    
+    <!-- Incluir la biblioteca Quagga para el escaneo de códigos de barras -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos del DOM
+            const startButton = document.getElementById('start-button');
+            const stopButton = document.getElementById('stop-button');
+            const manualButton = document.getElementById('manual-button');
+            const scannerContainer = document.getElementById('scanner-container');
+            const resultDiv = document.getElementById('result');
+            const personDetailsElement = document.getElementById('person-details');
+            const statusElement = document.getElementById('status');
+            const manualInput = document.getElementById('manual-input');
+            const dniInput = document.getElementById('dni-input');
+            const submitDniButton = document.getElementById('submit-dni');
+            const debugArea = document.getElementById('debug-area');
+            
+            // Variables de control
+            let isProcessing = false;
+            let consecutiveDetections = {};
+            
+            // Activar el área de debug inmediatamente para facilitar la depuración
+            debugArea.classList.remove('hidden');
+            
+            // Función para agregar mensajes de depuración
+            function debug(message) {
+                console.log(message);
+                const now = new Date();
+                const timestamp = now.toTimeString().split(' ')[0] + '.' + now.getMilliseconds();
+                debugArea.innerHTML = `<div>[${timestamp}] ${message}</div>` + debugArea.innerHTML;
+            }
+            
+            // Activar el área de debug con triple clic en el título
+            let titleClickCount = 0;
+            document.querySelector('h1').addEventListener('click', function() {
+                titleClickCount++;
+                if (titleClickCount === 3) {
+                    debugArea.classList.remove('hidden');
+                    debug('Modo de depuración activado');
+                }
+            });
+            
+            // Verificar si el navegador soporta getUserMedia
+            function hasGetUserMedia() {
+                return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+            }
+            
+            // Iniciar el escáner
+            startButton.addEventListener('click', function() {
+                if (hasGetUserMedia()) {
+                    scannerContainer.classList.remove('hidden');
+                    startButton.classList.add('hidden');
+                    stopButton.classList.remove('hidden');
+                    manualInput.classList.add('hidden');
+                    resultDiv.classList.add('hidden');
+                    
+                    debug('Iniciando el escáner...');
+                    startScanner();
+                } else {
+                    alert('Tu navegador no soporta acceso a la cámara. Por favor, usa un navegador actualizado o intenta con otro dispositivo.');
+                    debug('Error: Navegador no compatible con getUserMedia');
+                }
+            });
+            
+            // Detener el escáner
+            stopButton.addEventListener('click', function() {
+                stopScanner();
+                scannerContainer.classList.add('hidden');
+                stopButton.classList.add('hidden');
+                startButton.classList.remove('hidden');
+                debug('Escáner detenido manualmente');
+            });
+            
+            // Mostrar el formulario de entrada manual
+            manualButton.addEventListener('click', function() {
+                manualInput.classList.remove('hidden');
+                resultDiv.classList.add('hidden');
+                debug('Modo de entrada manual activado');
+            });
+            
+            // Enviar DNI ingresado manualmente
+            submitDniButton.addEventListener('click', function() {
+                const dniValue = dniInput.value.trim();
+                if (dniValue && /^\d{7,8}$/.test(dniValue)) {
+                    manualInput.classList.add('hidden');
+                    processDetectedDNI(dniValue);
+                    debug('DNI ingresado manualmente: ' + dniValue);
+                } else {
+                    alert('Por favor ingresa un DNI válido (7-8 dígitos)');
+                    debug('Error: DNI inválido ingresado manualmente');
+                }
+            });
+            
+            // Parsear los datos del DNI argentino
+            function parseArgentineDNIData(code) {
+                debug('Parseando datos del DNI: ' + code);
+                
+                let result = {
+                    dni: null,
+                    apellido: null,
+                    nombre: null,
+                    sexo: null,
+                    nacimiento: null,
+                    rawData: code
+                };
+                
+                // Intentar extraer directamente un número de DNI (caso simple)
+                const dniMatch = code.match(/\b\d{7,8}\b/);
+                if (dniMatch) {
+                    result.dni = dniMatch[0];
+                    debug('DNI encontrado por regex: ' + result.dni);
+                }
+                
+                // Intentar parsear formato actual de DNI argentino (con @ como separador)
+                // Formato típico: @ARGENTINA@APELLIDO@NOMBRE@SEXO@NACIONALIDAD@DNI@TRAMITE...
+                if (code.includes('@')) {
+                    const parts = code.split('@');
+                    debug('Partes encontradas: ' + parts.length);
+                    
+                    // Buscar índice de "ARGENTINA" como punto de referencia
+                    const argentinaIndex = parts.findIndex(p => p.toUpperCase() === 'ARGENTINA');
+                    
+                    if (argentinaIndex >= 0) {
+                        debug('Índice de ARGENTINA encontrado: ' + argentinaIndex);
+                        // Usar índices relativos a la posición de "ARGENTINA"
+                        if (parts.length > argentinaIndex + 1) result.apellido = parts[argentinaIndex + 1];
+                        if (parts.length > argentinaIndex + 2) result.nombre = parts[argentinaIndex + 2];
+                        if (parts.length > argentinaIndex + 3) result.sexo = parts[argentinaIndex + 3];
+                        if (parts.length > argentinaIndex + 5) {
+                            const potentialDNI = parts[argentinaIndex + 5].trim();
+                            if (/^\d{7,8}$/.test(potentialDNI)) {
+                                result.dni = potentialDNI;
+                                debug('DNI encontrado por formato @: ' + result.dni);
+                            }
+                        }
+                        
+                        // Buscar la fecha de nacimiento en alguna parte después (formato DD/MM/AAAA)
+                        for (let i = argentinaIndex + 3; i < parts.length; i++) {
+                            const dateMatch = parts[i].match(/\d{1,2}\/\d{1,2}\/\d{4}/);
+                            if (dateMatch) {
+                                result.nacimiento = dateMatch[0];
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // Formato alternativo con "$" como separador (algunos DNI más antiguos)
+                else if (code.includes('$')) {
+                    const parts = code.split('$');
+                    debug('Formato $ encontrado. Partes: ' + parts.length);
+                    
+                    for (let i = 0; i < parts.length; i++) {
+                        // Buscar DNI (7-8 dígitos)
+                        if (!result.dni) {
+                            const dniMatch = parts[i].match(/^\d{7,8}$/);
+                            if (dniMatch) {
+                                result.dni = dniMatch[0];
+                                debug('DNI encontrado por formato $: ' + result.dni);
+                            }
+                        }
+                        
+                        // Buscar fecha de nacimiento
+                        const dateMatch = parts[i].match(/\d{1,2}\/\d{1,2}\/\d{4}/);
+                        if (dateMatch) result.nacimiento = dateMatch[0];
+                    }
+                }
+                
+                // Si no se encontró nada con los formatos anteriores, buscar números que parezcan DNI
+                if (!result.dni) {
+                    const matches = code.match(/\b\d{7,8}\b/g);
+                    if (matches && matches.length > 0) {
+                        result.dni = matches[0]; // Tomar el primer match
+                        debug('DNI encontrado por búsqueda general: ' + result.dni);
+                    }
+                }
+                
+                debug('Datos extraídos: ' + JSON.stringify(result));
+                return result;
+            }
+            
+            // Configurar y iniciar Quagga con enfoque en PDF417
+            function startScanner() {
+                Quagga.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: document.querySelector("#interactive"),
+                        constraints: {
+                            width: { min: 640 },
+                            height: { min: 480 },
+                            facingMode: "environment",
+                            aspectRatio: { min: 1, max: 2 }
+                        }
+                    },
+                    locator: {
+                        patchSize: "medium",
+                        halfSample: true
+                    },
+                    numOfWorkers: 4,
+                    frequency: 10,
+                    decoder: {
+                        readers: [
+                            // Priorizar PDF417 para DNI argentino
+                            {
+                                format: "pdf417_reader",
+                                config: {
+                                    // Aumentar parámetros de sensibilidad
+                                    minSymbolCount: 1,
+                                    maxSymbolCount: 150
+                                }
+                            },
+                            // Mantener code_128 como respaldo
+                            {
+                                format: "code_128_reader",
+                                config: {}
+                            }
+                        ]
+                    },
+                    locate: true
+                }, function(err) {
+                    if (err) {
+                        console.error(err);
+                        debug('Error al iniciar Quagga: ' + err);
+                        alert('Error al iniciar el escáner: ' + err);
+                        // Volver a mostrar el botón de inicio
+                        scannerContainer.classList.add('hidden');
+                        stopButton.classList.add('hidden');
+                        startButton.classList.remove('hidden');
+                        return;
+                    }
+                    
+                    debug('Quagga iniciado correctamente');
+                    Quagga.start();
+                });
+                
+                // Evento cuando se detecta un código
+                Quagga.onDetected(function(result) {
+                    if (!isProcessing && result && result.codeResult) {
+                        const code = result.codeResult.code;
+                        const format = result.codeResult.format;
+                        
+                        debug(`Código detectado (${format}): ${code}`);
+                        
+                        // Validar que el código no esté vacío
+                        if (!code || code.trim() === '') {
+                            debug('Código vacío detectado, ignorando');
+                            return;
+                        }
+                        
+                        // Parsear los datos del DNI
+                        const dniData = parseArgentineDNIData(code);
+                        
+                        if (dniData && dniData.dni) {
+                            const dni = dniData.dni;
+                            debug('DNI extraído: ' + dni);
+                            
+                            // Algoritmo mejorado para confirmar detecciones
+                            if (!consecutiveDetections[dni]) {
+                                consecutiveDetections[dni] = {
+                                    count: 1,
+                                    data: dniData,
+                                    lastDetected: Date.now()
+                                };
+                            } else {
+                                consecutiveDetections[dni].count++;
+                                consecutiveDetections[dni].lastDetected = Date.now();
+                                // Mantener la data más completa
+                                if (Object.keys(dniData).filter(k => dniData[k]).length > 
+                                    Object.keys(consecutiveDetections[dni].data).filter(k => consecutiveDetections[dni].data[k]).length) {
+                                    consecutiveDetections[dni].data = dniData;
+                                }
+                            }
+                            
+                            // Reducir la confianza en detecciones antiguas
+                            const now = Date.now();
+                            Object.keys(consecutiveDetections).forEach(key => {
+                                // Si han pasado más de 5 segundos desde la última detección, disminuir confianza
+                                if (now - consecutiveDetections[key].lastDetected > 5000) {
+                                    consecutiveDetections[key].count = Math.max(0, consecutiveDetections[key].count - 1);
+                                    if (consecutiveDetections[key].count === 0) {
+                                        delete consecutiveDetections[key];
+                                    }
+                                }
+                                
+                                // Reducir confianza en otras detecciones
+                                if (key !== dni) {
+                                    consecutiveDetections[key].count = Math.max(0, consecutiveDetections[key].count - 0.5);
+                                    if (consecutiveDetections[key].count === 0) {
+                                        delete consecutiveDetections[key];
+                                    }
+                                }
+                            });
+                            
+                            debug('Confianza actual: ' + JSON.stringify({
+                                dni: dni,
+                                count: consecutiveDetections[dni].count
+                            }));
+                            
+                            // Si detectamos el mismo DNI 3 veces, lo procesamos
+                            if (consecutiveDetections[dni].count >= 3) {
+                                isProcessing = true;
+                                debug('DNI confirmado con confianza suficiente: ' + dni);
+                                processDetectedDNIWithData(dni, consecutiveDetections[dni].data);
+                            }
+                        } else {
+                            debug('No se pudo extraer un DNI válido del código');
+                        }
+                    }
+                });
+                
+                // Mejorar la visualización del proceso de escaneo
+                Quagga.onProcessed(function(result) {
+                    var drawingCtx = Quagga.canvas.ctx.overlay,
+                        drawingCanvas = Quagga.canvas.dom.overlay;
+                    
+                    if (result) {
+                        // Limpiar el canvas
+                        if (drawingCanvas && drawingCtx) {
+                            drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                            
+                            // Si encontró un código, dibujarlo
+                            if (result.boxes) {
+                                drawingCtx.strokeStyle = "#00FF00";
+                                drawingCtx.lineWidth = 2;
+                                
+                                for (var i = 0; i < result.boxes.length; i++) {
+                                    Quagga.ImageDebug.drawPath(result.boxes[i], {x: 0, y: 1}, drawingCtx, {color: "#00FF00", lineWidth: 2});
+                                }
+                            }
+                            
+                            if (result.box) {
+                                Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {color: "#00F", lineWidth: 2});
+                            }
+                            
+                            if (result.codeResult && result.codeResult.code) {
+                                Quagga.ImageDebug.drawPath(result.line, {x: 'x', y: 'y'}, drawingCtx, {color: "#F00", lineWidth: 3});
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Detener Quagga
+            function stopScanner() {
+                if (Quagga) {
+                    try {
+                        Quagga.stop();
+                        debug('Quagga detenido');
+                    } catch (e) {
+                        debug('Error al detener Quagga: ' + e.message);
+                    }
+                }
+            }
+            
+            // Procesar el DNI detectado con todos los datos adicionales
+            function processDetectedDNIWithData(dni, dniData) {
+                // Detener el escáner
+                stopScanner();
+                
+                // Ocultar la cámara
+                scannerContainer.classList.add('hidden');
+                stopButton.classList.add('hidden');
+                startButton.classList.remove('hidden');
+                
+                // Mostrar el resultado con todos los datos disponibles
+                let personInfoHTML = '';
+                
+                personInfoHTML += `<p class="person-info"><span class="info-label">DNI:</span> ${dni}</p>`;
+                
+                if (dniData.apellido) {
+                    personInfoHTML += `<p class="person-info"><span class="info-label">Apellido:</span> ${dniData.apellido}</p>`;
+                }
+                
+                if (dniData.nombre) {
+                    personInfoHTML += `<p class="person-info"><span class="info-label">Nombre:</span> ${dniData.nombre}</p>`;
+                }
+                
+                if (dniData.sexo) {
+                    personInfoHTML += `<p class="person-info"><span class="info-label">Sexo:</span> ${dniData.sexo}</p>`;
+                }
+                
+                if (dniData.nacimiento) {
+                    personInfoHTML += `<p class="person-info"><span class="info-label">Fecha de Nacimiento:</span> ${dniData.nacimiento}</p>`;
+                }
+                
+                personDetailsElement.innerHTML = personInfoHTML;
+                resultDiv.classList.remove('hidden');
+                statusElement.textContent = "Enviando datos...";
+                
+                // Enviar el DNI al servidor
+                enviarDNI(dni);
+            }
+            
+            // Procesar el DNI sin datos adicionales (entrada manual)
+            function processDetectedDNI(dni) {
+                // Ocultar la cámara si está visible
+                scannerContainer.classList.add('hidden');
+                stopButton.classList.add('hidden');
+                startButton.classList.remove('hidden');
+                
+                // Mostrar solo el DNI en el resultado
+                personDetailsElement.innerHTML = `<p class="person-info"><span class="info-label">DNI:</span> ${dni}</p>`;
+                resultDiv.classList.remove('hidden');
+                statusElement.textContent = "Enviando datos...";
+                
+                // Enviar el DNI al servidor
+                enviarDNI(dni);
+            }
+            
+            // Enviar el DNI al servidor mediante fetch
+            function enviarDNI(dni) {
+                debug('Enviando DNI ' + dni + ' al servidor...');
+                
+                // Usar el nuevo endpoint sugerido 
+                const endpoint = `https://choosing-rafa.duckdns.org/api/List/acreditar/${dni}`;
+                
+                debug('Usando endpoint: ' + endpoint);
+                
+                fetch(endpoint, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Cache-Control': 'no-cache'
+                    },
+                    // Agregar opciones para solucionar problemas de CORS
+                    mode: 'cors',
+                    cache: 'no-cache',
+                    credentials: 'same-origin',
+                })
+                .then(response => {
+                    debug('Respuesta del servidor recibida. Status: ' + response.status);
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`Error ${response.status}: ${text || response.statusText}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    debug('Acreditación exitosa: ' + JSON.stringify(data));
+                    statusElement.textContent = "¡Acreditación exitosa!";
+                    statusElement.style.color = "green";
+                })
+                .catch(error => {
+                    debug('Error en la solicitud: ' + error.message);
+                    
+                    // Intento alternativo con el endpoint original
+                    debug('Intentando con endpoint alternativo...');
+                    const alternativeEndpoint = `https://choosing-rafa.duckdns.org/api/List/updateAccreditStatus/${dni}`;
+                    
+                    fetch(alternativeEndpoint, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*',
+                            'Cache-Control': 'no-cache'
+                        },
+                        mode: 'cors',
+                        cache: 'no-cache',
+                        credentials: 'same-origin',
+                    })
+                    .then(response => {
+                        debug('Respuesta alternativa recibida. Status: ' + response.status);
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                throw new Error(`Error ${response.status}: ${text || response.statusText}`);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        debug('Acreditación exitosa con endpoint alternativo: ' + JSON.stringify(data));
+                        statusElement.textContent = "¡Acreditación exitosa!";
+                        statusElement.style.color = "green";
+                    })
+                    .catch(error2 => {
+                        debug('Error en ambos endpoints: ' + error2.message);
+                        statusElement.textContent = "Error de conexión. Por favor inténtalo nuevamente.";
+                        statusElement.style.color = "red";
+                        console.error("Error al enviar los datos:", error2);
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="icon" href="./images/icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/icon.png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .login-container {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 300px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Iniciar Sesión</h2>
+        <div id="errorMessage" class="error-message"></div>
+        <div class="form-group">
+            <label for="username">Usuario:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button id="loginButton">Ingresar</button>
+    </div>
+
+    <script>
+        document.getElementById('loginButton').addEventListener('click', async function() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                document.getElementById('errorMessage').textContent = 'Por favor complete todos los campos';
+                return;
+            }
+            
+            try {
+                const response = await fetch('https://choosing-rafa.duckdns.org/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    // Guardar el token en localStorage
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userData', JSON.stringify({
+            id: data.user.id,
+            name: data.user.name
+        }));
+                    // Redirigir al index
+                    window.location.href = 'index.html';
+                } else {
+                    const errorData = await response.json();
+                    document.getElementById('errorMessage').textContent = 
+                        errorData.message || 'Usuario o contraseña incorrectos';
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 
+                    'Usuario o contraseña incorrectos';
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

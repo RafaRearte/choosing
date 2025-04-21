@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas de Acreditación</title>
+    <link rel="icon" href="./images/icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/icon.png">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Estilos personalizados -->
+    <style>
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 30px;
+        }
+        .stats-card {
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .counter-badge {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .counter-badge:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+        .counter-badge.active {
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+        }
+        #loadingIndicator {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        .stat-label {
+            font-size: 1.2rem;
+            color: #666;
+        }
+        .chart-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar" style="background-color: #f8f9fa;border-bottom: 1px solid #e0e0e0;">
+        <div class="container">
+            <a class="navbar-brand" href="#">Acreditación de Invitados</a>
+        
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+        
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+            <div class="offcanvas-header d-flex justify-content-between align-items-center border-bottom pb-3">
+                <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Menú</h5>
+                <div>
+                    <button type="button" class="btn-close me-2" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                    <button type="button" id="logoutButton" class="btn btn-outline-danger">Cerrar Sesión</button>
+                </div>
+            </div>
+            <div class="offcanvas-body">
+                <!-- Información del usuario -->
+                <div class="user-info mb-4 p-3 bg-light rounded border">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-person-circle fs-1 me-3 text-primary"></i>
+                        <div>
+                            <p class="mb-0 fw-bold">Hola, <span id="userName">Usuario</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+                    <li class="nav-item mb-3">
+                        <a class="nav-link active d-flex align-items-center" aria-current="page" href="Index.html">
+                            <i class="bi bi-house-door me-2"></i> Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link d-flex align-items-center" href="stats.html">
+                            <i class="bi bi-graph-up me-2"></i> Estadísticas
+                        </a>
+                    </li>
+                    <li class="nav-item mt-3">
+                        <button type="button" class="btn btn-primary w-100 d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#addGuestModal">
+                            <i class="bi bi-person-plus me-2"></i> Nuevo Invitado
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="offcanvas-footer p-3 border-top">
+                <div class="text-center text-muted small">
+                    <p class="mb-0">© 2025 Sistema de Acreditación</p>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="loadingIndicator">Cargando...</div>
+
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Estadísticas de Acreditación</h2>
+        
+        <!-- Fila para tarjetas de estadísticas principales -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card bg-light">
+                    <div class="text-center">
+                        <p class="stat-label">Total Invitados</p>
+                        <p id="totalStat" class="stat-number text-primary">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card bg-light">
+                    <div class="text-center">
+                        <p class="stat-label">Acreditados</p>
+                        <p id="accreditedStat" class="stat-number text-success">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card bg-light">
+                    <div class="text-center">
+                        <p class="stat-label">No Acreditados</p>
+                        <p id="notAccreditedStat" class="stat-number text-danger">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card bg-light">
+                    <div class="text-center">
+                        <p class="stat-label">Nuevos</p>
+                        <p id="newStat" class="stat-number text-info">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila para gráficos -->
+        <div class="row">
+            <!-- Gráfico de torta: Estado de acreditación -->
+            <div class="col-md-6">
+                <div class="stats-card bg-light">
+                    <h4 class="chart-title">Estado de Acreditación</h4>
+                    <div class="chart-container">
+                        <canvas id="statusPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gráfico de barras: Acreditaciones por hora -->
+            <div class="col-md-6">
+                <div class="stats-card bg-light">
+                    <h4 class="chart-title">Acreditaciones por Hora</h4>
+                    <div class="chart-container">
+                        <canvas id="hourlyBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila para estadísticas adicionales (puede expandirse en el futuro) -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="stats-card bg-light">
+                    <h4 class="chart-title">Asistencia por Día</h4>
+                    <div class="chart-container">
+                        <canvas id="dayAttendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stats-card bg-light">
+                    <h4 class="chart-title">Nuevos Registros</h4>
+                    <div class="chart-container">
+                        <canvas id="newRegistrationsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Variable global para los gráficos
+        let statusPieChart, hourlyBarChart, dayAttendanceChart, newRegistrationsChart;
+        const apiUrl = "https://choosing-rafa.duckdns.org/api/List";
+
+        // Verificar token al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            loadUserInfo();
+            // Inicializar gráficos
+            initCharts();
+            
+            // Cargar datos
+            fetchStats();
+            
+            // Actualizar automáticamente cada 30 segundos
+            setInterval(fetchStats, 30000);
+            
+            // Agregar evento al botón de cerrar sesión
+            document.getElementById('logoutButton').addEventListener('click', logout);
+            
+            // Eventos para los contadores
+            document.querySelectorAll('.counter-badge').forEach(badge => {
+                badge.addEventListener('click', function() {
+                    window.location.href = 'Index.html';
+                });
+            });
+        });
+
+        // Inicializar todos los gráficos
+        function initCharts() {
+            // Gráfico de torta - Estado de acreditación
+            const statusCtx = document.getElementById('statusPieChart').getContext('2d');
+            statusPieChart = new Chart(statusCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Acreditados', 'No Acreditados'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#28a745', '#dc3545'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de barras - Acreditaciones por hora
+            const hourlyCtx = document.getElementById('hourlyBarChart').getContext('2d');
+            hourlyBarChart = new Chart(hourlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: generateHourLabels(),
+                    datasets: [{
+                        label: 'Cantidad de Acreditaciones',
+                        data: new Array(24).fill(0),
+                        backgroundColor: '#17a2b8',
+                        borderColor: '#138496',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de barras - Asistencia por día
+            const dayCtx = document.getElementById('dayAttendanceChart').getContext('2d');
+            dayAttendanceChart = new Chart(dayCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jueves', 'Viernes', 'Ambos días'],
+                    datasets: [{
+                        label: 'Invitados',
+                        data: [0, 0, 0],
+                        backgroundColor: ['#6610f2', '#fd7e14', '#20c997'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de línea - Nuevos registros (simulado por ahora)
+            const newCtx = document.getElementById('newRegistrationsChart').getContext('2d');
+            newRegistrationsChart = new Chart(newCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+                    datasets: [{
+                        label: 'Nuevos Registros',
+                        data: [0, 0, 0, 0],
+                        fill: false,
+                        borderColor: '#6f42c1',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Generar etiquetas para las horas (0-23)
+        function generateHourLabels() {
+            const labels = [];
+            for (let i = 0; i < 24; i++) {
+                labels.push(`${i}:00`);
+            }
+            return labels;
+        }
+
+        // Función para obtener todos los datos estadísticos
+        async function fetchStats() {
+            document.getElementById('loadingIndicator').style.display = 'block';
+            
+            try {
+                // Obtener todos los invitados
+                const allGuests = await fetchGuestsByEndpoint('GetAll');
+                
+                if (!allGuests) return;
+                
+                // Obtener acreditados
+                const acreditados = await fetchGuestsByEndpoint('GetAcreditados');
+                
+                // Obtener no acreditados
+                const noAcreditados = await fetchGuestsByEndpoint('GetNoAcreditados');
+                
+                // Obtener nuevos
+                const nuevos = await fetchGuestsByEndpoint('GetNuevos');
+                
+                // Actualizar contadores y gráfico de estado
+                updateStatusStats(allGuests, acreditados, noAcreditados, nuevos);
+                
+                // Actualizar gráfico de asistencia por día
+                updateDayAttendanceChart(allGuests);
+                
+                // Simulación de datos para gráfico de acreditaciones por hora
+                // Esto deberá actualizarse cuando se implemente en el backend
+                updateHourlyChart(simulateHourlyData());
+                
+                // Simulación de datos para nuevos registros
+                // Esto deberá actualizarse cuando se implemente en el backend
+                updateNewRegistrationsChart(simulateNewRegistrationsData());
+                
+            } catch (error) {
+                console.error('Error al obtener estadísticas:', error);
+            } finally {
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        }
+
+        // Función para obtener invitados por endpoint específico
+        async function fetchGuestsByEndpoint(endpoint) {
+            const token = localStorage.getItem('authToken');
+            
+            try {
+                const response = await fetch(`${apiUrl}/${endpoint}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.status === 401) {
+                    alert('Sesión expirada. Por favor inicie sesión nuevamente.');
+                    logout();
+                    return null;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`Error al obtener los invitados desde ${endpoint}`);
+                }
+                
+                return await response.json();
+                
+            } catch (error) {
+                console.error(`Error fetching guests from ${endpoint}:`, error);
+                return null;
+            }
+        }
+
+        // Actualizar estadísticas de estado y gráfico de torta
+        function updateStatusStats(guests, acreditados, noAcreditados, nuevos) {
+            const totalGuests = guests ? guests.length : 0;
+            const accreditedGuests = acreditados ? acreditados.length : 0;
+            const notAccreditedGuests = noAcreditados ? noAcreditados.length : 0;
+            const newGuests = nuevos ? nuevos.length : 0;
+            
+            // Actualizar contadores en la navbar
+            //document.getElementById("totalGuests").innerText = `Invitados: ${totalGuests}`;
+            //document.getElementById("accredited").innerText = `Acreditados: ${accreditedGuests}`;
+            //document.getElementById("notAccredited").innerText = `No acreditados: ${notAccreditedGuests}`;
+            //document.getElementById("new").innerText = `Nuevos: ${newGuests}`;
+            
+            // Actualizar estadísticas en tarjetas
+            document.getElementById("totalStat").innerText = totalGuests;
+            document.getElementById("accreditedStat").innerText = accreditedGuests;
+            document.getElementById("notAccreditedStat").innerText = notAccreditedGuests;
+            document.getElementById("newStat").innerText = newGuests;
+            
+            // Actualizar gráfico de torta
+            statusPieChart.data.datasets[0].data = [accreditedGuests, notAccreditedGuests];
+            statusPieChart.update();
+        }
+
+        // Actualizar gráfico de asistencia por día
+        function updateDayAttendanceChart(guests) {
+            if (!guests) return;
+            
+            const juevesOnly = guests.filter(guest => guest.dayOne === 'SI' && guest.dayTwo === 'NO').length;
+            const viernesOnly = guests.filter(guest => guest.dayOne === 'NO' && guest.dayTwo === 'SI').length;
+            const bothDays = guests.filter(guest => guest.dayOne === 'SI' && guest.dayTwo === 'SI').length;
+            
+            dayAttendanceChart.data.datasets[0].data = [juevesOnly, viernesOnly, bothDays];
+            dayAttendanceChart.update();
+        }
+
+        // Actualizar gráfico de acreditaciones por hora
+        function updateHourlyChart(hourlyData) {
+            hourlyBarChart.data.datasets[0].data = hourlyData;
+            hourlyBarChart.update();
+        }
+
+        // Actualizar gráfico de nuevos registros
+        function updateNewRegistrationsChart(data) {
+            newRegistrationsChart.data.datasets[0].data = data;
+            newRegistrationsChart.update();
+        }
+
+        // Simulación de datos para acreditaciones por hora
+        // Esto deberá reemplazarse con datos reales del API
+        function simulateHourlyData() {
+            const hourlyData = new Array(24).fill(0);
+            
+            // La mayoría de acreditaciones entre 8am y 6pm
+            for (let i = 8; i <= 18; i++) {
+                hourlyData[i] = Math.floor(Math.random() * 20) + 5;
+            }
+            
+            // Pocas acreditaciones en horas tempranas y tardías
+            for (let i = 0; i < 8; i++) {
+                hourlyData[i] = Math.floor(Math.random() * 3);
+            }
+            
+            for (let i = 19; i < 24; i++) {
+                hourlyData[i] = Math.floor(Math.random() * 3);
+            }
+            
+            return hourlyData;
+        }
+
+        // Simulación de datos para nuevos registros
+        // Esto deberá reemplazarse con datos reales del API
+        function simulateNewRegistrationsData() {
+            return [
+                Math.floor(Math.random() * 30) + 10,
+                Math.floor(Math.random() * 40) + 20,
+                Math.floor(Math.random() * 20) + 5,
+                Math.floor(Math.random() * 15) + 5
+            ];
+        }
+
+        // Función para cerrar sesión
+        function logout() {
+            localStorage.removeItem('authToken');
+            window.location.href = 'login.html';
+        }
+        function loadUserInfo() {
+    // Obtener datos del usuario del localStorage (guardados durante el login)
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    
+    if (userData) {
+        // Mostrar el nombre del usuario
+        document.getElementById('userName').textContent = userData.name || 'Usuario';
+    
+    }
+}
+    </script>
+</body>
+<footer class="bg-dark text-white text-center py-3 mt-5">
+    <p>&copy; 2025 - Acreditación de Eventos</p>
+</footer>
+</html>
