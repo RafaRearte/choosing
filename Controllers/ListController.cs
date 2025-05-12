@@ -111,7 +111,33 @@ namespace choosing.Controllers
             await _listService.DeleteInvitadoAsync(dni);
             return Ok(invitado);
         }
+        // Eliminar invitado por ID
+        [HttpDelete("deleteById/{id}")]
+        public async Task<IActionResult> DeleteInvitadoById(int id, [FromQuery] int eventId)
+        {
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
 
+            var invitado = await _listService.GetInvitadoByIdAndEventIdAsync(id, eventId);
+            if (invitado == null)
+                return NotFound($"No se encontró un invitado con el ID {id} en el evento especificado");
+
+            await _listService.DeleteInvitadoByIdAsync(id);
+            return Ok(invitado);
+        }
+        // Obtener invitado por ID
+        [HttpGet("GetById/{id}")]
+        public async Task<IActionResult> GetInvitadoById(int id, [FromQuery] int eventId)
+        {
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            var invitado = await _listService.GetInvitadoByIdAndEventIdAsync(id, eventId);
+            if (invitado == null)
+                return NotFound($"No se encontró un invitado con el ID {id} en el evento especificado");
+
+            return Ok(invitado);
+        }
         // Agregar un nuevo invitado
         [HttpPost("create")]
         public async Task<IActionResult> CreateInvitado([FromBody] Guest newGuest)
@@ -172,15 +198,15 @@ namespace choosing.Controllers
                     return NotFound($"No se encontró un invitado con el DNI {originalDni} en el evento especificado");
 
                 // Si el DNI cambió, verificar que el nuevo DNI no exista en este evento
-                if (originalDni != updatedGuest.Dni)
+                if (updatedGuest.Dni.HasValue && originalDni != updatedGuest.Dni.Value)
                 {
-                    var existingWithNewDni = await _listService.GetInvitadoByDniAndEventIdAsync(updatedGuest.Dni, eventId);
-                    if (existingWithNewDni != null && existingWithNewDni.Dni != originalDni)
-                        return Conflict($"Ya existe otro invitado con el DNI {updatedGuest.Dni} en este evento");
+                    var existingWithNewDni = await _listService.GetInvitadoByDniAndEventIdAsync(updatedGuest.Dni.Value, eventId);
+                    if (existingWithNewDni != null && existingWithNewDni.Id != existingGuest.Id)
+                        return Conflict($"Ya existe otro invitado con el DNI {updatedGuest.Dni.Value} en este evento");
                 }
 
-                // Actualizar el invitado
-                await _listService.UpdateInvitadoAsync(originalDni, updatedGuest);
+                // Actualizar el invitado usando su ID
+                await _listService.UpdateInvitadoByIdAsync(existingGuest.Id, updatedGuest);
                 return Ok(updatedGuest);
             }
             catch (Exception ex)
@@ -222,20 +248,6 @@ namespace choosing.Controllers
         }
         // Controllers/ListController.cs - Añadir estos endpoints
 
-        // Obtener invitado por ID
-        [HttpGet("GetById/{id}")]
-        public async Task<IActionResult> GetInvitadoById(int id, [FromQuery] int eventId)
-        {
-            if (eventId <= 0)
-                return BadRequest("Se requiere un ID de evento válido");
-
-            var invitado = await _listService.GetInvitadoByIdAndEventIdAsync(id, eventId);
-            if (invitado == null)
-                return NotFound($"No se encontró un invitado con el ID {id} en el evento especificado");
-
-            return Ok(invitado);
-        }
-
         // Actualizar invitado por ID
         [HttpPut("updateById/{id}")]
         public async Task<IActionResult> UpdateInvitadoById(int id, [FromBody] Guest updatedGuest, [FromQuery] int eventId)
@@ -273,22 +285,6 @@ namespace choosing.Controllers
                 return StatusCode(500, $"Error interno al actualizar invitado: {ex.Message}");
             }
         }
-
-        // Eliminar invitado por ID
-        [HttpDelete("deleteById/{id}")]
-        public async Task<IActionResult> DeleteInvitadoById(int id, [FromQuery] int eventId)
-        {
-            if (eventId <= 0)
-                return BadRequest("Se requiere un ID de evento válido");
-
-            var invitado = await _listService.GetInvitadoByIdAndEventIdAsync(id, eventId);
-            if (invitado == null)
-                return NotFound($"No se encontró un invitado con el ID {id} en el evento especificado");
-
-            await _listService.DeleteInvitadoByIdAsync(id);
-            return Ok(invitado);
-        }
-
         // Acreditar invitado por ID
         [HttpPut("acreditarById/{id}")]
         public async Task<IActionResult> AcreditarInvitadoById(int id, [FromQuery] int eventId)
