@@ -20,7 +20,11 @@ namespace choosing.Services.Interfaces
         Task<Guest> CreateInvitadoAsync(Guest newGuest); // New method
         Task UpdateInvitadoAsync(int originalDni, Guest updatedGuest); // Nuevo método
         Task UpdateAccreditStatusAsync(Guest invitado); // Nuevo método
-
         Task DeleteInvitadoAsync(int dni); // Nuevo método
+
+        Task<Guest?> GetInvitadoByIdAsync(int id);
+        Task<Guest?> GetInvitadoByIdAndEventIdAsync(int id, int eventId);
+        Task DeleteInvitadoByIdAsync(int id);
+        Task UpdateInvitadoByIdAsync(int id, Guest updatedGuest);
     }
 }

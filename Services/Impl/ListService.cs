@@ -126,5 +126,45 @@ namespace choosing.Services.Impl
         {
             return await _listRepository.GetInvitadosNuevosByEventIdAsync(eventId);
         }
+
+        public async Task<Guest?> GetInvitadoByIdAsync(int id)
+        {
+            return await _listRepository.GetByIdAsync(id);
+        }
+
+        public async Task<Guest?> GetInvitadoByIdAndEventIdAsync(int id, int eventId)
+        {
+            return await _listRepository.GetByIdAndEventIdAsync(id, eventId);
+        }
+
+        public async Task DeleteInvitadoByIdAsync(int id)
+        {
+            await _listRepository.DeleteByIdAsync(id);
+        }
+
+        // Modificar el método UpdateInvitadoAsync para soportar ID
+        public async Task UpdateInvitadoByIdAsync(int id, Guest updatedGuest)
+        {
+            // Obtener el invitado original
+            var invitado = await _listRepository.GetByIdAsync(id);
+            if (invitado == null)
+                throw new Exception($"No se encontró un invitado con el ID {id}");
+
+            // Actualizar todos los campos
+            invitado.Dni = updatedGuest.Dni;
+            invitado.Nombre = updatedGuest.Nombre;
+            invitado.Apellido = updatedGuest.Apellido;
+            invitado.Mail = updatedGuest.Mail;
+            invitado.DayOne = updatedGuest.DayOne;
+            invitado.DayTwo = updatedGuest.DayTwo;
+            invitado.InfoAdicional = updatedGuest.InfoAdicional;
+            invitado.Acreditado = updatedGuest.Acreditado;
+            invitado.CantEntradas = updatedGuest.CantEntradas;
+            invitado.Empresa = updatedGuest.Empresa;
+            invitado.Categoria = updatedGuest.Categoria;
+            invitado.EventoId = updatedGuest.EventoId;
+
+            await _listRepository.UpdateAsync(invitado);
+        }
     }
 }

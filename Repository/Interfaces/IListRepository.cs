@@ -19,5 +19,8 @@ namespace choosing.Repository.Interfaces
         Task<List<Guest>> GetNotAcreditadosByEventIdAsync(int eventId);
         Task<List<Guest>> GetInvitadosNuevosAsync();
         Task<List<Guest>> GetInvitadosNuevosByEventIdAsync(int eventId);
+        Task<Guest?> GetByIdAsync(int id);
+        Task<Guest?> GetByIdAndEventIdAsync(int id, int eventId);
+        Task DeleteByIdAsync(int id);
     }
 }

@@ -183,5 +183,48 @@ namespace choosing.Repository.Impl
                 .Where(g => g.EventoId == eventId && g.EsNuevo == true)
                 .ToListAsync();
         }
+
+        public async Task<Guest?> GetByIdAsync(int id)
+        {
+            try
+            {
+                return await _context.Guests.FindAsync(id);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error retrieving guest with ID {id}", ex);
+            }
+        }
+
+        public async Task<Guest?> GetByIdAndEventIdAsync(int id, int eventId)
+        {
+            try
+            {
+                return await _context.Guests
+                    .FirstOrDefaultAsync(g => g.Id == id && g.EventoId == eventId);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error retrieving guest with ID {id} for event {eventId}", ex);
+            }
+        }
+
+        public async Task DeleteByIdAsync(int id)
+        {
+            try
+            {
+                var guest = await _context.Guests.FindAsync(id);
+                if (guest != null)
+                {
+                    _context.Guests.Remove(guest);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error deleting guest with ID {id}", ex);
+            }
+        }
+
     }
 }
