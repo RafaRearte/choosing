@@ -7,14 +7,14 @@ namespace choosing.Services.Impl
     public class ListService : IListService
     {
         private readonly IListRepository _listRepository;
-        
+
         public ListService(IListRepository listRepository)
         {
             _listRepository = listRepository;
         }
+
         public async Task AcreditarInvitadoAsync(Guest guest)
         {
-            //invitado.Ingreso = true;  // Lógica de acreditación (puedes añadir más lógica aquí)
             guest.Acreditado = 1;
             guest.horaAcreditacion = DateTime.Now;
             await _listRepository.UpdateAsync(guest);
@@ -25,15 +25,29 @@ namespace choosing.Services.Impl
             return await _listRepository.GetAllAsync();
         }
 
+        public async Task<List<Guest>> GetInvitadosByEventIdAsync(int eventId)
+        {
+            return await _listRepository.GetByEventIdAsync(eventId);
+        }
+
         public async Task<Guest?> GetInvitadoByDniAsync(int dni)
         {
             return await _listRepository.GetByDNIAsync(dni);
         }
 
-        public async  Task<List<Guest>> SearchInvitadoAsync(string query)
+        public async Task<Guest?> GetInvitadoByDniAndEventIdAsync(int dni, int eventId)
+        {
+            return await _listRepository.GetByDniAndEventIdAsync(dni, eventId);
+        }
+
+        public async Task<List<Guest>> SearchInvitadoAsync(string query)
         {
             return await _listRepository.SearchByNameAsync(query);
+        }
 
+        public async Task<List<Guest>> SearchInvitadoByEventIdAsync(string query, int eventId)
+        {
+            return await _listRepository.SearchByNameAndEventIdAsync(query, eventId);
         }
 
         public async Task<Guest> CreateInvitadoAsync(Guest newGuest)
@@ -65,6 +79,9 @@ namespace choosing.Services.Impl
                 invitado.InfoAdicional = updatedGuest.InfoAdicional;
                 invitado.Acreditado = updatedGuest.Acreditado;
                 invitado.CantEntradas = updatedGuest.CantEntradas;
+                invitado.Empresa = updatedGuest.Empresa;
+                invitado.Categoria = updatedGuest.Categoria;
+                invitado.EventoId = updatedGuest.EventoId;
 
                 await _listRepository.UpdateAsync(invitado);
             }
@@ -85,14 +102,29 @@ namespace choosing.Services.Impl
             return await _listRepository.GetAcreditadosAsync();
         }
 
+        public async Task<List<Guest>> GetInvitadosAcreditadosByEventIdAsync(int eventId)
+        {
+            return await _listRepository.GetAcreditadosByEventIdAsync(eventId);
+        }
+
         public async Task<List<Guest>> GetInvitadosNoAcreditadosAsync()
         {
             return await _listRepository.GetNotAcreditadosAsync();
         }
 
+        public async Task<List<Guest>> GetInvitadosNoAcreditadosByEventIdAsync(int eventId)
+        {
+            return await _listRepository.GetNotAcreditadosByEventIdAsync(eventId);
+        }
+
         public async Task<List<Guest>> GetInvitadosNuevosAsync()
         {
             return await _listRepository.GetInvitadosNuevosAsync();
+        }
+
+        public async Task<List<Guest>> GetInvitadosNuevosByEventIdAsync(int eventId)
+        {
+            return await _listRepository.GetInvitadosNuevosByEventIdAsync(eventId);
         }
     }
 }

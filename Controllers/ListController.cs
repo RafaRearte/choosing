@@ -1,5 +1,6 @@
 ﻿using choosing.Domain;
 using choosing.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,72 +19,95 @@ namespace choosing.Controllers
         }
         // Obtener todos los invitados
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAllInvitados()
+        public async Task<IActionResult> GetAllInvitados([FromQuery] int eventId)
         {
-            var guests = await _listService.GetAllInvitadosAsync();
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            var guests = await _listService.GetInvitadosByEventIdAsync(eventId);
             return Ok(guests);
         }
 
         // Para invitados acreditados
         [HttpGet("GetAcreditados")]
-        public async Task<IActionResult> GetInvitadosAcreditados()
+        public async Task<IActionResult> GetInvitadosAcreditados([FromQuery] int eventId)
         {
-            var acreditados = await _listService.GetInvitadosAcreditadosAsync();
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            var acreditados = await _listService.GetInvitadosAcreditadosByEventIdAsync(eventId);
             return Ok(acreditados);
         }
 
-        // Para invitados no acreditados
         [HttpGet("GetNoAcreditados")]
-        public async Task<IActionResult> GetInvitadosNoAcreditados()
+        public async Task<IActionResult> GetInvitadosNoAcreditados([FromQuery] int eventId)
         {
-            var noAcreditados = await _listService.GetInvitadosNoAcreditadosAsync();
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            var noAcreditados = await _listService.GetInvitadosNoAcreditadosByEventIdAsync(eventId);
             return Ok(noAcreditados);
         }
 
         // Para invitados nuevos
         [HttpGet("GetNuevos")]
-        public async Task<IActionResult> GetInvitadosNuevos()
+        public async Task<IActionResult> GetInvitadosNuevos([FromQuery] int eventId)
         {
-            var nuevos = await _listService.GetInvitadosNuevosAsync();
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            var nuevos = await _listService.GetInvitadosNuevosByEventIdAsync(eventId);
             return Ok(nuevos);
         }
 
-        // Buscar por appelido o nombre
+        // Buscar por apellido o nombre
         [HttpGet("searchByName")]
-        public async Task<IActionResult> SearchInvitado([FromQuery] string query)
+        public async Task<IActionResult> SearchInvitado([FromQuery] string query, [FromQuery] int eventId)
         {
-            var invitados = await _listService.SearchInvitadoAsync(query);
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            var invitados = await _listService.SearchInvitadoByEventIdAsync(query, eventId);
             return Ok(invitados);
         }
 
-        // Buscar por dni
         [HttpGet("searchByDni")]
-        public async Task<IActionResult> GetInvitadoByDni([FromQuery] int dni)
+        public async Task<IActionResult> GetInvitadoByDni([FromQuery] int dni, [FromQuery] int eventId)
         {
-            var invitado = await _listService.GetInvitadoByDniAsync(dni);
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            var invitado = await _listService.GetInvitadoByDniAndEventIdAsync(dni, eventId);
+            if (invitado == null)
+                return NotFound($"No se encontró un invitado con el DNI {dni} en el evento especificado");
+
             return Ok(invitado);
         }
 
         // Acreditar un invitado
         [HttpPut("acreditar/{dni}")]
-        public async Task<IActionResult> AcreditarInvitado(int dni)
+        public async Task<IActionResult> AcreditarInvitado(int dni, [FromQuery] int eventId)
         {
-            var guest = await _listService.GetAllInvitadosAsync();
-            var invitadoToAcreditar = guest.FirstOrDefault(i => i.Dni == dni);
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
 
-            if (invitadoToAcreditar == null)
-                return NotFound();
-
-            await _listService.AcreditarInvitadoAsync(invitadoToAcreditar);
-            return Ok(invitadoToAcreditar);
-        }
-
-        [HttpDelete("delete/{dni}")]
-        public async Task<IActionResult> DeleteInvitado(int dni)
-        {
-            var invitado = await _listService.GetInvitadoByDniAsync(dni);
+            var invitado = await _listService.GetInvitadoByDniAndEventIdAsync(dni, eventId);
             if (invitado == null)
-                return NotFound($"No se encontró un invitado con el DNI {dni}");
+                return NotFound($"No se encontró un invitado con el DNI {dni} en el evento especificado");
+
+            await _listService.AcreditarInvitadoAsync(invitado);
+            return Ok(invitado);
+        }
+        [HttpDelete("delete/{dni}")]
+        public async Task<IActionResult> DeleteInvitado(int dni, [FromQuery] int eventId)
+        {
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            var invitado = await _listService.GetInvitadoByDniAndEventIdAsync(dni, eventId);
+            if (invitado == null)
+                return NotFound($"No se encontró un invitado con el DNI {dni} en el evento especificado");
+
             await _listService.DeleteInvitadoAsync(dni);
             return Ok(invitado);
         }
@@ -95,19 +119,26 @@ namespace choosing.Controllers
             if (newGuest == null)
                 return BadRequest("Datos de invitado inválidos");
 
+            // Validar el ID del evento (debe ser no-nulo y mayor que 0)
+            if (newGuest.EventoId == null || newGuest.EventoId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            // Ahora que sabemos que EventoId tiene un valor válido, podemos convertirlo a int
+            int eventoId = newGuest.EventoId.Value;
+
             try
             {
-                // Validar que el DNI no exista ya
-                var existingGuest = await _listService.GetInvitadoByDniAsync(newGuest.Dni);
+                // Validar que el DNI no exista ya en este evento
+                var existingGuest = await _listService.GetInvitadoByDniAndEventIdAsync(newGuest.Dni, eventoId);
                 if (existingGuest != null)
-                    return Conflict($"Ya existe un invitado con el DNI {newGuest.Dni}");
+                    return Conflict($"Ya existe un invitado con el DNI {newGuest.Dni} en este evento");
 
                 // Inicializar campos para un nuevo invitado
                 newGuest.Acreditado = 0; // No acreditado inicialmente
                 newGuest.EsNuevo = true; // Nuevo invitado
 
                 await _listService.CreateInvitadoAsync(newGuest);
-                return CreatedAtAction(nameof(GetInvitadoByDni), new { dni = newGuest.Dni }, newGuest);
+                return CreatedAtAction(nameof(GetInvitadoByDni), new { dni = newGuest.Dni, eventId = eventoId }, newGuest);
             }
             catch (Exception ex)
             {
@@ -115,26 +146,33 @@ namespace choosing.Controllers
                 return StatusCode(500, $"Error interno al crear invitado: {ex.Message}");
             }
         }
+
         // Actualizar un invitado
         [HttpPut("update/{originalDni}")]
-        public async Task<IActionResult> UpdateInvitado(int originalDni, [FromBody] Guest updatedGuest)
+        public async Task<IActionResult> UpdateInvitado(int originalDni, [FromBody] Guest updatedGuest, [FromQuery] int eventId)
         {
             if (updatedGuest == null)
                 return BadRequest("Datos de invitado inválidos");
 
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            // Asegurar que el EventoId del invitado coincide con el proporcionado
+            updatedGuest.EventoId = eventId;
+
             try
             {
                 // Obtener el invitado original
-                var existingGuest = await _listService.GetInvitadoByDniAsync(originalDni);
+                var existingGuest = await _listService.GetInvitadoByDniAndEventIdAsync(originalDni, eventId);
                 if (existingGuest == null)
-                    return NotFound($"No se encontró un invitado con el DNI {originalDni}");
+                    return NotFound($"No se encontró un invitado con el DNI {originalDni} en el evento especificado");
 
-                // Si el DNI cambió, verificar que el nuevo DNI no exista
+                // Si el DNI cambió, verificar que el nuevo DNI no exista en este evento
                 if (originalDni != updatedGuest.Dni)
                 {
-                    var existingWithNewDni = await _listService.GetInvitadoByDniAsync(updatedGuest.Dni);
+                    var existingWithNewDni = await _listService.GetInvitadoByDniAndEventIdAsync(updatedGuest.Dni, eventId);
                     if (existingWithNewDni != null && existingWithNewDni.Dni != originalDni)
-                        return Conflict($"Ya existe otro invitado con el DNI {updatedGuest.Dni}");
+                        return Conflict($"Ya existe otro invitado con el DNI {updatedGuest.Dni} en este evento");
                 }
 
                 // Actualizar el invitado
@@ -150,13 +188,16 @@ namespace choosing.Controllers
 
         // Actualizar solo el estado de acreditación (endpoint específico para el toggle)
         [HttpPut("updateAccreditStatus/{dni}")]
-        public async Task<IActionResult> UpdateAccreditStatus(int dni, [FromBody] AccreditStatusDto status)
+        public async Task<IActionResult> UpdateAccreditStatus(int dni, [FromBody] AccreditStatusDto status, [FromQuery] int eventId)
         {
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
             try
             {
-                var invitado = await _listService.GetInvitadoByDniAsync(dni);
+                var invitado = await _listService.GetInvitadoByDniAndEventIdAsync(dni, eventId);
                 if (invitado == null)
-                    return NotFound($"No se encontró un invitado con el DNI {dni}");
+                    return NotFound($"No se encontró un invitado con el DNI {dni} en el evento especificado");
 
                 // Actualizar solo el estado de acreditación
                 invitado.Acreditado = status.Acreditado;

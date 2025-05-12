@@ -6,13 +6,24 @@
     <title>Document</title>
 </head>
 <body>
-    <div style="font-family: Arial, sans-serif; text-align: center; width: 300px; border: 1px solid black; padding: 10px;">
-        <h2>Etiqueta de Invitado</h2>
-        <p><strong>Nombre:</strong> ${nombre}</p>
-        <p><strong>Apellido:</strong> ${apellido}</p>
-        <p><strong>DNI:</strong> ${dni}</p>
-        <p><strong>Email:</strong> ${mail}</p>
-        <p><strong>Estado:</strong> Acreditado</p>
-    </div>
+    <div style="
+    width: 80mm;
+    height: 26mm;
+    font-family: Arial, sans-serif;
+    font-size: 9pt;
+    line-height: 1.1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0mm;
+    box-sizing: border-box;
+">
+    <div style="font-weight: bold;">${nombre} ${apellido}</div>
+    <div>${profesion}</div>
+    <div>${cargo}</div>
+    <div>DNI: ${dni}</div>
+</div>
 </body>
 </html>

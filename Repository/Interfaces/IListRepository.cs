@@ -5,21 +5,19 @@ namespace choosing.Repository.Interfaces
     public interface IListRepository
     {
         Task<List<Guest>> GetAllAsync();
-
+        Task<List<Guest>> GetByEventIdAsync(int eventId);
         Task<Guest?> GetByDNIAsync(int Dni);
-
-        // Buscar por nombre (si planeas implementar búsqueda)
+        Task<Guest?> GetByDniAndEventIdAsync(int dni, int eventId);
         Task<List<Guest>> SearchByNameAsync(string query);
-
-        // Actualizar información del invitado (como acreditarlo)
+        Task<List<Guest>> SearchByNameAndEventIdAsync(string query, int eventId);
         Task UpdateAsync(Guest guest);
-
-        Task<Guest> AddAsync(Guest guest); // New method
-
-        Task DeleteAsync(int dni); // Nuevo método
-
+        Task<Guest> AddAsync(Guest guest);
+        Task DeleteAsync(int dni);
         Task<List<Guest>> GetAcreditadosAsync();
+        Task<List<Guest>> GetAcreditadosByEventIdAsync(int eventId);
         Task<List<Guest>> GetNotAcreditadosAsync();
+        Task<List<Guest>> GetNotAcreditadosByEventIdAsync(int eventId);
         Task<List<Guest>> GetInvitadosNuevosAsync();
+        Task<List<Guest>> GetInvitadosNuevosByEventIdAsync(int eventId);
     }
 }

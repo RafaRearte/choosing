@@ -19,6 +19,7 @@ public partial class DbHotelContext : DbContext
     public virtual DbSet<Guest> Guests { get; set; }
 
     public DbSet<User> Users { get; set; }
+    public DbSet<EventModel> Events { get; set; }
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -28,7 +29,9 @@ public partial class DbHotelContext : DbContext
     {
         modelBuilder.Entity<Guest>(entity =>
         {
-            entity.HasKey(e => e.Dni);
+            entity.HasKey(e => e.Id);  // Nueva clave primaria
+
+            entity.HasIndex(e => e.Dni);  // Índice único en DNI
 
             entity.ToTable("invitados");
 
@@ -55,6 +58,24 @@ public partial class DbHotelContext : DbContext
             entity.Property(e => e.Nombre)
                 .HasMaxLength(255)
                 .HasColumnName("nombre");
+            entity.HasOne<EventModel>()
+                        .WithMany()
+                        .HasForeignKey(d => d.EventoId);
+            entity.Property(e => e.Categoria)
+                        .HasMaxLength(100)
+                        .HasColumnName("categoria");
+            entity.Property(e => e.Empresa)
+                        .HasMaxLength(255)
+                        .HasColumnName("empresa");
+        });
+
+        modelBuilder.Entity<EventModel>(entity =>
+        {
+            entity.ToTable("Eventos");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Nombre).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Descripcion).HasMaxLength(500);
+            entity.Property(e => e.Ubicacion).HasMaxLength(255);
         });
 
         OnModelCreatingPartial(modelBuilder);

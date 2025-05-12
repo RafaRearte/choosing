@@ -1,11 +1,15 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace choosing.Domain
 {
     [Table("Invitados")]
     public partial class Guest
     {
-        public int Dni { get; set; }
+        [Key]
+        public int Id { get; set; }  
+
+        public int? Dni { get; set; }
 
         public string? InfoAdicional { get; set; }
 
@@ -28,6 +32,14 @@ namespace choosing.Domain
 
         public string? profesion { get; set; }
         public string? cargo { get; set; }
+
+        [Required]
+        public int? EventoId { get; set; }
+
+        [ForeignKey("EventoId")]
+
+        public string? Categoria { get; set; }
+        public string? Empresa { get; set; }  // Para almacenar la empresa/organización
     }
 }
 
