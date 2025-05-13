@@ -94,5 +94,26 @@ namespace choosing.Controllers
                 return StatusCode(500, $"Error interno al eliminar evento: {ex.Message}");
             }
         }
+        // Actualizar solo la configuración de un evento
+        [HttpPut("update-config/{id}")]
+        public async Task<IActionResult> UpdateEventConfig(int id, [FromBody] string configuracionJson)
+        {
+            try
+            {
+                var existingEvent = await _eventService.GetEventByIdAsync(id);
+                if (existingEvent == null)
+                    return NotFound($"No se encontró un evento con el ID {id}");
+
+                // Actualizar solo el campo de configuración
+                existingEvent.ConfiguracionJson = configuracionJson;
+                await _eventService.UpdateEventAsync(existingEvent);
+
+                return Ok(existingEvent);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno al actualizar configuración: {ex.Message}");
+            }
+        }
     }
 }

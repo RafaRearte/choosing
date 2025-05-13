@@ -76,6 +76,7 @@ public partial class DbHotelContext : DbContext
             entity.Property(e => e.Nombre).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Descripcion).HasMaxLength(500);
             entity.Property(e => e.Ubicacion).HasMaxLength(255);
+            entity.Property(e => e.ConfiguracionJson);
         });
 
         OnModelCreatingPartial(modelBuilder);

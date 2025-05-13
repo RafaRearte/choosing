@@ -131,9 +131,13 @@
                 <span id="accredited" class="badge bg-success counter-badge" data-endpoint="GetAcreditados">Acreditados: 0</span>
                 <span id="new" class="badge bg-info counter-badge" data-endpoint="GetNuevos">Nuevos: 0</span>
             </div>
-            <div>
-                <button type="button" class="btn btn-primary w-100 d-flex align-items-center justify-content-center open-add-guest-btn" data-bs-toggle="modal" data-bs-target="#addGuestModal">
+            <div class="d-flex">
+                <button type="button" class="btn btn-primary me-2 d-flex align-items-center justify-content-center open-add-guest-btn" data-bs-toggle="modal" data-bs-target="#addGuestModal">
                     <i class="bi bi-person-plus me-2"></i> Nuevo Invitado
+                </button>
+                <!-- Botón de configuración de columnas -->
+                <button type="button" class="btn btn-outline-primary me-2" onclick="configurarEvento()">
+                    <i class="bi bi-gear"></i> Configurar
                 </button>
             </div>
             <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
@@ -381,6 +385,60 @@
         </div>
     </div>
 
+    <!-- Modal de Configuración de Columnas -->
+    <div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="configModalLabel">Configuración de Columnas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="configForm">
+                        <div class="mb-3">
+                            <h6 class="fw-bold">Campos a mostrar:</h6>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configDni" checked>
+                            <label class="form-check-label" for="configDni">DNI</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configEmail" checked>
+                            <label class="form-check-label" for="configEmail">Email</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configEmpresa" checked>
+                            <label class="form-check-label" for="configEmpresa">Empresa</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configCategoria" checked>
+                            <label class="form-check-label" for="configCategoria">Categoría</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configProfesion" checked>
+                            <label class="form-check-label" for="configProfesion">Profesión</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configCargo" checked>
+                            <label class="form-check-label" for="configCargo">Cargo</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configDias" checked>
+                            <label class="form-check-label" for="configDias">Días (Día 1/Día 2)</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configInfoAdicional" checked>
+                            <label class="form-check-label" for="configInfoAdicional">Información Adicional</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveConfigBtn">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Agregar Bootstrap Icons para los iconos de edición -->

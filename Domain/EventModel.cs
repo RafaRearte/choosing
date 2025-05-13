@@ -12,5 +12,7 @@ namespace choosing.Domain
         public DateTime FechaFin { get; set; }
         public string? Ubicacion { get; set; }
         public bool Activo { get; set; } = true;
+        [Column("ConfiguracionJson")]
+        public string? ConfiguracionJson { get; set; }
     }
 }

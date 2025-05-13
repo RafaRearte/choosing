@@ -104,6 +104,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapGet("/", () => "API Choosing está funcionando!");
-
 app.Run();

@@ -56,41 +56,44 @@ const initializeDataTable = () => {
         { data: 'apellido', title: 'Apellido' }
     ];
     
-    // Columnas opcionales basadas en la configuración del evento y presencia de datos
+    // Columnas opcionales basadas en la configuración del evento
     const optionalColumns = [];
     
     // Obtener la configuración del evento o usar valores predeterminados
-    const config = eventData.configuracion || {};
+    const config = eventData.configuracionJson ? JSON.parse(eventData.configuracionJson) : {};
     
-    // Función helper para verificar si una columna tiene datos
-    const columnHasData = (fieldName) => {
-        if (!eventData || !fieldName) return false;
-        // Ver si al menos un invitado tiene datos en este campo
-        return true; // Por ahora asumimos que puede haber datos
-    };
-    
-    // Si el evento tiene DNI configurado y hay datos, mostramos la columna
-    if (config.mostrarDni !== false && columnHasData('dni')) {
+    // Si el evento tiene DNI configurado, mostramos la columna
+    if (config.mostrarDni !== false) {
         optionalColumns.push({ data: 'dni', title: 'DNI' });
     }
     
-    // Si el evento tiene email configurado y hay datos, mostramos la columna
-    if (config.mostrarEmail !== false && columnHasData('mail')) {
+    // Si el evento tiene email configurado, mostramos la columna
+    if (config.mostrarEmail !== false) {
         optionalColumns.push({ data: 'mail', title: 'Email' });
     }
     
-    // Si el evento tiene empresa configurada y hay datos, mostramos la columna
-    if (config.mostrarEmpresa !== false && columnHasData('empresa')) {
+    // Si el evento tiene empresa configurada, mostramos la columna
+    if (config.mostrarEmpresa !== false) {
         optionalColumns.push({ data: 'empresa', title: 'Empresa' });
     }
     
-    // Si el evento tiene categoría configurada y hay datos, mostramos la columna
-    if (config.mostrarCategoria !== false && columnHasData('categoria')) {
+    // Si el evento tiene categoría configurada, mostramos la columna
+    if (config.mostrarCategoria !== false) {
         optionalColumns.push({ data: 'categoria', title: 'Categoría' });
     }
     
-    // Si el evento tiene días específicos configurados y hay datos, mostramos las columnas
-    if (config.mostrarDias !== false && (columnHasData('dayOne') || columnHasData('dayTwo'))) {
+    // Si el evento tiene profesión configurada, mostramos la columna
+    if (config.mostrarProfesion !== false) {
+        optionalColumns.push({ data: 'profesion', title: 'Profesión' });
+    }
+    
+    // Si el evento tiene cargo configurado, mostramos la columna
+    if (config.mostrarCargo !== false) {
+        optionalColumns.push({ data: 'cargo', title: 'Cargo' });
+    }
+    
+    // Si el evento tiene días específicos configurados, mostramos las columnas
+    if (config.mostrarDias !== false) {
         optionalColumns.push(
             { data: 'dayOne', title: 'Día 1' },
             { data: 'dayTwo', title: 'Día 2' }
@@ -202,7 +205,120 @@ $(document).ready(function () {
         // Load filtered data
         loadFilteredData(fullUrl);
     });
+    
+    // Configurar el botón de guardar configuración
+    $(document).on('click', '#saveConfigBtn', function() {
+        guardarConfiguracion(currentEventId);
+    });
 });
+
+// Función para configurar el evento actual
+function configurarEvento() {
+    // Verificar que se ha seleccionado un evento
+    if (!currentEventId) {
+        alert("Primero debe seleccionar un evento");
+        return;
+    }
+
+    // Obtener configuración actual del evento
+    showLoading();
+    
+    // Si eventData ya está cargado, usamos esos datos directamente
+    if (eventData) {
+        mostrarModalConfiguracion(eventData);
+        hideLoading();
+        return;
+    }
+    
+    fetch(`${eventApiUrl}/${currentEventId}`, {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Error al obtener datos del evento');
+        return response.json();
+    })
+    .then(evento => {
+        // Mostrar modal de configuración
+        mostrarModalConfiguracion(evento);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al cargar la configuración del evento');
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
+// Función para mostrar modal de configuración
+function mostrarModalConfiguracion(evento) {
+    // Cargar configuración actual (si existe)
+    const configuracion = evento.configuracionJson ? JSON.parse(evento.configuracionJson) : {};
+    
+    // Asignar valores a los checkboxes
+    document.getElementById('configDni').checked = configuracion.mostrarDni !== false;
+    document.getElementById('configEmail').checked = configuracion.mostrarEmail !== false;
+    document.getElementById('configEmpresa').checked = configuracion.mostrarEmpresa !== false;
+    document.getElementById('configCategoria').checked = configuracion.mostrarCategoria !== false;
+    document.getElementById('configProfesion').checked = configuracion.mostrarProfesion !== false;
+    document.getElementById('configCargo').checked = configuracion.mostrarCargo !== false;
+    document.getElementById('configDias').checked = configuracion.mostrarDias !== false;
+    document.getElementById('configInfoAdicional').checked = configuracion.mostrarInfoAdicional !== false;
+    
+    // Mostrar el modal
+    const modalInstance = new bootstrap.Modal(document.getElementById('configModal'));
+    modalInstance.show();
+}
+
+function guardarConfiguracion(eventoId) {
+    // Recopilar configuración del formulario
+    const configuracion = {
+        mostrarDni: document.getElementById('configDni').checked,
+        mostrarEmail: document.getElementById('configEmail').checked,
+        mostrarEmpresa: document.getElementById('configEmpresa').checked,
+        mostrarCategoria: document.getElementById('configCategoria').checked,
+        mostrarProfesion: document.getElementById('configProfesion').checked,
+        mostrarCargo: document.getElementById('configCargo').checked,
+        mostrarDias: document.getElementById('configDias').checked,
+        mostrarInfoAdicional: document.getElementById('configInfoAdicional').checked
+    };
+    
+    // Guardar configuración directamente usando endpoint específico
+    showLoading();
+    
+    fetch(`${eventApiUrl}/update-config/${eventoId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify(configuracion)
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Error al guardar la configuración');
+        
+        // Cerrar el modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('configModal'));
+        modal.hide();
+        
+        // Recargar datos para aplicar la nueva configuración
+        fetchEventData().then(() => {
+            initializeDataTable();
+            fetchGuests();
+        });
+        
+        alert('Configuración guardada correctamente');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al guardar la configuración: ' + error.message);
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
 
 // Función para cerrar sesión
 const logout = () => {
@@ -252,7 +368,7 @@ const openEditModal = async (id) => {
         }
         
         // Mostrar/ocultar campos según la configuración del evento
-        configurarCamposModal('edit', eventData.configuracion);
+        configurarCamposModal('edit', eventData.configuracionJson ? JSON.parse(eventData.configuracionJson) : {});
         
         // Abrir el modal
         $('#editGuestModal').modal('show');
@@ -475,8 +591,7 @@ const fetchGuests = async () => {
         console.error('Error fetching guests:', error);
     }
 };
-
-// Guardar nuevo invitado
+    // Guardar nuevo invitado (continuación)
 const saveNewGuest = async () => {
     // Obtener los valores del formulario
     const dni = document.getElementById("newGuestDni").value;
@@ -625,17 +740,20 @@ const loadFilteredData = async (url) => {
 // Imprimir etiqueta y acreditar invitado
 const printLabel = async (nombre, apellido, dni, profesion, cargo) => {
     try {
-        // Primero acreditar al usuario (usando el ID en lugar del DNI)
-        const response = await authenticatedFetch(`${apiUrl}/updateAccreditStatus/${dni}?eventId=${currentEventId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ acreditado: 1 })
-        });
-        
-        if (!response || !response.ok) {
-            throw new Error('Error al acreditar al invitado');
+        // Si hay DNI, acreditar al invitado
+        if (dni) {
+            const response = await authenticatedFetch(`${apiUrl}/updateAccreditStatus/${dni}?eventId=${currentEventId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ acreditado: 1 })
+            });
+            
+            if (!response || !response.ok) {
+                console.error('Error al acreditar al invitado');
+                // Continuamos con la impresión aunque no se haya podido acreditar
+            }
         }
         
         // Luego imprimir la etiqueta
@@ -689,6 +807,11 @@ function loadUserInfo() {
     if (eventElement && currentEventName) {
         eventElement.textContent = currentEventName;
     }
+    
+    const menuEventElement = document.getElementById('menuCurrentEventName');
+    if (menuEventElement && currentEventName) {
+        menuEventElement.textContent = currentEventName;
+    }
 }
 
 // Función para abrir el modal de nuevo invitado con configuración adecuada
@@ -697,10 +820,19 @@ const openAddGuestModal = () => {
     document.getElementById("addGuestForm").reset();
     
     // Configurar los campos visibles según el evento actual
-    configurarCamposModal('new', eventData.configuracion);
+    configurarCamposModal('new', eventData.configuracionJson ? JSON.parse(eventData.configuracionJson) : {});
     
     // Mostrar el modal
     $('#addGuestModal').modal('show');
+};
+
+// Función para mostrar/ocultar el indicador de carga
+const showLoading = () => {
+    document.getElementById('loadingIndicator').style.display = 'block';
+};
+
+const hideLoading = () => {
+    document.getElementById('loadingIndicator').style.display = 'none';
 };
 
 // Agregar eventos para botón del modal
