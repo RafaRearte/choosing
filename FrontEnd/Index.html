@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="es">
 
 <style>
     #invitadosList {
@@ -31,58 +31,75 @@
         font-size: 0.8rem;
     }
 
-    /* Ajuste específico para la columna Email (4ta columna) */
-    #invitadosTable th:nth-child(4), 
-    #invitadosTable td:nth-child(4) {
-        max-width: 180px; /* Ancho más realista para emails */
+    /* Ajuste específico para columnas con posible desbordamiento */
+    #invitadosTable th, 
+    #invitadosTable td {
+        max-width: 180px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-        /* Columnas Jueves (5ta) y Viernes (6ta) */
-        #invitadosTable th:nth-child(5), 
-    #invitadosTable td:nth-child(5),
-    #invitadosTable th:nth-child(6), 
-    #invitadosTable td:nth-child(6) {
-        width: 80px;  /* Ancho fijo compacto */
-        text-align: center; /* Centra el texto (SI/NO) */
-        padding: 8px 5px !important; /* Reduce espacio interno */
+    
+    /* Columnas de estados de asistencia */
+    #invitadosTable th[data-day="true"], 
+    #invitadosTable td[data-day="true"] {
+        width: 80px;
+        text-align: center;
+        padding: 8px 5px !important;
     }
 
-    /* Ajuste para la columna DNI (1ra columna) */
-    #invitadosTable th:nth-child(1), 
-    #invitadosTable td:nth-child(1) {
-        width: 100px;
-    }
     /* Estilo para los contadores como botones */
-.counter-badge {
-    cursor: pointer;
-    transition: all 0.3s;
-}
+    .counter-badge {
+        cursor: pointer;
+        transition: all 0.3s;
+    }
 
-.counter-badge:hover {
-    opacity: 0.8;
-    transform: scale(1.05);
-}
+    .counter-badge:hover {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
 
-/* Estilo para el contador activo */
-.counter-badge.active {
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
-}
+    /* Estilo para el contador activo */
+    .counter-badge.active {
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+    }
 
-/* Indicador de carga */
-#loadingIndicator {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    z-index: 1000;
-}
+    /* Indicador de carga */
+    #loadingIndicator {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        z-index: 1000;
+    }
+    
+    /* Estilo para el nombre del evento actual */
+    .current-event-badge {
+        background-color: #6c757d;
+        color: white;
+        padding: 0.35rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.9rem;
+        margin-left: 8px;
+    }
+    
+    /* Estilo para volver a selección de eventos */
+    .event-selector-link {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    
+    .event-selector-link:hover {
+        color: #495057;
+        text-decoration: underline;
+    }
 </style>
 
 <head>
@@ -97,12 +114,17 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
     <!-- PrintJs CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/print-js/1.6.0/print.min.css">
-
 </head>
 <body>
     <nav class="navbar" style="background-color: #f8f9fa;border-bottom: 1px solid #e0e0e0;">
         <div class="container">
-            <a class="navbar-brand" href="#">Acreditación de Invitados</a>
+            <div class="d-flex align-items-center">
+                <a class="navbar-brand" href="#">Acreditación de Invitados</a>
+                <span class="current-event-badge" id="currentEventName">Evento</span>
+                <a href="event-selection.html" class="event-selector-link ms-2">
+                    <i class="bi bi-arrow-left-circle"></i> Cambiar evento
+                </a>
+            </div>
             <div class="my-3">
                 <span id="totalGuests" class="badge bg-primary counter-badge" data-endpoint="GetAll">Invitados: 0</span>
                 <span id="notAccredited" class="badge bg-danger counter-badge" data-endpoint="GetNoAcreditados">No acreditados: 0</span>
@@ -110,7 +132,7 @@
                 <span id="new" class="badge bg-info counter-badge" data-endpoint="GetNuevos">Nuevos: 0</span>
             </div>
             <div>
-                <button type="button" class="btn btn-primary w-100 d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#addGuestModal">
+                <button type="button" class="btn btn-primary w-100 d-flex align-items-center justify-content-center open-add-guest-btn" data-bs-toggle="modal" data-bs-target="#addGuestModal">
                     <i class="bi bi-person-plus me-2"></i> Nuevo Invitado
                 </button>
             </div>
@@ -133,6 +155,7 @@
                         <i class="bi bi-person-circle fs-1 me-3 text-primary"></i>
                         <div>
                             <p class="mb-0 fw-bold">Hola, <span id="userName">Usuario</span></p>
+                            <p class="mb-0 text-muted">Evento: <span id="menuCurrentEventName">Evento actual</span></p>
                         </div>
                     </div>
                 </div>
@@ -148,8 +171,13 @@
                             <i class="bi bi-graph-up me-2"></i> Estadísticas
                         </a>
                     </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link d-flex align-items-center" href="event-selection.html">
+                            <i class="bi bi-calendar-event me-2"></i> Cambiar evento
+                        </a>
+                    </li>
                     <li class="nav-item mt-3">
-                        <button type="button" class="btn btn-primary w-100 d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#addGuestModal">
+                        <button type="button" class="btn btn-primary w-100 d-flex align-items-center justify-content-center open-add-guest-btn" data-bs-toggle="modal" data-bs-target="#addGuestModal">
                             <i class="bi bi-person-plus me-2"></i> Nuevo Invitado
                         </button>
                     </li>
@@ -164,160 +192,196 @@
     </nav>
     <div id="loadingIndicator">Cargando...</div>
 <div class="container my-5">
-    <!--<input type="search" id="customSearch" class="form-control form-control-sm" placeholder="Buscar invitados...">-->
     <!-- Lista de Invitados -->
     <div class="container-fluid my-5">
         <div id="invitadosList" class="my-4">
             <table id="invitadosTable" class="display">
                 <thead>
-                    <tr>
-                        <th>DNI</th>
-                        <th>Nombre</th>
-                        <th>Apellido</th>
-                        <th>Email</th>
-                        <th>Jueves</th>
-                        <th>Viernes</th>
-                        <th>Ingreso</th>
-                        <th>Acción</th>
-                    </tr>
+                    <!-- La cabecera se genera dinámicamente desde JavaScript -->
                 </thead>
                 <tbody id="tableBody">
                     <!-- Filas dinámicas aquí -->
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </div>
-
-<!--
-    <div class="container my-4">
-        <h3>Buscar Invitados</h3>
-        <div class="row g-3 align-items-center">
-             Buscar por Nombre 
-            <div class="col-md-6 d-flex align-items-center">
-                <input type="text" id="searchName" class="form-control me-2" placeholder="Nombre o Apellido">
-                <button type="button" class="btn btn-primary" onclick="searchByName()">Buscar</button>
-            </div>
-
-            <div class="col-md-6 d-flex align-items-center">
-                <input type="text" id="searchDni" class="form-control me-2" placeholder="DNI">
-                <button type="button" class="btn btn-primary" onclick="searchByDni()">Buscar</button>
-            </div>
-        </div>
-    </div>
-    -->
  
     <!-- Add New Guest Modal -->
-<div class="modal fade" id="addGuestModal" tabindex="-1" aria-labelledby="addGuestModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="addGuestModalLabel">Agregar Nuevo Invitado</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal fade" id="addGuestModal" tabindex="-1" aria-labelledby="addGuestModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addGuestModalLabel">Agregar Nuevo Invitado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addGuestForm">
+                        <!-- Campos obligatorios -->
+                        <div class="mb-3">
+                            <label for="newGuestNombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="newGuestNombre" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newGuestApellido" class="form-label">Apellido</label>
+                            <input type="text" class="form-control" id="newGuestApellido" required>
+                        </div>
+                        
+                        <!-- Campo DNI (opcional según configuración) -->
+                        <div class="mb-3" id="newGuestDniGroup">
+                            <label for="newGuestDni" class="form-label">DNI</label>
+                            <input type="number" class="form-control" id="newGuestDni">
+                        </div>
+                        
+                        <!-- Otros campos (opcional según configuración) -->
+                        <div class="mb-3" id="newGuestEmailGroup">
+                            <label for="newGuestEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="newGuestEmail">
+                        </div>
+                        
+                        <div class="mb-3" id="newGuestEmpresaGroup">
+                            <label for="newGuestEmpresa" class="form-label">Empresa</label>
+                            <input type="text" class="form-control" id="newGuestEmpresa">
+                        </div>
+                        
+                        <div class="mb-3" id="newGuestCategoriaGroup">
+                            <label for="newGuestCategoria" class="form-label">Categoría</label>
+                            <input type="text" class="form-control" id="newGuestCategoria">
+                        </div>
+                        
+                        <div class="mb-3" id="newGuestProfesionGroup">
+                            <label for="newGuestProfesion" class="form-label">Profesión</label>
+                            <input type="text" class="form-control" id="newGuestProfesion">
+                        </div>
+                        
+                        <div class="mb-3" id="newGuestCargoGroup">
+                            <label for="newGuestCargo" class="form-label">Cargo</label>
+                            <input type="text" class="form-control" id="newGuestCargo">
+                        </div>
+                        
+                        <!-- Días de asistencia (opcional según configuración) -->
+                        <div class="mb-3" id="newGuestDiasGroup">
+                            <label class="form-label">Días de Asistencia</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="newGuestDayOne">
+                                <label class="form-check-label" for="newGuestDayOne">Día 1</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="newGuestDayTwo">
+                                <label class="form-check-label" for="newGuestDayTwo">Día 2</label>
+                            </div>
+                        </div>
+                        
+                        <!-- Información adicional (opcional según configuración) -->
+                        <div class="mb-3" id="newGuestInfoAdicionalGroup">
+                            <label for="newGuestInfoAdicional" class="form-label">Información Adicional</label>
+                            <textarea class="form-control" id="newGuestInfoAdicional" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveNewGuest()">Guardar</button>
+                </div>
+            </div>
         </div>
-        <div class="modal-body">
-          <form id="addGuestForm">
-            <div class="mb-3">
-              <label for="newGuestDni" class="form-label">DNI</label>
-              <input type="number" class="form-control" id="newGuestDni" required>
-            </div>
-            <div class="mb-3">
-              <label for="newGuestNombre" class="form-label">Nombre</label>
-              <input type="text" class="form-control" id="newGuestNombre" required>
-            </div>
-            <div class="mb-3">
-              <label for="newGuestApellido" class="form-label">Apellido</label>
-              <input type="text" class="form-control" id="newGuestApellido" required>
-            </div>
-            <div class="mb-3">
-              <label for="newGuestEmail" class="form-label">Email</label>
-              <input type="email" class="form-control" id="newGuestEmail">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Días de Asistencia</label>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="newGuestDayOne">
-                <label class="form-check-label" for="newGuestDayOne">Jueves</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="newGuestDayTwo">
-                <label class="form-check-label" for="newGuestDayTwo">Viernes</label>
-              </div>
-            </div>
-            <div class="mb-3">
-              <label for="newGuestInfoAdicional" class="form-label">Información Adicional</label>
-              <textarea class="form-control" id="newGuestInfoAdicional" rows="2"></textarea>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-primary" onclick="saveNewGuest()">Guardar</button>
-        </div>
-      </div>
     </div>
-  </div>
-  <div class="modal fade" id="editGuestModal" tabindex="-1" aria-labelledby="editGuestModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="editGuestModalLabel">Editar Invitado</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    
+    <!-- Edit Guest Modal -->
+    <div class="modal fade" id="editGuestModal" tabindex="-1" aria-labelledby="editGuestModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editGuestModalLabel">Editar Invitado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editGuestForm">
+                        <!-- Campo oculto para el ID -->
+                        <input type="hidden" id="editGuestId">
+                        
+                        <!-- Campos obligatorios -->
+                        <div class="mb-3">
+                            <label for="editGuestNombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="editGuestNombre" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editGuestApellido" class="form-label">Apellido</label>
+                            <input type="text" class="form-control" id="editGuestApellido" required>
+                        </div>
+                        
+                        <!-- Campo DNI (opcional según configuración) -->
+                        <div class="mb-3" id="editGuestDniGroup">
+                            <label for="editGuestDni" class="form-label">DNI</label>
+                            <input type="number" class="form-control" id="editGuestDni">
+                        </div>
+                        
+                        <!-- Otros campos (opcional según configuración) -->
+                        <div class="mb-3" id="editGuestEmailGroup">
+                            <label for="editGuestEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editGuestEmail">
+                        </div>
+                        
+                        <div class="mb-3" id="editGuestEmpresaGroup">
+                            <label for="editGuestEmpresa" class="form-label">Empresa</label>
+                            <input type="text" class="form-control" id="editGuestEmpresa">
+                        </div>
+                        
+                        <div class="mb-3" id="editGuestCategoriaGroup">
+                            <label for="editGuestCategoria" class="form-label">Categoría</label>
+                            <input type="text" class="form-control" id="editGuestCategoria">
+                        </div>
+                        
+                        <div class="mb-3" id="editGuestProfesionGroup">
+                            <label for="editGuestProfesion" class="form-label">Profesión</label>
+                            <input type="text" class="form-control" id="editGuestProfesion">
+                        </div>
+                        
+                        <div class="mb-3" id="editGuestCargoGroup">
+                            <label for="editGuestCargo" class="form-label">Cargo</label>
+                            <input type="text" class="form-control" id="editGuestCargo">
+                        </div>
+                        
+                        <!-- Días de asistencia (opcional según configuración) -->
+                        <div class="mb-3" id="editGuestDiasGroup">
+                            <label class="form-label">Días de Asistencia</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="editGuestDayOne">
+                                <label class="form-check-label" for="editGuestDayOne">Día 1</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="editGuestDayTwo">
+                                <label class="form-check-label" for="editGuestDayTwo">Día 2</label>
+                            </div>
+                        </div>
+                        
+                        <!-- Información adicional (opcional según configuración) -->
+                        <div class="mb-3" id="editGuestInfoAdicionalGroup">
+                            <label for="editGuestInfoAdicional" class="form-label">Información Adicional</label>
+                            <textarea class="form-control" id="editGuestInfoAdicional" rows="2"></textarea>
+                        </div>
+                        
+                        <!-- Estado de acreditación -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="editGuestAcreditado">
+                            <label class="form-check-label" for="editGuestAcreditado">Acreditado</label>
+                        </div>
+                        
+                        <!-- Información de hora de acreditación -->
+                        <div class="mb-3">
+                            <div id="editGuestHoraAcreditacion" class="form-text text-muted"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger me-auto" onclick="deleteGuest()">Eliminar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEditedGuest()">Guardar Cambios</button>
+                </div>
+            </div>
         </div>
-        <div class="modal-body">
-          <form id="editGuestForm">
-            <input type="hidden" id="editGuestDniOriginal">
-            <div class="mb-3">
-              <label for="editGuestDni" class="form-label">DNI</label>
-              <input type="number" class="form-control" id="editGuestDni" required>
-            </div>
-            <div class="mb-3">
-              <label for="editGuestNombre" class="form-label">Nombre</label>
-              <input type="text" class="form-control" id="editGuestNombre" required>
-            </div>
-            <div class="mb-3">
-              <label for="editGuestApellido" class="form-label">Apellido</label>
-              <input type="text" class="form-control" id="editGuestApellido" required>
-            </div>
-            <div class="mb-3">
-              <label for="editGuestEmail" class="form-label">Email</label>
-              <input type="email" class="form-control" id="editGuestEmail">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Días de Asistencia</label>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="editGuestDayOne">
-                <label class="form-check-label" for="editGuestDayOne">Jueves</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="editGuestDayTwo">
-                <label class="form-check-label" for="editGuestDayTwo">Viernes</label>
-              </div>
-            </div>
-            <div class="mb-3">
-              <label for="editGuestInfoAdicional" class="form-label">Información Adicional</label>
-              <textarea class="form-control" id="editGuestInfoAdicional" rows="2"></textarea>
-            </div>
-            <div class="mb-3 form-check">
-              <input type="checkbox" class="form-check-input" id="editGuestAcreditado">
-              <label class="form-check-label" for="editGuestAcreditado">Acreditado</label>
-            </div>
-            <div class="mb-3">
-                <div id="editGuestHoraAcreditacion" class="form-text text-muted"></div>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-danger me-auto" onclick="deleteGuest()">Eliminar</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-primary" onclick="saveEditedGuest()">Guardar Cambios</button>
-        </div>
-      </div>
     </div>
-  </div>
-
 
 </div>
-
 
 <!-- Agregar Bootstrap Icons para los iconos de edición -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -331,13 +395,10 @@
 <!-- PrintJS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/print-js/1.6.0/print.min.js"></script>
 
-<script>
-    //<button onclick="window.location.href='qr.html'">Escanear DNI</button>
-</script>
 <script src="scriptindex.js"></script>
 </body>
 <footer class="bg-dark text-white text-center py-3">
-    <p>&copy; 2025 - Acreditacion de Eventos   </p>
+    <p>&copy; 2025 - Acreditación de Eventos</p>
 </footer>
 
 </html>

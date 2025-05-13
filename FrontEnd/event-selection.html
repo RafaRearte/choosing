@@ -36,6 +36,15 @@
             color: #666;
             margin-top: 0.5rem;
         }
+        .event-attendees {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        .event-attendees .badge {
+            margin-left: 5px;
+        }
         #loadingIndicator {
             display: none;
             position: fixed;
@@ -85,6 +94,110 @@
                 <p class="mt-2">Cargando eventos...</p>
             </div>
         </div>
+        
+        <!-- Crear Nuevo Evento (solo para administradores) -->
+        <div class="row mt-5" id="adminSection" style="display: none;">
+            <div class="col-12 text-center">
+                <hr class="my-4">
+                <h4>Administración de Eventos</h4>
+                <button id="createEventBtn" class="btn btn-primary mt-3">
+                    <i class="bi bi-plus-circle me-2"></i>Crear Nuevo Evento
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear Evento -->
+    <div class="modal fade" id="createEventModal" tabindex="-1" aria-labelledby="createEventModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createEventModalLabel">Crear Nuevo Evento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createEventForm">
+                        <!-- Información básica del evento -->
+                        <div class="mb-3">
+                            <label for="eventNombre" class="form-label">Nombre del Evento</label>
+                            <input type="text" class="form-control" id="eventNombre" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventDescripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="eventDescripcion" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventUbicacion" class="form-label">Ubicación</label>
+                            <input type="text" class="form-control" id="eventUbicacion">
+                        </div>
+                        
+                        <!-- Fechas del evento -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="eventFechaInicio" class="form-label">Fecha de Inicio</label>
+                                <input type="date" class="form-control" id="eventFechaInicio" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="eventFechaFin" class="form-label">Fecha de Fin</label>
+                                <input type="date" class="form-control" id="eventFechaFin" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Configuración del evento -->
+                        <h6 class="mt-4 mb-3">Configuración del Evento</h6>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="configMostrarDni" checked>
+                            <label class="form-check-label" for="configMostrarDni">Incluir campo DNI</label>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="configMostrarEmail" checked>
+                            <label class="form-check-label" for="configMostrarEmail">Incluir campo Email</label>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="configMostrarEmpresa" checked>
+                            <label class="form-check-label" for="configMostrarEmpresa">Incluir campo Empresa</label>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="configMostrarCategoria" checked>
+                            <label class="form-check-label" for="configMostrarCategoria">Incluir campo Categoría</label>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="configMostrarProfesion" checked>
+                            <label class="form-check-label" for="configMostrarProfesion">Incluir campo Profesión</label>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="configMostrarCargo" checked>
+                            <label class="form-check-label" for="configMostrarCargo">Incluir campo Cargo</label>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="configMostrarDias" checked>
+                            <label class="form-check-label" for="configMostrarDias">Incluir campos para días de asistencia</label>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="configMostrarInfoAdicional" checked>
+                            <label class="form-check-label" for="configMostrarInfoAdicional">Incluir campo de Información Adicional</label>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="configActivo" checked>
+                            <label class="form-check-label" for="configActivo">Evento Activo</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveEventBtn">Crear Evento</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Footer -->
@@ -100,6 +213,9 @@
     <script>
         // Constante para la URL base de la API
         const apiBaseUrl = "https://choosing-rafa.duckdns.org/api";
+        
+        // Variable para almacenar información del usuario
+        let userData = null;
 
         // Función para mostrar el indicador de carga
         const showLoading = () => {
@@ -156,6 +272,19 @@
             window.location.href = 'login.html';
         };
 
+        // Función para cargar información del usuario
+        const loadUserInfo = () => {
+            const userDataStr = localStorage.getItem('userData');
+            if (userDataStr) {
+                userData = JSON.parse(userDataStr);
+                
+                // Si el usuario es admin, mostrar sección de administración
+                if (userData.role === 'admin') {
+                    document.getElementById('adminSection').style.display = 'block';
+                }
+            }
+        };
+
         // Función para obtener los eventos
         const fetchEvents = async () => {
             showLoading();
@@ -189,8 +318,33 @@
             }
         };
 
+        // Función para obtener estadísticas de un evento
+        const fetchEventStats = async (eventId) => {
+            try {
+                const totalResponse = await authenticatedFetch(`${apiBaseUrl}/List/GetAll?eventId=${eventId}`);
+                const acreditadosResponse = await authenticatedFetch(`${apiBaseUrl}/List/GetAcreditados?eventId=${eventId}`);
+                
+                if (!totalResponse || !acreditadosResponse) return { total: 0, acreditados: 0 };
+                
+                if (!totalResponse.ok || !acreditadosResponse.ok) {
+                    return { total: 0, acreditados: 0 };
+                }
+                
+                const totalGuests = await totalResponse.json();
+                const acreditados = await acreditadosResponse.json();
+                
+                return {
+                    total: totalGuests.length,
+                    acreditados: acreditados.length
+                };
+            } catch (error) {
+                console.error(`Error fetching stats for event ${eventId}:`, error);
+                return { total: 0, acreditados: 0 };
+            }
+        };
+
         // Función para mostrar los eventos
-        const displayEvents = (events) => {
+        const displayEvents = async (events) => {
             const eventsContainer = document.getElementById('eventsList');
             eventsContainer.innerHTML = '';
             
@@ -206,7 +360,15 @@
                 return;
             }
             
-            events.forEach(event => {
+            // Mostrar eventos activos primero
+            const sortedEvents = [...events].sort((a, b) => {
+                // Primero por estado activo (activos primero)
+                if (a.activo !== b.activo) return b.activo ? 1 : -1;
+                // Luego por fecha de inicio (más recientes primero)
+                return new Date(b.fechaInicio) - new Date(a.fechaInicio);
+            });
+            
+            for (const event of sortedEvents) {
                 // Formatear fechas
                 const startDate = new Date(event.fechaInicio);
                 const endDate = new Date(event.fechaFin);
@@ -222,6 +384,9 @@
                     month: '2-digit',
                     year: 'numeric'
                 });
+                
+                // Obtener estadísticas del evento
+                const stats = await fetchEventStats(event.id);
                 
                 // Crear tarjeta de evento
                 const card = document.createElement('div');
@@ -239,6 +404,13 @@
                                 <i class="bi bi-geo-alt me-1"></i>
                                 ${event.ubicacion || 'Ubicación no especificada'}
                             </div>
+                            <div class="event-attendees">
+                                <i class="bi bi-people me-1"></i>
+                                <span class="me-2">Invitados:</span>
+                                <span class="badge bg-primary">${stats.total}</span>
+                                <span class="ms-2 me-1">Acreditados:</span>
+                                <span class="badge bg-success">${stats.acreditados}</span>
+                            </div>
                             ${event.activo ? 
                                 '<span class="badge bg-success event-badge">Activo</span>' : 
                                 '<span class="badge bg-secondary event-badge">Inactivo</span>'
@@ -247,7 +419,7 @@
                     </div>
                 `;
                 eventsContainer.appendChild(card);
-            });
+            }
         };
 
         // Función para seleccionar un evento
@@ -260,6 +432,77 @@
             window.location.href = 'index.html';
         };
 
+        // Función para crear un nuevo evento
+        const createEvent = async () => {
+            // Obtener datos del formulario
+            const nombre = document.getElementById('eventNombre').value;
+            const descripcion = document.getElementById('eventDescripcion').value;
+            const ubicacion = document.getElementById('eventUbicacion').value;
+            const fechaInicio = document.getElementById('eventFechaInicio').value;
+            const fechaFin = document.getElementById('eventFechaFin').value;
+            
+            // Validación básica
+            if (!nombre || !fechaInicio || !fechaFin) {
+                alert('Por favor complete los campos obligatorios: Nombre, Fecha de Inicio y Fecha de Fin');
+                return;
+            }
+            
+            // Crear configuración del evento
+            const configuracion = {
+                mostrarDni: document.getElementById('configMostrarDni').checked,
+                mostrarEmail: document.getElementById('configMostrarEmail').checked,
+                mostrarEmpresa: document.getElementById('configMostrarEmpresa').checked,
+                mostrarCategoria: document.getElementById('configMostrarCategoria').checked,
+                mostrarProfesion: document.getElementById('configMostrarProfesion').checked,
+                mostrarCargo: document.getElementById('configMostrarCargo').checked,
+                mostrarDias: document.getElementById('configMostrarDias').checked,
+                mostrarInfoAdicional: document.getElementById('configMostrarInfoAdicional').checked
+            };
+            
+            // Crear objeto del evento
+            const newEvent = {
+                nombre,
+                descripcion,
+                ubicacion,
+                fechaInicio: new Date(fechaInicio).toISOString(),
+                fechaFin: new Date(fechaFin).toISOString(),
+                activo: document.getElementById('configActivo').checked,
+                configuracion
+            };
+            
+            showLoading();
+            
+            try {
+                const response = await authenticatedFetch(`${apiBaseUrl}/Event/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newEvent)
+                });
+                
+                if (!response) return; // Si hay redirección por token inválido
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error al crear evento: ${errorText}`);
+                }
+                
+                // Cerrar modal y recargar eventos
+                $('#createEventModal').modal('hide');
+                document.getElementById('createEventForm').reset();
+                
+                alert('Evento creado exitosamente');
+                fetchEvents();
+                
+            } catch (error) {
+                console.error('Error creating event:', error);
+                alert(`Error al crear el evento: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        };
+
         // Verificar autenticación y cargar eventos al iniciar
         document.addEventListener('DOMContentLoaded', () => {
             // Verificar si hay un token de autenticación
@@ -269,11 +512,22 @@
                 return;
             }
             
+            // Cargar información del usuario
+            loadUserInfo();
+            
             // Cargar eventos
             fetchEvents();
             
             // Configurar evento para botón de cerrar sesión
             document.getElementById('logoutButton').addEventListener('click', logout);
+            
+            // Configurar evento para botón de crear evento
+            document.getElementById('createEventBtn').addEventListener('click', () => {
+                $('#createEventModal').modal('show');
+            });
+            
+            // Configurar evento para guardar nuevo evento
+            document.getElementById('saveEventBtn').addEventListener('click', createEvent);
         });
     </script>
 </body>
