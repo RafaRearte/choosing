@@ -163,6 +163,7 @@ namespace choosing.Services.Impl
             invitado.Empresa = updatedGuest.Empresa;
             invitado.Categoria = updatedGuest.Categoria;
             invitado.EventoId = updatedGuest.EventoId;
+            invitado.Lugar = updatedGuest.Lugar;
 
             await _listRepository.UpdateAsync(invitado);
         }

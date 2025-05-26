@@ -91,6 +91,10 @@ const initializeDataTable = () => {
     if (config.mostrarCargo !== false) {
         optionalColumns.push({ data: 'cargo', title: 'Cargo' });
     }
+    // Si el evento tiene lugar configurado, mostramos la columna
+    if (config.mostrarLugar !== false) {
+        optionalColumns.push({ data: 'lugar', title: 'Lugar' });
+    }
     
     // Si el evento tiene días específicos configurados, mostramos las columnas
     if (config.mostrarDias !== false) {
@@ -126,7 +130,7 @@ const initializeDataTable = () => {
                     <button type="button" class="btn btn-primary btn-sm" onclick="openEditModal(${data.id})">
                         Info
                     </button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="printLabel('${data.nombre}', '${data.apellido}', '${data.dni || ''}', '${data.profesion || ''}', '${data.cargo || ''}')">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="printLabel(${data.id}, '${data.nombre}', '${data.apellido}', '${data.dni || ''}', '${data.profesion || ''}', '${data.cargo || ''}', '${data.empresa || ''}')">
                         Etiqueta
                     </button>
                     <button type="button" 
@@ -281,6 +285,7 @@ function guardarConfiguracion(eventoId) {
         mostrarCategoria: document.getElementById('configCategoria').checked,
         mostrarProfesion: document.getElementById('configProfesion').checked,
         mostrarCargo: document.getElementById('configCargo').checked,
+        mostrarLugar: document.getElementById('configLugar').checked,
         mostrarDias: document.getElementById('configDias').checked,
         mostrarInfoAdicional: document.getElementById('configInfoAdicional').checked
     };
@@ -351,6 +356,7 @@ const openEditModal = async (id) => {
         document.getElementById('editGuestCategoria').value = guest.categoria || '';
         document.getElementById('editGuestProfesion').value = guest.profesion || '';
         document.getElementById('editGuestCargo').value = guest.cargo || '';
+        document.getElementById('editGuestLugar').value = guest.lugar || '';
         
         // Configurar los checkboxes de días según los valores
         document.getElementById('editGuestDayOne').checked = guest.dayOne === 'SI';
@@ -405,6 +411,10 @@ const configurarCamposModal = (modalType, config) => {
     // Cargo
     document.getElementById(`${prefix}GuestCargoGroup`).style.display = 
         config?.mostrarCargo !== false ? 'block' : 'none';
+
+    // Lugar
+    document.getElementById(`${prefix}GuestLugarGroup`).style.display = 
+        config?.mostrarLugar !== false ? 'block' : 'none';
     
     // Días de asistencia
     document.getElementById(`${prefix}GuestDiasGroup`).style.display = 
@@ -429,6 +439,7 @@ const saveEditedGuest = async () => {
     const categoria = document.getElementById('editGuestCategoria').value;
     const profesion = document.getElementById('editGuestProfesion').value;
     const cargo = document.getElementById('editGuestCargo').value;
+    const lugar = document.getElementById('editGuestLugar').value;
     const dayOne = document.getElementById('editGuestDayOne').checked ? 'SI' : 'NO';
     const dayTwo = document.getElementById('editGuestDayTwo').checked ? 'SI' : 'NO';
     const infoAdicional = document.getElementById('editGuestInfoAdicional').value;
@@ -451,6 +462,7 @@ const saveEditedGuest = async () => {
         categoria: categoria,
         profesion: profesion,
         cargo: cargo,
+        lugar: lugar,
         dayOne: dayOne,
         dayTwo: dayTwo,
         infoAdicional: infoAdicional,
@@ -602,6 +614,7 @@ const saveNewGuest = async () => {
     const categoria = document.getElementById("newGuestCategoria").value;
     const profesion = document.getElementById("newGuestProfesion").value;
     const cargo = document.getElementById("newGuestCargo").value;
+    const lugar = document.getElementById("newGuestLugar").value;
     const dayOne = document.getElementById("newGuestDayOne").checked ? "SI" : "NO";
     const dayTwo = document.getElementById("newGuestDayTwo").checked ? "SI" : "NO";
     const infoAdicional = document.getElementById("newGuestInfoAdicional").value;
@@ -622,6 +635,7 @@ const saveNewGuest = async () => {
         categoria,
         profesion,
         cargo,
+        lugar,
         dayOne,
         dayTwo,
         infoAdicional,
@@ -738,11 +752,11 @@ const loadFilteredData = async (url) => {
 };
 
 // Imprimir etiqueta y acreditar invitado
-const printLabel = async (nombre, apellido, dni, profesion, cargo) => {
+const printLabel = async (id,nombre, apellido, dni, profesion, cargo, empresa) => {
     try {
         // Si hay DNI, acreditar al invitado
-        if (dni) {
-            const response = await authenticatedFetch(`${apiUrl}/updateAccreditStatus/${dni}?eventId=${currentEventId}`, {
+        if (id) {
+            const response = await authenticatedFetch(`${apiUrl}/updateAccreditStatusById/${id}?eventId=${currentEventId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -774,7 +788,7 @@ const printLabel = async (nombre, apellido, dni, profesion, cargo) => {
         ">
             <div style="font-weight: bold;">${nombre} ${apellido}</div>
             <div>${profesion || ''}</div>
-            <div>${cargo || ''}</div>
+            <div>${empresa || ''}</div>
             ${dni ? `<div>DNI: ${dni}</div>` : ''}
         </div>
         `;

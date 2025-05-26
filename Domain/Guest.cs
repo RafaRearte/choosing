@@ -39,7 +39,9 @@ namespace choosing.Domain
         [ForeignKey("EventoId")]
 
         public string? Categoria { get; set; }
-        public string? Empresa { get; set; }  // Para almacenar la empresa/organización
+        public string? Empresa { get; set; }
+
+        public string? Lugar { get; set; }
     }
 }
 

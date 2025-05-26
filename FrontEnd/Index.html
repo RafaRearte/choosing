@@ -120,7 +120,6 @@
         <div class="container">
             <div class="d-flex align-items-center">
                 <a class="navbar-brand" href="#">Acreditación de Invitados</a>
-                <span class="current-event-badge" id="currentEventName">Evento</span>
                 <a href="event-selection.html" class="event-selector-link ms-2">
                     <i class="bi bi-arrow-left-circle"></i> Cambiar evento
                 </a>
@@ -184,6 +183,12 @@
                         <button type="button" class="btn btn-primary w-100 d-flex align-items-center justify-content-center open-add-guest-btn" data-bs-toggle="modal" data-bs-target="#addGuestModal">
                             <i class="bi bi-person-plus me-2"></i> Nuevo Invitado
                         </button>
+                    </li>
+                    <li class="nav-item mt-3">
+                        <!-- Agregar en la barra de navegación o en el menú lateral -->
+                            <a href="print-labels.html" class="btn btn-info me-2">
+                               <i class="bi bi-printer me-2"></i> Impresión Masiva
+                            </a>
                     </li>
                 </ul>
             </div>
@@ -260,6 +265,11 @@
                         <div class="mb-3" id="newGuestCargoGroup">
                             <label for="newGuestCargo" class="form-label">Cargo</label>
                             <input type="text" class="form-control" id="newGuestCargo">
+                        </div>
+
+                        <div class="mb-3" id="newGuestLugarGroup">
+                            <label for="newGuestLugar" class="form-label">Lugar</label>
+                            <input type="text" class="form-control" id="newGuestLugar">
                         </div>
                         
                         <!-- Días de asistencia (opcional según configuración) -->
@@ -363,6 +373,11 @@
                             <label for="editGuestInfoAdicional" class="form-label">Información Adicional</label>
                             <textarea class="form-control" id="editGuestInfoAdicional" rows="2"></textarea>
                         </div>
+
+                        <div class="mb-3" id="editGuestLugarGroup">
+                            <label for="editGuestLugar" class="form-label">Lugar</label>
+                            <input type="text" class="form-control" id="editGuestLugar">
+                        </div>
                         
                         <!-- Estado de acreditación -->
                         <div class="mb-3 form-check">
@@ -421,6 +436,10 @@
                         <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" id="configCargo" checked>
                             <label class="form-check-label" for="configCargo">Cargo</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configLugar" checked>
+                            <label class="form-check-label" for="configLugar">Lugar</label>
                         </div>
                         <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" id="configDias" checked>
