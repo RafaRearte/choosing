@@ -14,5 +14,10 @@ namespace choosing.Domain
         public bool Activo { get; set; } = true;
         [Column("ConfiguracionJson")]
         public string? ConfiguracionJson { get; set; }
+        // NUEVOS CAMPOS PARA CÓDIGOS
+        public string CodigoAcceso { get; set; } = "";
+        public string? CodigoAdmin { get; set; } = "";
+        public string? CodigoStats { get; set; } = "";
+        public bool PermitirAccesoPostEvento { get; set; } = false;
     }
 }

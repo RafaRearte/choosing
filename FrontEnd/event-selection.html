@@ -423,14 +423,163 @@
         };
 
         // Función para seleccionar un evento
-        const selectEvent = (eventId, eventName) => {
-            // Guardar información del evento en localStorage
+const selectEvent = async (eventId, eventName) => {
+    // Verificar si ya tiene código guardado para este evento
+    const savedCodes = JSON.parse(localStorage.getItem('eventCodes') || '{}');
+    
+    if (savedCodes[eventId]) {
+        // Ya tiene acceso a este evento
+        localStorage.setItem('currentEventId', eventId);
+        localStorage.setItem('currentEventName', eventName);
+        localStorage.setItem('currentEventAccess', JSON.stringify(savedCodes[eventId]));
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    // No tiene código, pedir acceso
+    showEventCodeModal(eventId, eventName);
+};
+
+// Función para mostrar modal de código de evento
+const showEventCodeModal = (eventId, eventName) => {
+    const modalHtml = `
+    <div class="modal fade" id="eventCodeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">🔐 Acceso al Evento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>${eventName}</h6>
+                    <p class="text-muted">Para acceder a este evento, ingrese el código de acceso:</p>
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="eventCodeInput" 
+                               placeholder="Código de acceso" 
+                               style="text-align: center; font-size: 1.2rem; letter-spacing: 2px;">
+                    </div>
+                    <div id="codeError" class="alert alert-danger" style="display: none;"></div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <strong>Tipos de código:</strong><br>
+                            • Código normal: Acceso completo al evento<br>
+                            • Código admin: Configuración y estadísticas<br>
+                            • Código stats: Solo estadísticas
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="verifyEventCode(${eventId}, '${eventName}')">
+                        🚀 Ingresar al Evento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+    
+    // Remover modal anterior si existe
+    const existingModal = document.getElementById('eventCodeModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Agregar modal al DOM
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('eventCodeModal'));
+    modal.show();
+    
+    // Focus en el input cuando se abre
+    document.getElementById('eventCodeInput').focus();
+};
+
+// Función para verificar código del evento
+const verifyEventCode = async (eventId, eventName) => {
+    const codigo = document.getElementById('eventCodeInput').value.trim();
+    
+    if (!codigo) {
+        showCodeError('Debe ingresar un código');
+        return;
+    }
+    
+    try {
+        const response = await authenticatedFetch(`${apiBaseUrl}/EventAccess/verificar-codigo`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ codigo: codigo })
+        });
+        
+        if (!response.ok) throw new Error('Error al verificar código');
+        
+        const result = await response.json();
+        
+        if (result.success && result.eventInfo && result.eventInfo.eventoId === eventId) {
+            // Código correcto, guardar acceso
+            const savedCodes = JSON.parse(localStorage.getItem('eventCodes') || '{}');
+            savedCodes[eventId] = {
+                codigo: codigo,
+                tipoAcceso: result.eventInfo.tipoAcceso,
+                permisos: {
+                    puedeAcreditar: result.eventInfo.puedeAcreditar,
+                    puedeEditarInvitados: result.eventInfo.puedeEditarInvitados,
+                    puedeVerEstadisticas: result.eventInfo.puedeVerEstadisticas,
+                    puedeConfigurar: result.eventInfo.puedeConfigurar
+                },
+                eventoEnFechas: result.eventInfo.eventoEnFechasValidas
+            };
+            localStorage.setItem('eventCodes', JSON.stringify(savedCodes));
+            
+            // Proceder al evento
             localStorage.setItem('currentEventId', eventId);
             localStorage.setItem('currentEventName', eventName);
+            localStorage.setItem('currentEventAccess', JSON.stringify(savedCodes[eventId]));
             
-            // Redirigir al dashboard principal
-            window.location.href = 'index.html';
-        };
+            // Cerrar modal y redirigir
+            bootstrap.Modal.getInstance(document.getElementById('eventCodeModal')).hide();
+            
+            // Redirigir según tipo de acceso
+            if (result.eventInfo.tipoAcceso === 'Stats') {
+                window.location.href = 'stats.html';
+            } else {
+                window.location.href = 'index.html';
+            }
+        } else {
+            showCodeError('Código inválido para este evento');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showCodeError('Error al verificar el código');
+    }
+};
+
+const showCodeError = (message) => {
+    const errorDiv = document.getElementById('codeError');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+    setTimeout(() => {
+        errorDiv.style.display = 'none';
+    }, 5000);
+};
+
+// Agregar evento Enter al input de código
+document.addEventListener('DOMContentLoaded', function() {
+    // ... tu código existente ...
+    
+    // Manejar Enter en el input de código cuando se crea el modal
+    document.addEventListener('keypress', function(e) {
+        if (e.target.id === 'eventCodeInput' && e.key === 'Enter') {
+            const eventId = localStorage.getItem('tempEventId');
+            const eventName = localStorage.getItem('tempEventName');
+            if (eventId && eventName) {
+                verifyEventCode(parseInt(eventId), eventName);
+            }
+        }
+    });
+});
 
         // Función para crear un nuevo evento
         const createEvent = async () => {

@@ -134,10 +134,6 @@
                 <button type="button" class="btn btn-primary me-2 d-flex align-items-center justify-content-center open-add-guest-btn" data-bs-toggle="modal" data-bs-target="#addGuestModal">
                     <i class="bi bi-person-plus me-2"></i> Nuevo Invitado
                 </button>
-                <!-- Botón de configuración de columnas -->
-                <button type="button" class="btn btn-outline-primary me-2" onclick="configurarEvento()">
-                    <i class="bi bi-gear"></i> Configurar
-                </button>
             </div>
             <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -186,9 +182,13 @@
                     </li>
                     <li class="nav-item mt-3">
                         <!-- Agregar en la barra de navegación o en el menú lateral -->
-                            <a href="print-labels.html" class="btn btn-info me-2">
+                            <a href="print-labels.html" class="btn btn-outline-primary me-2">
                                <i class="bi bi-printer me-2"></i> Impresión Masiva
                             </a>
+                        <!-- Botón de configuración de columnas -->
+                            <button type="button" class="btn btn-outline-primary me-2" onclick="configurarEvento()">
+                                <i class="bi bi-gear"></i> Columnas
+                            </button>
                     </li>
                 </ul>
             </div>

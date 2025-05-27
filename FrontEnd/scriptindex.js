@@ -1,3 +1,41 @@
+const puedeHacerAccion = (accion) => {
+    const eventAccess = JSON.parse(localStorage.getItem('currentEventAccess') || '{}');
+    
+    switch(accion) {
+        case 'acreditar':
+            return eventAccess.permisos?.puedeAcreditar || false;
+        case 'editar':
+            return eventAccess.permisos?.puedeEditarInvitados || false;
+        case 'estadisticas':
+            return eventAccess.permisos?.puedeVerEstadisticas || false;
+        case 'configurar':
+            return eventAccess.permisos?.puedeConfigurar || false;
+        default:
+            return true; // Por defecto puede ver
+    }
+};
+
+// Función para configurar elementos según permisos
+const configurarElementosSegunPermisos = () => {
+    // Botón de nuevo invitado
+    const addGuestBtns = document.querySelectorAll('.open-add-guest-btn');
+    addGuestBtns.forEach(btn => {
+        btn.style.display = puedeHacerAccion('editar') ? 'block' : 'none';
+    });
+    
+    // Botón de configurar
+    const configBtn = document.querySelector('[onclick="configurarEvento()"]');
+    if (configBtn) {
+        configBtn.style.display = puedeHacerAccion('configurar') ? 'block' : 'none';
+    }
+    
+    // Enlaces a estadísticas
+    const statsLinks = document.querySelectorAll('a[href="stats.html"]');
+    statsLinks.forEach(link => {
+        link.style.display = puedeHacerAccion('estadisticas') ? 'block' : 'none';
+    });
+};
+
 // Inicializar DataTable
 let dataTable;
 let eventData = null; // Para almacenar la configuración del evento actual
@@ -118,33 +156,30 @@ const initializeDataTable = () => {
     };
     
     // Columna de acciones (siempre presente)
-    const accionesColumn = {
-        data: null,
-        title: 'Acción',
-        render: function (data) {
-            // Verificar si el invitado está acreditado
-            const isAccredited = data.acreditado > 0;
-            
-            return `
-                <div class="d-flex gap-1">
-                    <button type="button" class="btn btn-primary btn-sm" onclick="openEditModal(${data.id})">
-                        Info
-                    </button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="printLabel(${data.id}, '${data.nombre}', '${data.apellido}', '${data.dni || ''}', '${data.profesion || ''}', '${data.cargo || ''}', '${data.empresa || ''}')">
-                        Etiqueta
-                    </button>
-                    <button type="button" 
-                        class="btn btn-sm ${isAccredited ? 'btn-success' : 'btn-outline-success'} rounded-circle toggle-accredit p-0 d-flex align-items-center justify-content-center" 
-                        style="width: 28px; height: 28px;"
-                        data-id="${data.id}" 
-                        data-status="${isAccredited}"
-                        title="${isAccredited ? 'Acreditado' : 'Acreditar'}">
-                        <i class="bi ${isAccredited ? 'bi-check-lg' : 'bi-plus-lg'}" style="font-size: 0.8rem;"></i>
-                    </button>
-                </div>
-            `;
+const accionesColumn = {
+    data: null,
+    title: 'Acción',
+    render: function (data) {
+        const isAccredited = data.acreditado > 0;
+        let actions = '<div class="d-flex gap-1">';
+        
+        // Botón de información (siempre visible)
+        actions += `<button type="button" class="btn btn-primary btn-sm" onclick="openEditModal(${data.id})">Info</button>`;
+        
+        // Botón de etiqueta (solo si puede acreditar)
+        if (puedeHacerAccion('acreditar')) {
+            actions += `<button type="button" class="btn btn-secondary btn-sm" onclick="printLabel(${data.id}, '${data.nombre}', '${data.apellido}', '${data.dni || ''}', '${data.profesion || ''}', '${data.cargo || ''}', '${data.empresa || ''}')">Etiqueta</button>`;
         }
-    };
+        
+        // Botón de acreditar (solo si puede acreditar)
+        if (puedeHacerAccion('acreditar')) {
+            actions += `<button type="button" class="btn btn-sm ${isAccredited ? 'btn-success' : 'btn-outline-success'} rounded-circle toggle-accredit p-0 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;" data-id="${data.id}" data-status="${isAccredited}" title="${isAccredited ? 'Acreditado' : 'Acreditar'}"><i class="bi ${isAccredited ? 'bi-check-lg' : 'bi-plus-lg'}" style="font-size: 0.8rem;"></i></button>`;
+        }
+        
+        actions += '</div>';
+        return actions;
+    }
+};
     
     // Combinar todas las columnas en el orden correcto
     const allColumns = [...baseColumns, ...optionalColumns, acreditadoColumn, accionesColumn];
@@ -299,7 +334,7 @@ function guardarConfiguracion(eventoId) {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
-        body: JSON.stringify(configuracion)
+        body: JSON.stringify(JSON.stringify(configuracion))
     })
     .then(response => {
         if (!response.ok) throw new Error('Error al guardar la configuración');
@@ -427,6 +462,10 @@ const configurarCamposModal = (modalType, config) => {
 
 // Función para guardar los cambios del invitado editado
 const saveEditedGuest = async () => {
+    if (!puedeHacerAccion('editar')) {
+        alert('No tiene permisos para editar invitados');
+        return;
+    }
     // Obtener el ID del invitado
     const id = document.getElementById('editGuestId').value;
     
@@ -497,6 +536,10 @@ const saveEditedGuest = async () => {
 
 // Función para eliminar un invitado
 const deleteGuest = async () => {
+        if (!puedeHacerAccion('editar')) {
+        alert('No tiene permisos para eliminar invitados');
+        return;
+    }
     // Obtener el ID del invitado a eliminar
     const id = document.getElementById('editGuestId').value;
     
@@ -527,6 +570,16 @@ const deleteGuest = async () => {
 
 // Función para cambiar el estado de acreditación (toggle)
 const toggleAccreditStatus = async (id, currentStatus) => {
+    if (!puedeHacerAccion('acreditar')) {
+        alert('No tiene permisos para acreditar invitados');
+        return;
+    }
+        // Verificar fechas del evento
+    const eventAccess = JSON.parse(localStorage.getItem('currentEventAccess') || '{}');
+    if (!eventAccess.eventoEnFechas && eventAccess.tipoAcceso !== 'Admin') {
+        alert('El evento no está en fechas válidas para acreditación');
+        return;
+    }
     try {
         // Convertir el estado actual a un valor booleano
         const isCurrentlyAccredited = currentStatus === 'true' || currentStatus === true;
@@ -605,6 +658,10 @@ const fetchGuests = async () => {
 };
     // Guardar nuevo invitado (continuación)
 const saveNewGuest = async () => {
+        if (!puedeHacerAccion('editar')) {
+        alert('No tiene permisos para crear invitados');
+        return;
+    }
     // Obtener los valores del formulario
     const dni = document.getElementById("newGuestDni").value;
     const nombre = document.getElementById("newGuestNombre").value;
@@ -855,4 +912,25 @@ document.addEventListener("DOMContentLoaded", function() {
     document.querySelectorAll('.open-add-guest-btn').forEach(btn => {
         btn.addEventListener('click', openAddGuestModal);
     });
-});
+    
+    // Verificar si tiene acceso al evento actual
+    const currentEventId = localStorage.getItem('currentEventId');
+    const eventAccess = localStorage.getItem('currentEventAccess');
+    
+    if (currentEventId && !eventAccess) {
+        alert('Necesita un código de acceso para este evento');
+        window.location.href = 'event-selection.html';
+        return;
+    }
+    
+    // Configurar permisos en la UI
+    configurarElementosSegunPermisos();
+    
+    // Mostrar tipo de acceso en algún lugar (opcional)
+    const accessInfo = JSON.parse(eventAccess || '{}');
+    if (accessInfo.tipoAcceso) {
+        console.log(`Acceso como: ${accessInfo.tipoAcceso}`);
+        // Opcional: mostrar en la UI el tipo de acceso
+        // document.querySelector('.navbar-brand').innerHTML += ` <small class="badge bg-secondary">${accessInfo.tipoAcceso}</small>`;
+    }
+    });
