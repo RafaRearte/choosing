@@ -377,8 +377,13 @@
         
         // Función para cerrar sesión
         function logout() {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userData');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        localStorage.removeItem('currentEventId');
+        localStorage.removeItem('currentEventName');
+        localStorage.removeItem('eventCodes');
+        localStorage.removeItem('currentEventAccess');
+        localStorage.removeItem('isGlobalAdmin');
             window.location.href = 'login.html';
         }
     </script>

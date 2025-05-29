@@ -143,6 +143,22 @@
                             </div>
                         </div>
                         
+                        <h6 class="mt-4 mb-3">Código de Acceso</h6>
+                    <div class="mb-3">
+                        <label for="eventCodigoBase" class="form-label">Código Base del Evento</label>
+                        <input type="text" class="form-control" id="eventCodigoBase" 
+                               placeholder="ej: congreso2025" 
+                               pattern="[a-zA-Z0-9]+" 
+                               title="Solo letras y números, sin espacios"
+                               required>
+                        <div class="form-text">
+                            Se generarán automáticamente:
+                            <br>• <strong>Normal:</strong> <span id="previewNormal">tu_codigo</span>
+                            <br>• <strong>Admin:</strong> <span id="previewAdmin">tu_codigo + admin</span>
+                            <br>• <strong>Stats:</strong> <span id="previewStats">tu_codigo + stats</span>
+                        </div>
+                    </div>
+                        
                         <!-- Configuración del evento -->
                         <h6 class="mt-4 mb-3">Configuración del Evento</h6>
                         
@@ -175,7 +191,10 @@
                             <input class="form-check-input" type="checkbox" id="configMostrarCargo" checked>
                             <label class="form-check-label" for="configMostrarCargo">Incluir campo Cargo</label>
                         </div>
-                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="configMostrarLugar" checked>
+                            <label class="form-check-label" for="configMostrarLugar">Incluir campo Lugar</label>
+                        </div>
                         <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" id="configMostrarDias" checked>
                             <label class="form-check-label" for="configMostrarDias">Incluir campos para días de asistencia</label>
@@ -210,276 +229,538 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
-        // Constante para la URL base de la API
-        const apiBaseUrl = "https://choosing-rafa.duckdns.org/api";
+
+<script>
+    // Constante para la URL base de la API
+    const apiBaseUrl = "https://choosing-rafa.duckdns.org/api";
+    
+    // Variable para almacenar información del usuario
+    let userData = null;
+
+    // Función para mostrar el indicador de carga
+    const showLoading = () => {
+        document.getElementById('loadingIndicator').style.display = 'block';
+    };
+
+    // Función para ocultar el indicador de carga
+    const hideLoading = () => {
+        document.getElementById('loadingIndicator').style.display = 'none';
+    };
+
+    // Función para hacer peticiones autenticadas
+    const authenticatedFetch = async (url, options = {}) => {
+        const token = localStorage.getItem('authToken');
         
-        // Variable para almacenar información del usuario
-        let userData = null;
-
-        // Función para mostrar el indicador de carga
-        const showLoading = () => {
-            document.getElementById('loadingIndicator').style.display = 'block';
+        if (!token) {
+            window.location.href = 'login.html';
+            return null;
+        }
+        
+        const headers = {
+            ...options.headers,
+            'Authorization': `Bearer ${token}`
         };
-
-        // Función para ocultar el indicador de carga
-        const hideLoading = () => {
-            document.getElementById('loadingIndicator').style.display = 'none';
-        };
-
-        // Función para hacer peticiones autenticadas
-        const authenticatedFetch = async (url, options = {}) => {
-            const token = localStorage.getItem('authToken');
+        
+        try {
+            const response = await fetch(url, {
+                ...options,
+                headers
+            });
             
-            // Si no hay token, redirigir al login
-            if (!token) {
-                window.location.href = 'login.html';
+            if (response.status === 401) {
+                alert('Sesión expirada. Por favor inicie sesión nuevamente.');
+                logout();
                 return null;
             }
             
-            // Configurar headers con autenticación
-            const headers = {
-                ...options.headers,
-                'Authorization': `Bearer ${token}`
-            };
+            return response;
+        } catch (error) {
+            console.error('Error en la petición:', error);
+            throw error;
+        }
+    };
+
+    // Función para cerrar sesión
+    const logout = () => {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        localStorage.removeItem('currentEventId');
+        localStorage.removeItem('currentEventName');
+        localStorage.removeItem('eventCodes');
+        localStorage.removeItem('currentEventAccess');
+        localStorage.removeItem('isGlobalAdmin');
+        window.location.href = 'login.html';
+    };
+
+    // Función para cargar información del usuario
+    const loadUserInfo = () => {
+        const userDataStr = localStorage.getItem('userData');
+        if (userDataStr) {
+            userData = JSON.parse(userDataStr);
             
-            try {
-                const response = await fetch(url, {
-                    ...options,
-                    headers
-                });
-                
-                // Si hay error de autenticación, redirigir al login
-                if (response.status === 401) {
-                    alert('Sesión expirada. Por favor inicie sesión nuevamente.');
-                    logout();
-                    return null;
-                }
-                
-                return response;
-            } catch (error) {
-                console.error('Error en la petición:', error);
-                throw error;
+            // Si el usuario es admin, mostrar sección de administración
+            if (userData.name === 'admin' || userData.name === 'rafa') {
+                document.getElementById('adminSection').style.display = 'block';
             }
-        };
+        }
+    };
 
-        // Función para cerrar sesión
-        const logout = () => {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userData');
-            localStorage.removeItem('currentEventId');
-            localStorage.removeItem('currentEventName');
-            window.location.href = 'login.html';
-        };
-
-        // Función para cargar información del usuario
-        const loadUserInfo = () => {
-            const userDataStr = localStorage.getItem('userData');
-            if (userDataStr) {
-                userData = JSON.parse(userDataStr);
-                
-                // Si el usuario es admin, mostrar sección de administración
-                if (userData.role === 'admin') {
-                    document.getElementById('adminSection').style.display = 'block';
-                }
-            }
-        };
-
-        // Función para obtener los eventos
-        const fetchEvents = async () => {
-            showLoading();
+    // Función para obtener los eventos
+    const fetchEvents = async () => {
+        showLoading();
+        
+        try {
+            const response = await authenticatedFetch(`${apiBaseUrl}/Event/GetAll`);
             
-            try {
-                const response = await authenticatedFetch(`${apiBaseUrl}/Event/GetAll`);
-                
-                if (!response) return; // Si hay redirección por token inválido
-                
-                if (!response.ok) throw new Error('Error al obtener los eventos');
-                const events = await response.json();
-                
-                displayEvents(events);
-            } catch (error) {
-                console.error('Error fetching events:', error);
-                
-                // Mostrar mensaje de error
-                document.getElementById('eventsList').innerHTML = `
-                    <div class="col-12 text-center">
-                        <div class="alert alert-danger">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            Error al cargar los eventos. Por favor intente nuevamente.
-                        </div>
-                        <button class="btn btn-primary mt-3" onclick="fetchEvents()">
-                            <i class="bi bi-arrow-clockwise me-2"></i>Reintentar
-                        </button>
+            if (!response) return;
+            
+            if (!response.ok) throw new Error('Error al obtener los eventos');
+            const events = await response.json();
+            
+            displayEvents(events);
+        } catch (error) {
+            console.error('Error fetching events:', error);
+            
+            document.getElementById('eventsList').innerHTML = `
+                <div class="col-12 text-center">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Error al cargar los eventos. Por favor intente nuevamente.
                     </div>
-                `;
-            } finally {
-                hideLoading();
-            }
-        };
+                    <button class="btn btn-primary mt-3" onclick="fetchEvents()">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Reintentar
+                    </button>
+                </div>
+            `;
+        } finally {
+            hideLoading();
+        }
+    };
 
-        // Función para obtener estadísticas de un evento
-        const fetchEventStats = async (eventId) => {
-            try {
-                const totalResponse = await authenticatedFetch(`${apiBaseUrl}/List/GetAll?eventId=${eventId}`);
-                const acreditadosResponse = await authenticatedFetch(`${apiBaseUrl}/List/GetAcreditados?eventId=${eventId}`);
-                
-                if (!totalResponse || !acreditadosResponse) return { total: 0, acreditados: 0 };
-                
-                if (!totalResponse.ok || !acreditadosResponse.ok) {
-                    return { total: 0, acreditados: 0 };
-                }
-                
-                const totalGuests = await totalResponse.json();
-                const acreditados = await acreditadosResponse.json();
-                
-                return {
-                    total: totalGuests.length,
-                    acreditados: acreditados.length
-                };
-            } catch (error) {
-                console.error(`Error fetching stats for event ${eventId}:`, error);
+    // Función para obtener estadísticas de un evento
+    const fetchEventStats = async (eventId) => {
+        try {
+            const totalResponse = await authenticatedFetch(`${apiBaseUrl}/List/GetAll?eventId=${eventId}`);
+            const acreditadosResponse = await authenticatedFetch(`${apiBaseUrl}/List/GetAcreditados?eventId=${eventId}`);
+            
+            if (!totalResponse || !acreditadosResponse) return { total: 0, acreditados: 0 };
+            
+            if (!totalResponse.ok || !acreditadosResponse.ok) {
                 return { total: 0, acreditados: 0 };
             }
-        };
+            
+            const totalGuests = await totalResponse.json();
+            const acreditados = await acreditadosResponse.json();
+            
+            return {
+                total: totalGuests.length,
+                acreditados: acreditados.length
+            };
+        } catch (error) {
+            console.error(`Error fetching stats for event ${eventId}:`, error);
+            return { total: 0, acreditados: 0 };
+        }
+    };
 
-        // Función para mostrar los eventos
-        const displayEvents = async (events) => {
-            const eventsContainer = document.getElementById('eventsList');
-            eventsContainer.innerHTML = '';
-            
-            if (!events || events.length === 0) {
-                eventsContainer.innerHTML = `
-                    <div class="col-12 text-center py-5">
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle me-2"></i>
-                            No hay eventos disponibles en este momento.
-                        </div>
+    // Función para mostrar los eventos
+    const displayEvents = async (events) => {
+        const eventsContainer = document.getElementById('eventsList');
+        eventsContainer.innerHTML = '';
+        
+        if (!events || events.length === 0) {
+            eventsContainer.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No hay eventos disponibles en este momento.
                     </div>
-                `;
-                return;
-            }
+                </div>
+            `;
+            return;
+        }
+        
+        // Mostrar eventos activos primero
+        const sortedEvents = [...events].sort((a, b) => {
+            if (a.activo !== b.activo) return b.activo ? 1 : -1;
+            return new Date(b.fechaInicio) - new Date(a.fechaInicio);
+        });
+        
+        for (const event of sortedEvents) {
+            // Formatear fechas
+            const startDate = new Date(event.fechaInicio);
+            const endDate = new Date(event.fechaFin);
             
-            // Mostrar eventos activos primero
-            const sortedEvents = [...events].sort((a, b) => {
-                // Primero por estado activo (activos primero)
-                if (a.activo !== b.activo) return b.activo ? 1 : -1;
-                // Luego por fecha de inicio (más recientes primero)
-                return new Date(b.fechaInicio) - new Date(a.fechaInicio);
+            const formattedStartDate = startDate.toLocaleDateString('es-AR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
             });
             
-            for (const event of sortedEvents) {
-                // Formatear fechas
-                const startDate = new Date(event.fechaInicio);
-                const endDate = new Date(event.fechaFin);
-                
-                const formattedStartDate = startDate.toLocaleDateString('es-AR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                });
-                
-                const formattedEndDate = endDate.toLocaleDateString('es-AR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                });
-                
-                // Obtener estadísticas del evento
-                const stats = await fetchEventStats(event.id);
-                
-                // Crear tarjeta de evento
-                const card = document.createElement('div');
-                card.className = 'col-md-4';
-                card.innerHTML = `
-                    <div class="card event-card" onclick="selectEvent(${event.id}, '${event.nombre}')">
-                        <div class="card-body">
-                            <h5 class="card-title">${event.nombre}</h5>
-                            <p class="card-text">${event.descripcion || 'Sin descripción'}</p>
-                            <div class="event-date">
-                                <i class="bi bi-calendar-event me-1"></i>
-                                ${formattedStartDate} - ${formattedEndDate}
-                            </div>
-                            <div class="event-location">
-                                <i class="bi bi-geo-alt me-1"></i>
-                                ${event.ubicacion || 'Ubicación no especificada'}
-                            </div>
-                            <div class="event-attendees">
-                                <i class="bi bi-people me-1"></i>
-                                <span class="me-2">Invitados:</span>
-                                <span class="badge bg-primary">${stats.total}</span>
-                                <span class="ms-2 me-1">Acreditados:</span>
-                                <span class="badge bg-success">${stats.acreditados}</span>
-                            </div>
-                            ${event.activo ? 
-                                '<span class="badge bg-success event-badge">Activo</span>' : 
-                                '<span class="badge bg-secondary event-badge">Inactivo</span>'
-                            }
+            const formattedEndDate = endDate.toLocaleDateString('es-AR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            
+            // Obtener estadísticas del evento
+            const stats = await fetchEventStats(event.id);
+            
+            // Crear tarjeta de evento
+            const card = document.createElement('div');
+            card.className = 'col-md-4';
+            card.innerHTML = `
+                <div class="card event-card" onclick="selectEvent(${event.id}, '${event.nombre}')">
+                    <div class="card-body">
+                        <h5 class="card-title">${event.nombre}</h5>
+                        <p class="card-text">${event.descripcion || 'Sin descripción'}</p>
+                        <div class="event-date">
+                            <i class="bi bi-calendar-event me-1"></i>
+                            ${formattedStartDate} - ${formattedEndDate}
                         </div>
+                        <div class="event-location">
+                            <i class="bi bi-geo-alt me-1"></i>
+                            ${event.ubicacion || 'Ubicación no especificada'}
+                        </div>
+                        <div class="event-attendees">
+                            <i class="bi bi-people me-1"></i>
+                            <span class="me-2">Invitados:</span>
+                            <span class="badge bg-primary">${stats.total}</span>
+                            <span class="ms-2 me-1">Acreditados:</span>
+                            <span class="badge bg-success">${stats.acreditados}</span>
+                        </div>
+                        ${event.activo ? 
+                            '<span class="badge bg-success event-badge">Activo</span>' : 
+                            '<span class="badge bg-secondary event-badge">Inactivo</span>'
+                        }
                     </div>
-                `;
-                eventsContainer.appendChild(card);
-            }
-        };
+                </div>
+            `;
+            eventsContainer.appendChild(card);
+        }
+    };
 
-        // Función para seleccionar un evento
-const selectEvent = async (eventId, eventName) => {
-    // Verificar si ya tiene código guardado para este evento
-    const savedCodes = JSON.parse(localStorage.getItem('eventCodes') || '{}');
+    // Función para seleccionar un evento
+    const selectEvent = async (eventId, eventName) => {
+            const userData = JSON.parse(localStorage.getItem('userData'));
     
-    if (savedCodes[eventId]) {
-        // Ya tiene acceso a este evento
+    // Si es admin, acceso directo sin código
+    if (userData.name === 'admin' || userData.name === 'rafa') {  // Agregar usuarios admin aquí
         localStorage.setItem('currentEventId', eventId);
         localStorage.setItem('currentEventName', eventName);
-        localStorage.setItem('currentEventAccess', JSON.stringify(savedCodes[eventId]));
+        
+        // Dar permisos completos de admin
+        const adminAccess = {
+            codigo: 'ADMIN_DIRECT_ACCESS',
+            tipoAcceso: 'Admin',
+            permisos: {
+                puedeAcreditar: true,
+                puedeEditarInvitados: true,
+                puedeVerEstadisticas: true,
+                puedeConfigurar: true
+            },
+            eventoEnFechas: true // Admin siempre puede, sin restricciones de fecha
+        };
+        
+        // Guardar también en eventCodes para futuras visitas
+        const savedCodes = JSON.parse(localStorage.getItem('eventCodes') || '{}');
+        savedCodes[eventId] = adminAccess;
+        localStorage.setItem('eventCodes', JSON.stringify(savedCodes));
+        
+        localStorage.setItem('currentEventAccess', JSON.stringify(adminAccess));
         window.location.href = 'index.html';
         return;
     }
+        // Verificar si ya tiene código guardado para este evento
+        const savedCodes = JSON.parse(localStorage.getItem('eventCodes') || '{}');
+        
+        if (savedCodes[eventId]) {
+            // Ya tiene acceso a este evento
+            localStorage.setItem('currentEventId', eventId);
+            localStorage.setItem('currentEventName', eventName);
+            localStorage.setItem('currentEventAccess', JSON.stringify(savedCodes[eventId]));
+            window.location.href = 'index.html';
+            return;
+        }
+        
+        // No tiene código, pedir acceso
+        showEventCodeModal(eventId, eventName);
+    };
+
+    // Función para mostrar modal de código de evento
+    const showEventCodeModal = (eventId, eventName) => {
+        const modalHtml = `
+        <div class="modal fade" id="eventCodeModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">🔐 Acceso al Evento</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6>${eventName}</h6>
+                        <p class="text-muted">Para acceder a este evento, ingrese el código de acceso:</p>
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="eventCodeInput" 
+                                   placeholder="Código de acceso" 
+                                   style="text-align: center; font-size: 1.2rem; letter-spacing: 2px;">
+                        </div>
+                        <div id="codeError" class="alert alert-danger" style="display: none;"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="verifyEventCode(${eventId}, '${eventName}')">
+                         Ingresar al Evento
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+        
+        // Remover modal anterior si existe
+        const existingModal = document.getElementById('eventCodeModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Agregar modal al DOM
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('eventCodeModal'));
+        modal.show();
+        
+        // Focus en el input cuando se abre
+        setTimeout(() => {
+            document.getElementById('eventCodeInput').focus();
+        }, 500);
+    };
+
+    // Función para verificar código del evento
+    const verifyEventCode = async (eventId, eventName) => {
+        const codigo = document.getElementById('eventCodeInput').value.trim();
+        
+        if (!codigo) {
+            showCodeError('Debe ingresar un código');
+            return;
+        }
+        
+        try {
+            const response = await authenticatedFetch(`${apiBaseUrl}/EventAccess/verificar-codigo`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ codigo: codigo })
+            });
+            
+            if (!response.ok) throw new Error('Error al verificar código');
+            
+            const result = await response.json();
+            
+            if (result.success && result.eventInfo && result.eventInfo.eventoId === eventId) {
+                // Código correcto, guardar acceso
+                const savedCodes = JSON.parse(localStorage.getItem('eventCodes') || '{}');
+                savedCodes[eventId] = {
+                    codigo: codigo,
+                    tipoAcceso: result.eventInfo.tipoAcceso,
+                    permisos: {
+                        puedeAcreditar: result.eventInfo.puedeAcreditar,
+                        puedeEditarInvitados: result.eventInfo.puedeEditarInvitados,
+                        puedeVerEstadisticas: result.eventInfo.puedeVerEstadisticas,
+                        puedeConfigurar: result.eventInfo.puedeConfigurar
+                    },
+                    eventoEnFechas: result.eventInfo.eventoEnFechasValidas
+                };
+                localStorage.setItem('eventCodes', JSON.stringify(savedCodes));
+                
+                // Proceder al evento
+                localStorage.setItem('currentEventId', eventId);
+                localStorage.setItem('currentEventName', eventName);
+                localStorage.setItem('currentEventAccess', JSON.stringify(savedCodes[eventId]));
+                
+                // Cerrar modal y redirigir
+                bootstrap.Modal.getInstance(document.getElementById('eventCodeModal')).hide();
+                
+                // Redirigir según tipo de acceso
+                if (result.eventInfo.tipoAcceso === 'Stats') {
+                    window.location.href = 'stats.html';
+                } else {
+                    window.location.href = 'index.html';
+                }
+            } else {
+                showCodeError('Código inválido para este evento');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showCodeError('Error al verificar el código');
+        }
+    };
+
+    const showCodeError = (message) => {
+        const errorDiv = document.getElementById('codeError');
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
+    };
+
+    const createEvent = async () => {
+    // Obtener datos del formulario
+    const nombre = document.getElementById('eventNombre').value;
+    const descripcion = document.getElementById('eventDescripcion').value;
+    const ubicacion = document.getElementById('eventUbicacion').value;
+    const fechaInicio = document.getElementById('eventFechaInicio').value;
+    const fechaFin = document.getElementById('eventFechaFin').value;
+    const codigoBase = document.getElementById('eventCodigoBase').value.trim();
     
-    // No tiene código, pedir acceso
-    showEventCodeModal(eventId, eventName);
+    // Validación básica
+    if (!nombre || !fechaInicio || !fechaFin || !codigoBase) {
+        alert('Por favor complete los campos obligatorios: Nombre, Fecha de Inicio, Fecha de Fin y Código Base');
+        return;
+    }
+    
+    // Validar que el código base sea válido
+    if (!/^[a-zA-Z0-9]+$/.test(codigoBase)) {
+        alert('El código base solo puede contener letras y números, sin espacios ni caracteres especiales');
+        return;
+    }
+    
+    // Generar códigos basados en el código base
+    const codigoLimpio = codigoBase.toLowerCase();
+    const codigoAcceso = codigoLimpio;
+    const codigoAdmin = codigoLimpio + 'admin';
+    const codigoStats = codigoLimpio + 'stats';
+    
+    // Crear configuración del evento
+    const configuracion = {
+        mostrarDni: document.getElementById('configMostrarDni').checked,
+        mostrarEmail: document.getElementById('configMostrarEmail').checked,
+        mostrarEmpresa: document.getElementById('configMostrarEmpresa').checked,
+        mostrarCategoria: document.getElementById('configMostrarCategoria').checked,
+        mostrarProfesion: document.getElementById('configMostrarProfesion').checked,
+        mostrarCargo: document.getElementById('configMostrarCargo').checked,
+        mostrarLugar: document.getElementById('configMostrarLugar').checked,
+        mostrarDias: document.getElementById('configMostrarDias').checked,
+        mostrarInfoAdicional: document.getElementById('configMostrarInfoAdicional').checked
+    };
+    
+    // Crear objeto del evento
+    const newEvent = {
+        nombre,
+        descripcion,
+        ubicacion,
+        fechaInicio: new Date(fechaInicio).toISOString(),
+        fechaFin: new Date(fechaFin).toISOString(),
+        activo: document.getElementById('configActivo').checked,
+        configuracionJson: JSON.stringify(configuracion),
+        codigoAcceso: codigoAcceso,
+        codigoAdmin: codigoAdmin,
+        codigoStats: codigoStats,
+        permitirAccesoPostEvento: false
+    };
+    
+    showLoading();
+    
+    try {
+        const response = await authenticatedFetch(`${apiBaseUrl}/Event/create`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newEvent)
+        });
+        
+        if (!response) return;
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Error al crear evento: ${errorText}`);
+        }
+        
+        // Cerrar modal y recargar eventos
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createEventModal'));
+        modal.hide();
+        document.getElementById('createEventForm').reset();
+        
+        // Resetear previews
+        document.getElementById('previewNormal').textContent = 'tu_codigo';
+        document.getElementById('previewAdmin').textContent = 'tu_codigo + admin';
+        document.getElementById('previewStats').textContent = 'tu_codigo + stats';
+        
+        // Mostrar códigos generados con mejor formato
+        showCodesModal(nombre, codigoAcceso, codigoAdmin, codigoStats);
+        
+        fetchEvents();
+        
+    } catch (error) {
+        console.error('Error creating event:', error);
+        alert(`Error al crear el evento: ${error.message}`);
+    } finally {
+        hideLoading();
+    }
 };
 
-// Función para mostrar modal de código de evento
-const showEventCodeModal = (eventId, eventName) => {
+// Función para mostrar modal con códigos generados
+const showCodesModal = (eventName, codigoNormal, codigoAdmin, codigoStats) => {
     const modalHtml = `
-    <div class="modal fade" id="eventCodeModal" tabindex="-1">
+    <div class="modal fade" id="codesGeneratedModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">🔐 Acceso al Evento</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">✅ Evento Creado Exitosamente</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <h6>${eventName}</h6>
-                    <p class="text-muted">Para acceder a este evento, ingrese el código de acceso:</p>
-                    <div class="mb-3">
-                        <input type="text" class="form-control" id="eventCodeInput" 
-                               placeholder="Código de acceso" 
-                               style="text-align: center; font-size: 1.2rem; letter-spacing: 2px;">
+                    <h6 class="mb-3">Evento: <strong>${eventName}</strong></h6>
+                    <p class="text-muted mb-3">Códigos de acceso generados:</p>
+                    
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title text-primary">👥 Código Normal</h6>
+                                    <code class="fs-5">${codigoNormal}</code>
+                                    <p class="card-text"><small class="text-muted">Para personal general del evento</small></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title text-warning">⚙️ Código Admin</h6>
+                                    <code class="fs-5">${codigoAdmin}</code>
+                                    <p class="card-text"><small class="text-muted">Para organizadores (configuración + estadísticas)</small></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title text-info">📊 Código Estadísticas</h6>
+                                    <code class="fs-5">${codigoStats}</code>
+                                    <p class="card-text"><small class="text-muted">Solo para ver estadísticas (sin acreditar)</small></p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="codeError" class="alert alert-danger" style="display: none;"></div>
-                    <div class="mt-3">
-                        <small class="text-muted">
-                            <strong>Tipos de código:</strong><br>
-                            • Código normal: Acceso completo al evento<br>
-                            • Código admin: Configuración y estadísticas<br>
-                            • Código stats: Solo estadísticas
-                        </small>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>¡Importante!</strong> Guarda estos códigos en un lugar seguro. Los necesitarás para acceder al evento.
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="verifyEventCode(${eventId}, '${eventName}')">
-                        🚀 Ingresar al Evento
-                    </button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
                 </div>
             </div>
         </div>
     </div>`;
     
     // Remover modal anterior si existe
-    const existingModal = document.getElementById('eventCodeModal');
+    const existingModal = document.getElementById('codesGeneratedModal');
     if (existingModal) {
         existingModal.remove();
     }
@@ -488,196 +769,78 @@ const showEventCodeModal = (eventId, eventName) => {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     
     // Mostrar modal
-    const modal = new bootstrap.Modal(document.getElementById('eventCodeModal'));
+    const modal = new bootstrap.Modal(document.getElementById('codesGeneratedModal'));
     modal.show();
-    
-    // Focus en el input cuando se abre
-    document.getElementById('eventCodeInput').focus();
 };
 
-// Función para verificar código del evento
-const verifyEventCode = async (eventId, eventName) => {
-    const codigo = document.getElementById('eventCodeInput').value.trim();
-    
-    if (!codigo) {
-        showCodeError('Debe ingresar un código');
-        return;
-    }
-    
-    try {
-        const response = await authenticatedFetch(`${apiBaseUrl}/EventAccess/verificar-codigo`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ codigo: codigo })
-        });
-        
-        if (!response.ok) throw new Error('Error al verificar código');
-        
-        const result = await response.json();
-        
-        if (result.success && result.eventInfo && result.eventInfo.eventoId === eventId) {
-            // Código correcto, guardar acceso
-            const savedCodes = JSON.parse(localStorage.getItem('eventCodes') || '{}');
-            savedCodes[eventId] = {
-                codigo: codigo,
-                tipoAcceso: result.eventInfo.tipoAcceso,
-                permisos: {
-                    puedeAcreditar: result.eventInfo.puedeAcreditar,
-                    puedeEditarInvitados: result.eventInfo.puedeEditarInvitados,
-                    puedeVerEstadisticas: result.eventInfo.puedeVerEstadisticas,
-                    puedeConfigurar: result.eventInfo.puedeConfigurar
-                },
-                eventoEnFechas: result.eventInfo.eventoEnFechasValidas
-            };
-            localStorage.setItem('eventCodes', JSON.stringify(savedCodes));
-            
-            // Proceder al evento
-            localStorage.setItem('currentEventId', eventId);
-            localStorage.setItem('currentEventName', eventName);
-            localStorage.setItem('currentEventAccess', JSON.stringify(savedCodes[eventId]));
-            
-            // Cerrar modal y redirigir
-            bootstrap.Modal.getInstance(document.getElementById('eventCodeModal')).hide();
-            
-            // Redirigir según tipo de acceso
-            if (result.eventInfo.tipoAcceso === 'Stats') {
-                window.location.href = 'stats.html';
-            } else {
-                window.location.href = 'index.html';
-            }
-        } else {
-            showCodeError('Código inválido para este evento');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        showCodeError('Error al verificar el código');
-    }
-};
 
-const showCodeError = (message) => {
-    const errorDiv = document.getElementById('codeError');
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-    setTimeout(() => {
-        errorDiv.style.display = 'none';
-    }, 5000);
-};
-
-// Agregar evento Enter al input de código
-document.addEventListener('DOMContentLoaded', function() {
-    // ... tu código existente ...
-    
-    // Manejar Enter en el input de código cuando se crea el modal
-    document.addEventListener('keypress', function(e) {
-        if (e.target.id === 'eventCodeInput' && e.key === 'Enter') {
-            const eventId = localStorage.getItem('tempEventId');
-            const eventName = localStorage.getItem('tempEventName');
-            if (eventId && eventName) {
-                verifyEventCode(parseInt(eventId), eventName);
-            }
-        }
+const createEventBtn = document.getElementById('createEventBtn');
+if (createEventBtn) {
+    createEventBtn.addEventListener('click', () => {
+        const modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+        modal.show();
     });
-});
+}
 
-        // Función para crear un nuevo evento
-        const createEvent = async () => {
-            // Obtener datos del formulario
-            const nombre = document.getElementById('eventNombre').value;
-            const descripcion = document.getElementById('eventDescripcion').value;
-            const ubicacion = document.getElementById('eventUbicacion').value;
-            const fechaInicio = document.getElementById('eventFechaInicio').value;
-            const fechaFin = document.getElementById('eventFechaFin').value;
-            
-            // Validación básica
-            if (!nombre || !fechaInicio || !fechaFin) {
-                alert('Por favor complete los campos obligatorios: Nombre, Fecha de Inicio y Fecha de Fin');
-                return;
-            }
-            
-            // Crear configuración del evento
-            const configuracion = {
-                mostrarDni: document.getElementById('configMostrarDni').checked,
-                mostrarEmail: document.getElementById('configMostrarEmail').checked,
-                mostrarEmpresa: document.getElementById('configMostrarEmpresa').checked,
-                mostrarCategoria: document.getElementById('configMostrarCategoria').checked,
-                mostrarProfesion: document.getElementById('configMostrarProfesion').checked,
-                mostrarCargo: document.getElementById('configMostrarCargo').checked,
-                mostrarDias: document.getElementById('configMostrarDias').checked,
-                mostrarInfoAdicional: document.getElementById('configMostrarInfoAdicional').checked
-            };
-            
-            // Crear objeto del evento
-            const newEvent = {
-                nombre,
-                descripcion,
-                ubicacion,
-                fechaInicio: new Date(fechaInicio).toISOString(),
-                fechaFin: new Date(fechaFin).toISOString(),
-                activo: document.getElementById('configActivo').checked,
-                configuracion
-            };
-            
-            showLoading();
-            
-            try {
-                const response = await authenticatedFetch(`${apiBaseUrl}/Event/create`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(newEvent)
-                });
-                
-                if (!response) return; // Si hay redirección por token inválido
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Error al crear evento: ${errorText}`);
-                }
-                
-                // Cerrar modal y recargar eventos
-                $('#createEventModal').modal('hide');
-                document.getElementById('createEventForm').reset();
-                
-                alert('Evento creado exitosamente');
-                fetchEvents();
-                
-            } catch (error) {
-                console.error('Error creating event:', error);
-                alert(`Error al crear el evento: ${error.message}`);
-            } finally {
-                hideLoading();
-            }
-        };
+// Configurar evento para guardar nuevo evento
+const saveEventBtn = document.getElementById('saveEventBtn');
+if (saveEventBtn) {
+    saveEventBtn.addEventListener('click', createEvent);
+}
 
-        // Verificar autenticación y cargar eventos al iniciar
-        document.addEventListener('DOMContentLoaded', () => {
-            // Verificar si hay un token de autenticación
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            // Cargar información del usuario
-            loadUserInfo();
-            
-            // Cargar eventos
-            fetchEvents();
-            
-            // Configurar evento para botón de cerrar sesión
-            document.getElementById('logoutButton').addEventListener('click', logout);
-            
+    // Verificar autenticación y cargar eventos al iniciar
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        loadUserInfo();
+        fetchEvents();
+        
+        document.getElementById('logoutButton').addEventListener('click', logout);
+        
             // Configurar evento para botón de crear evento
-            document.getElementById('createEventBtn').addEventListener('click', () => {
-                $('#createEventModal').modal('show');
-            });
-            
-            // Configurar evento para guardar nuevo evento
-            document.getElementById('saveEventBtn').addEventListener('click', createEvent);
+    const createEventBtn = document.getElementById('createEventBtn');
+    if (createEventBtn) {
+        createEventBtn.addEventListener('click', () => {
+            const modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+            modal.show();
         });
-    </script>
+    }
+
+    const codigoBaseInput = document.getElementById('eventCodigoBase');
+if (codigoBaseInput) {
+    codigoBaseInput.addEventListener('input', function() {
+        const baseCode = this.value.toLowerCase().replace(/[^a-z0-9]/g, ''); // Solo letras y números
+        this.value = baseCode; // Actualizar el input limpio
+        
+        // Actualizar previews
+        document.getElementById('previewNormal').textContent = baseCode || 'tu_codigo';
+        document.getElementById('previewAdmin').textContent = (baseCode || 'tu_codigo') + 'admin';
+        document.getElementById('previewStats').textContent = (baseCode || 'tu_codigo') + 'stats';
+    });
+}
+
+    // Configurar evento para guardar nuevo evento
+    const saveEventBtn = document.getElementById('saveEventBtn');
+    if (saveEventBtn) {
+        saveEventBtn.addEventListener('click', createEvent);
+    }
+
+
+        // Manejar Enter en el input de código
+        document.addEventListener('keypress', function(e) {
+            if (e.target.id === 'eventCodeInput' && e.key === 'Enter') {
+                // Buscar los botones de verificar código
+                const verifyButton = document.querySelector('[onclick*="verifyEventCode"]');
+                if (verifyButton) {
+                    verifyButton.click();
+                }
+            }
+        });
+    });
+</script>
 </body>
 </html>

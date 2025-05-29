@@ -366,6 +366,10 @@ const logout = () => {
     localStorage.removeItem('userData');
     localStorage.removeItem('currentEventId');
     localStorage.removeItem('currentEventName');
+    localStorage.removeItem('isGlobalAdmin');
+    localStorage.removeItem('eventCodes');
+    localStorage.removeItem('currentEventAccess');
+
     window.location.href = 'login.html';
 };
 

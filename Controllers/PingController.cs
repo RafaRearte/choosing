@@ -12,5 +12,20 @@ namespace choosing.Controllers
         {
             return Ok("Pong");
         }
+
+        [HttpGet("server-time")]
+        public IActionResult GetServerTime()
+        {
+            var serverTime = DateTime.Now;
+            var utcTime = DateTime.UtcNow;
+
+            return Ok(new
+            {
+                ServerLocalTime = serverTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                ServerUTCTime = utcTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                TimeZone = TimeZoneInfo.Local.DisplayName,
+                TimeZoneId = TimeZoneInfo.Local.Id
+            });
+        }
     }
 }

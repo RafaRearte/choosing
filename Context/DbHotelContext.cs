@@ -80,6 +80,18 @@ public partial class DbHotelContext : DbContext
             entity.Property(e => e.Descripcion).HasMaxLength(500);
             entity.Property(e => e.Ubicacion).HasMaxLength(255);
             entity.Property(e => e.ConfiguracionJson);
+            entity.Property(e => e.CodigoAcceso)
+        .HasMaxLength(100)
+        .HasDefaultValue("");
+
+            entity.Property(e => e.CodigoAdmin)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.CodigoStats)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.PermitirAccesoPostEvento)
+                .HasDefaultValue(false);
         });
 
         OnModelCreatingPartial(modelBuilder);

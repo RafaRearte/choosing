@@ -62,17 +62,17 @@ namespace choosing.Controllers
 
             // Verificar fechas del evento
             var ahora = DateTime.Now;
-            var eventoEnFechas = ahora >= evento.FechaInicio && ahora <= evento.FechaFin.AddDays(1);
+            var eventoEnFechas = ahora >= evento.FechaInicio && ahora <= evento.FechaFin;
 
             // Si no está en fechas, solo admin con permiso especial puede acreditar
             if (!eventoEnFechas && tipoAcceso != "Admin")
             {
                 puedeAcreditar = false;
             }
-            else if (!eventoEnFechas && tipoAcceso == "Admin" && !evento.PermitirAccesoPostEvento)
-            {
-                puedeAcreditar = false;
-            }
+            //else if (!eventoEnFechas && tipoAcceso == "Admin" && !evento.PermitirAccesoPostEvento)
+            //{
+            //    puedeAcreditar = false;
+            //}
 
             return Ok(new
             {
