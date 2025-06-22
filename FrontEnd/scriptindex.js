@@ -1145,11 +1145,11 @@ const showGuestFound = (guest) => {
                 <button class="btn btn-success btn-lg" onclick="quickAccredit(${guest.id})">
                     <i class="bi bi-check-lg me-2"></i>Acreditar Ahora
                 </button>
-                <button class="btn btn-primary btn-lg" onclick="accreditAndPrint(${guest.id}, '${guest.nombre}', '${guest.apellido}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}')">
+                <button class="btn btn-primary btn-lg" onclick="accreditAndPrint(${guest.id}, '${guest.nombre}', '${guest.apellido}','${guest.telefono || ''}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}')">
                     <i class="bi bi-printer me-2"></i>Acreditar e Imprimir
                 </button>
             ` : `
-                <button class="btn btn-outline-primary btn-lg" onclick="printLabel(${guest.id}, '${guest.nombre}', '${guest.apellido}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}')">
+                <button class="btn btn-outline-primary btn-lg" onclick="printLabel(${guest.id}, '${guest.nombre}', '${guest.apellido}','${guest.telefono || ''}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}')">
                     <i class="bi bi-printer me-2"></i>Reimprimir Etiqueta
                 </button>
             `}
