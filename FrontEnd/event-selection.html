@@ -65,6 +65,11 @@
         <div class="container">
             <a class="navbar-brand" href="#">Sistema de Acreditación</a>
             <div>
+                <a href="admin-panel.html" class="btn btn-primary mt-3" id="adminSection" style="display: none;">
+                    <i class="bi bi-shield-check me-2"></i>Panel de Administración
+                </a>
+            </div>
+            <div>
                 <button type="button" id="logoutButton" class="btn btn-outline-danger">
                     <i class="bi bi-box-arrow-right me-1"></i>Cerrar Sesión
                 </button>
@@ -94,17 +99,7 @@
                 <p class="mt-2">Cargando eventos...</p>
             </div>
         </div>
-        
-        <!-- Crear Nuevo Evento (solo para administradores) -->
-        <div class="row mt-5" id="adminSection" style="display: none;">
-            <div class="col-12 text-center">
-                <hr class="my-4">
-                <h4>Administración de Eventos</h4>
-                <button id="createEventBtn" class="btn btn-primary mt-3">
-                    <i class="bi bi-plus-circle me-2"></i>Crear Nuevo Evento
-                </button>
-            </div>
-        </div>
+
     </div>
 
     <!-- Modal para Crear Evento -->
