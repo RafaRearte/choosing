@@ -133,12 +133,16 @@ const initializeDataTable = () => {
     if (config.mostrarLugar !== false) {
         optionalColumns.push({ data: 'lugar', title: 'Lugar' });
     }
-    
+    // Después de mostrarLugar
+    if (config.mostrarTelefono !== false) {
+        optionalColumns.push({ data: 'telefono', title: 'Teléfono' });
+    }
     // Si el evento tiene días específicos configurados, mostramos las columnas
     if (config.mostrarDias !== false) {
         optionalColumns.push(
             { data: 'dayOne', title: 'Día 1' },
-            { data: 'dayTwo', title: 'Día 2' }
+            { data: 'dayTwo', title: 'Día 2' },
+            { data: 'dayThree', title: 'Día 3' }
         );
     }
     
@@ -168,7 +172,7 @@ const accionesColumn = {
         
         // Botón de etiqueta (solo si puede acreditar)
         if (puedeHacerAccion('acreditar')) {
-            actions += `<button type="button" class="btn btn-secondary btn-sm" onclick="printLabel(${data.id}, '${data.nombre}', '${data.apellido}','${data.mail || ''}', '${data.dni || ''}', '${data.profesion || ''}', '${data.cargo || ''}', '${data.empresa || ''}')">Etiqueta</button>`;
+            actions += `<button type="button" class="btn btn-secondary btn-sm" onclick="printLabel(${data.id}, '${data.nombre}', '${data.apellido}','${data.telefono || ''}','${data.mail || ''}', '${data.dni || ''}', '${data.profesion || ''}', '${data.cargo || ''}', '${data.empresa || ''}')">Etiqueta</button>`;
         }
         
         // Botón de acreditar (solo si puede acreditar)
@@ -305,6 +309,8 @@ function mostrarModalConfiguracion(evento) {
     document.getElementById('configCargo').checked = configuracion.mostrarCargo !== false;
     document.getElementById('configDias').checked = configuracion.mostrarDias !== false;
     document.getElementById('configInfoAdicional').checked = configuracion.mostrarInfoAdicional !== false;
+    document.getElementById('configLugar').checked = configuracion.mostrarLugar !== false;
+    document.getElementById('configTelefono').checked = configuracion.mostrarTelefono !== false;
     
     // Mostrar el modal
     const modalInstance = new bootstrap.Modal(document.getElementById('configModal'));
@@ -322,7 +328,8 @@ function guardarConfiguracion(eventoId) {
         mostrarCargo: document.getElementById('configCargo').checked,
         mostrarLugar: document.getElementById('configLugar').checked,
         mostrarDias: document.getElementById('configDias').checked,
-        mostrarInfoAdicional: document.getElementById('configInfoAdicional').checked
+        mostrarInfoAdicional: document.getElementById('configInfoAdicional').checked,
+        mostrarTelefono: document.getElementById('configTelefono').checked
     };
     
     // Guardar configuración directamente usando endpoint específico
@@ -396,10 +403,12 @@ const openEditModal = async (id) => {
         document.getElementById('editGuestProfesion').value = guest.profesion || '';
         document.getElementById('editGuestCargo').value = guest.cargo || '';
         document.getElementById('editGuestLugar').value = guest.lugar || '';
+        document.getElementById('editGuestTelefono').value = guest.telefono || '';
         
         // Configurar los checkboxes de días según los valores
         document.getElementById('editGuestDayOne').checked = guest.dayOne === 'SI';
         document.getElementById('editGuestDayTwo').checked = guest.dayTwo === 'SI';
+        document.getElementById('editGuestDayThree').checked = guest.dayThree === 'SI';
         
         document.getElementById('editGuestInfoAdicional').value = guest.infoAdicional || '';
         document.getElementById('editGuestAcreditado').checked = guest.acreditado > 0;
@@ -454,6 +463,10 @@ const configurarCamposModal = (modalType, config) => {
     // Lugar
     document.getElementById(`${prefix}GuestLugarGroup`).style.display = 
         config?.mostrarLugar !== false ? 'block' : 'none';
+
+    // Teléfono
+    document.getElementById(`${prefix}GuestTelefonoGroup`).style.display = 
+        config?.mostrarTelefono !== false ? 'block' : 'none';
     
     // Días de asistencia
     document.getElementById(`${prefix}GuestDiasGroup`).style.display = 
@@ -483,8 +496,10 @@ const saveEditedGuest = async () => {
     const profesion = document.getElementById('editGuestProfesion').value;
     const cargo = document.getElementById('editGuestCargo').value;
     const lugar = document.getElementById('editGuestLugar').value;
+    const telefono = document.getElementById('editGuestTelefono').value;
     const dayOne = document.getElementById('editGuestDayOne').checked ? 'SI' : 'NO';
     const dayTwo = document.getElementById('editGuestDayTwo').checked ? 'SI' : 'NO';
+    const dayThree = document.getElementById('editGuestDayThree').checked ? 'SI' : 'NO';
     const infoAdicional = document.getElementById('editGuestInfoAdicional').value;
     const acreditado = document.getElementById('editGuestAcreditado').checked ? 1 : 0;
     
@@ -506,8 +521,10 @@ const saveEditedGuest = async () => {
         profesion: profesion,
         cargo: cargo,
         lugar: lugar,
+        telefono: telefono,
         dayOne: dayOne,
         dayTwo: dayTwo,
+        dayThree: dayThree,
         infoAdicional: infoAdicional,
         acreditado: acreditado,
         eventoId: parseInt(currentEventId)
@@ -676,8 +693,10 @@ const saveNewGuest = async () => {
     const profesion = document.getElementById("newGuestProfesion").value;
     const cargo = document.getElementById("newGuestCargo").value;
     const lugar = document.getElementById("newGuestLugar").value;
+    const telefono = document.getElementById("newGuestTelefono").value;
     const dayOne = document.getElementById("newGuestDayOne").checked ? "SI" : "NO";
     const dayTwo = document.getElementById("newGuestDayTwo").checked ? "SI" : "NO";
+    const dayThree = document.getElementById("newGuestDayThree").checked ? "SI" : "NO";
     const infoAdicional = document.getElementById("newGuestInfoAdicional").value;
 
     // Validación básica
@@ -697,8 +716,10 @@ const saveNewGuest = async () => {
         profesion,
         cargo,
         lugar,
+        telefono,
         dayOne,
         dayTwo,
+        dayThree,
         infoAdicional,
         acreditado: 0,
         eventoId: parseInt(currentEventId),
@@ -813,7 +834,7 @@ const loadFilteredData = async (url) => {
 };
 
 // Imprimir etiqueta y acreditar invitado
-const printLabel = async (id,nombre, apellido,email, dni, profesion, cargo, empresa) => {
+const printLabel = async (id,nombre, apellido,telefono,email, dni, profesion, cargo, empresa) => {
     try {
         // Si hay id, acreditar al invitado
         if (id) {
@@ -839,6 +860,7 @@ ORG:${empresa || ''}
 TITLE:${profesion || ''}
 EMAIL:${email}
 NOTE:DNI: ${dni || ''} 
+TEL:${telefono || ''}
 END:VCARD`;
         
 // Generar QR usando la nueva biblioteca
@@ -866,6 +888,7 @@ END:VCARD`;
                 <div style="font-weight: bold; font-size: 16pt; margin-bottom: 2px;">${nombre} ${apellido}</div>
                 <div style="font-size: 12pt; margin-bottom: 1px;">${empresa || ''}</div>
                 <div style="font-size: 12pt; margin-bottom: 1px;">${cargo || ''}</div>
+                ${telefono ? `<div style="font-size: 10pt;">Teléfono: ${telefono}</div>` : ''}
                 ${dni ? `<div style="font-size: 10pt;">DNI: ${dni}</div>` : ''}
             </div>
             <div style="margin-right: 5mm; width: 20mm; height: 20mm;">
@@ -1177,10 +1200,10 @@ const quickAccredit = async (guestId) => {
 };
 
 // Acreditar e imprimir
-const accreditAndPrint = async (id, nombre, apellido, dni, profesion, cargo, empresa) => {
+const accreditAndPrint = async (id, nombre, apellido,telefono, dni, profesion, cargo, empresa) => {
     await quickAccredit(id);
     setTimeout(() => {
-        printLabel(id, nombre, apellido, dni, profesion, cargo, empresa);
+        printLabel(id, nombre, apellido,telefono, dni, profesion, cargo, empresa);
     }, 500);
 };
 

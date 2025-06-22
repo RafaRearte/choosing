@@ -272,6 +272,11 @@
                             <label for="newGuestLugar" class="form-label">Lugar</label>
                             <input type="text" class="form-control" id="newGuestLugar">
                         </div>
+
+                        <div class="mb-3" id="newGuestTelefonoGroup">
+                            <label for="newGuestTelefono" class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="newGuestTelefono">
+                        </div>
                         
                         <!-- Días de asistencia (opcional según configuración) -->
                         <div class="mb-3" id="newGuestDiasGroup">
@@ -283,6 +288,10 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="newGuestDayTwo">
                                 <label class="form-check-label" for="newGuestDayTwo">Día 2</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="newGuestDayThree">
+                                <label class="form-check-label" for="newGuestDayThree">Día 2</label>
                             </div>
                         </div>
                         
@@ -367,6 +376,10 @@
                                 <input class="form-check-input" type="checkbox" id="editGuestDayTwo">
                                 <label class="form-check-label" for="editGuestDayTwo">Día 2</label>
                             </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="editGuestDayThree">
+                                <label class="form-check-label" for="editGuestDayThree">Día 3</label>
+                            </div>
                         </div>
                         
                         <!-- Información adicional (opcional según configuración) -->
@@ -380,6 +393,11 @@
                             <input type="text" class="form-control" id="editGuestLugar">
                         </div>
                         
+                        <div class="mb-3" id="editGuestTelefonoGroup">
+                            <label for="editGuestTelefono" class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="editGuestTelefono">
+                        </div>    
+
                         <!-- Estado de acreditación -->
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="editGuestAcreditado">
@@ -443,8 +461,12 @@
                             <label class="form-check-label" for="configLugar">Lugar</label>
                         </div>
                         <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configTelefono" checked>
+                            <label class="form-check-label" for="configTelefono">Telefono</label>
+                        </div>
+                        <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" id="configDias" checked>
-                            <label class="form-check-label" for="configDias">Días (Día 1/Día 2)</label>
+                            <label class="form-check-label" for="configDias">Días (Día 1/Día 2/Día 3)</label>
                         </div>
                         <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" id="configInfoAdicional" checked>
