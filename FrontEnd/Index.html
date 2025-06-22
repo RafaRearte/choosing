@@ -128,6 +128,10 @@
                 <span id="new" class="badge bg-info counter-badge" data-endpoint="GetNuevos">Nuevos: 0</span>
             </div>
             <div class="d-flex">
+                <!-- Botón de escaneo en la navbar -->
+                <button type="button" class="btn btn-warning me-2 d-flex align-items-center justify-content-center" id="scanModeBtn">
+                    <i class="bi bi-upc-scan me-2"></i> Escanear
+                </button>
                 <button type="button" class="btn btn-primary me-2 d-flex align-items-center justify-content-center open-add-guest-btn" data-bs-toggle="modal" data-bs-target="#addGuestModal">
                     <i class="bi bi-person-plus me-2"></i> Nuevo Invitado
                 </button>
@@ -457,6 +461,66 @@
     </div>
 </div>
 
+<!-- Modal de Escaneo -->
+<div class="modal fade" id="scanModal" tabindex="-1" aria-labelledby="scanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="scanModalLabel">
+                    <i class="bi bi-upc-scan me-2"></i>Modo Escaneo Activo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <div class="spinner-border text-primary" role="status" id="scanSpinner">
+                        <span class="visually-hidden">Esperando escaneo...</span>
+                    </div>
+                    <h4 class="mt-3">Esperando escaneo...</h4>
+                    <p class="text-muted">Escanee un código QR o DNI con la lectora</p>
+                </div>
+                
+                <!-- Campo oculto que recibe el input de la lectora -->
+                <input type="text" id="scanInput" class="form-control" 
+                       placeholder="Los datos del escaneo aparecerán aquí..." 
+                       style="font-size: 1.2rem; text-align: center;">
+                
+                <!-- Resultado del escaneo -->
+                <div id="scanResult" class="mt-4" style="display: none;">
+                    <!-- Aquí se mostrará la info del invitado -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Acreditación -->
+<div class="modal fade" id="accreditConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Acreditación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                <!-- Datos del invitado -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="confirmAccreditBtn">
+                    <i class="bi bi-check-lg me-1"></i> Acreditar
+                </button>
+                <button type="button" class="btn btn-primary" id="accreditAndPrintBtn">
+                    <i class="bi bi-printer me-1"></i> Acreditar e Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Agregar Bootstrap Icons para los iconos de edición -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
@@ -468,6 +532,10 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <!-- PrintJS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/print-js/1.6.0/print.min.js"></script>
+<!-- biblioteca qr -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<!-- ✅ CDN MÁS CONFIABLE -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 
 <script src="scriptindex.js"></script>
 </body>

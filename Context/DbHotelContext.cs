@@ -49,6 +49,9 @@ public partial class DbHotelContext : DbContext
             entity.Property(e => e.DayTwo)
                 .HasMaxLength(255)
                 .HasColumnName("day_two");
+            entity.Property(e => e.DayThree)
+                .HasMaxLength(255)
+                .HasColumnName("day_three");
             entity.Property(e => e.InfoAdicional)
                 .HasMaxLength(255)
                 .HasColumnName("info_adicional");
@@ -70,6 +73,7 @@ public partial class DbHotelContext : DbContext
             entity.Property(e => e.Lugar)
                         .HasMaxLength(255)
                         .HasColumnName("lugar");
+            entity.Property(e => e.Telefono).HasMaxLength(50).HasColumnName("telefono");
         });
 
         modelBuilder.Entity<EventModel>(entity =>

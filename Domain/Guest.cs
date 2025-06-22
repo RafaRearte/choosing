@@ -23,6 +23,8 @@ namespace choosing.Domain
 
         public string? DayTwo { get; set; }
 
+        public string? DayThree { get; set; }
+
         public int? CantEntradas { get; set; }
 
         public int? Acreditado { get; set; }
@@ -42,6 +44,8 @@ namespace choosing.Domain
         public string? Empresa { get; set; }
 
         public string? Lugar { get; set; }
+
+        public string? Telefono { get; set; }
     }
 }
 

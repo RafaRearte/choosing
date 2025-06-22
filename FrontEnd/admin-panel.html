@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Sistema de Acreditación</title>
+    <link rel="icon" href="./images/icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/icon.png">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+    
+    <style>
+        .admin-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+        .admin-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd;
+        }
+        #loadingIndicator {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .badge-status {
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-shield-check me-2"></i>Panel de Administración
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="event-selection.html">
+                    <i class="bi bi-arrow-left me-1"></i>Volver a Eventos
+                </a>
+                <button type="button" id="logoutButton" class="btn btn-outline-light ms-2">
+                    <i class="bi bi-box-arrow-right me-1"></i>Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator">Cargando...</div>
+
+    <!-- Main Content -->
+    <div class="container-fluid my-4">
+        <!-- Stats Dashboard -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card admin-card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-calendar-event display-4"></i>
+                        <h5 class="card-title mt-2">Eventos</h5>
+                        <p class="stats-number text-white" id="totalEvents">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card admin-card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-people display-4"></i>
+                        <h5 class="card-title mt-2">Usuarios</h5>
+                        <p class="stats-number text-white" id="totalUsers">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card admin-card bg-info text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-person-check display-4"></i>
+                        <h5 class="card-title mt-2">Invitados</h5>
+                        <p class="stats-number text-white" id="totalGuests">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card admin-card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-check-circle display-4"></i>
+                        <h5 class="card-title mt-2">Acreditados</h5>
+                        <p class="stats-number text-white" id="totalAccredited">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-pills mb-4" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="events-tab" data-bs-toggle="pill" data-bs-target="#events" type="button" role="tab">
+                    <i class="bi bi-calendar-event me-2"></i>Gestión de Eventos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="users-tab" data-bs-toggle="pill" data-bs-target="#users" type="button" role="tab">
+                    <i class="bi bi-people me-2"></i>Gestión de Usuarios
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="settings-tab" data-bs-toggle="pill" data-bs-target="#settings" type="button" role="tab">
+                    <i class="bi bi-gear me-2"></i>Configuración
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="adminTabContent">
+            <!-- EVENTOS TAB -->
+            <div class="tab-pane fade show active" id="events" role="tabpanel">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-calendar-event me-2"></i>Gestión de Eventos
+                                </h5>
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEventModal">
+                                    <i class="bi bi-plus-circle me-1"></i>Nuevo Evento
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-container">
+                                    <table id="eventsTable" class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Nombre</th>
+                                                <th>Fecha Inicio</th>
+                                                <th>Fecha Fin</th>
+                                                <th>Ubicación</th>
+                                                <th>Estado</th>
+                                                <th>Invitados</th>
+                                                <th>Acreditados</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="eventsTableBody">
+                                            <!-- Data loaded via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- USUARIOS TAB -->
+            <div class="tab-pane fade" id="users" role="tabpanel">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-people me-2"></i>Gestión de Usuarios
+                                </h5>
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                                    <i class="bi bi-person-plus me-1"></i>Nuevo Usuario
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-container">
+                                    <table id="usersTable" class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Usuario</th>
+                                                <th>Email</th>
+                                                <th>Fecha Registro</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="usersTableBody">
+                                            <!-- Data loaded via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONFIGURACIÓN TAB -->
+            <div class="tab-pane fade" id="settings" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-gear me-2"></i>Configuración Global
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Configuraciones del Sistema</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enableRegistration" checked>
+                                        <label class="form-check-label" for="enableRegistration">
+                                            Permitir registro público
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enableNotifications" checked>
+                                        <label class="form-check-label" for="enableNotifications">
+                                            Notificaciones por email
+                                        </label>
+                                    </div>
+                                </div>
+                                <button class="btn btn-success">
+                                    <i class="bi bi-check-circle me-1"></i>Guardar Configuración
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-info-circle me-2"></i>Información del Sistema
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Versión:</strong> 1.0.0</p>
+                                <p><strong>Base de Datos:</strong> SQL Server</p>
+                                <p><strong>Última Actualización:</strong> <span id="lastUpdate">--</span></p>
+                                <p><strong>Estado:</strong> <span class="badge bg-success">Operativo</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Crear Evento -->
+    <div class="modal fade" id="createEventModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-calendar-plus me-2"></i>Crear Nuevo Evento
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createEventForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="eventName" class="form-label">Nombre del Evento</label>
+                                <input type="text" class="form-control" id="eventName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="eventLocation" class="form-label">Ubicación</label>
+                                <input type="text" class="form-control" id="eventLocation">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="eventDescription" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="eventStartDate" class="form-label">Fecha de Inicio</label>
+                                <input type="datetime-local" class="form-control" id="eventStartDate" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="eventEndDate" class="form-label">Fecha de Fin</label>
+                                <input type="datetime-local" class="form-control" id="eventEndDate" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="eventCodeAccess" class="form-label">Código de Acceso</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="eventCodeAccess" required>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="generateCode('eventCodeAccess')">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="eventCodeAdmin" class="form-label">Código Admin</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="eventCodeAdmin">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="generateCode('eventCodeAdmin')">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="eventCodeStats" class="form-label">Código Stats</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="eventCodeStats">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="generateCode('eventCodeStats')">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="eventActive" checked>
+                            <label class="form-check-label" for="eventActive">
+                                Evento activo
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="createEvent()">
+                        <i class="bi bi-check-circle me-1"></i>Crear Evento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Editar Evento -->
+    <div class="modal fade" id="editEventModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square me-2"></i>Editar Evento
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editEventForm">
+                        <input type="hidden" id="editEventId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editEventName" class="form-label">Nombre del Evento</label>
+                                <input type="text" class="form-control" id="editEventName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editEventLocation" class="form-label">Ubicación</label>
+                                <input type="text" class="form-control" id="editEventLocation">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEventDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="editEventDescription" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editEventStartDate" class="form-label">Fecha de Inicio</label>
+                                <input type="datetime-local" class="form-control" id="editEventStartDate" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editEventEndDate" class="form-label">Fecha de Fin</label>
+                                <input type="datetime-local" class="form-control" id="editEventEndDate" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="editEventCodeAccess" class="form-label">Código de Acceso</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="editEventCodeAccess">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="generateCode('editEventCodeAccess')">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="editEventCodeAdmin" class="form-label">Código Admin</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="editEventCodeAdmin">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="generateCode('editEventCodeAdmin')">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="editEventCodeStats" class="form-label">Código Stats</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="editEventCodeStats">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="generateCode('editEventCodeStats')">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editEventActive">
+                            <label class="form-check-label" for="editEventActive">
+                                Evento activo
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger me-auto" onclick="deleteEvent()">
+                        <i class="bi bi-trash me-1"></i>Eliminar
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="updateEvent()">
+                        <i class="bi bi-check-circle me-1"></i>Actualizar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Crear Usuario -->
+    <div class="modal fade" id="createUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-plus me-2"></i>Crear Nuevo Usuario
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createUserForm">
+                        <div class="mb-3">
+                            <label for="userName" class="form-label">Nombre de Usuario</label>
+                            <input type="text" class="form-control" id="userName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="userEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userPassword" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" id="userPassword" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="createUser()">
+                        <i class="bi bi-check-circle me-1"></i>Crear Usuario
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Editar Usuario -->
+    <div class="modal fade" id="editUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square me-2"></i>Editar Usuario
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId">
+                        <div class="mb-3">
+                            <label for="editUserName" class="form-label">Nombre de Usuario</label>
+                            <input type="text" class="form-control" id="editUserName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editUserEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editUserEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editUserPassword" class="form-label">Nueva Contraseña (opcional)</label>
+                            <input type="password" class="form-control" id="editUserPassword">
+                            <div class="form-text">Deja en blanco para mantener la contraseña actual</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger me-auto" onclick="deleteUser()">
+                        <i class="bi bi-trash me-1"></i>Eliminar
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="updateUser()">
+                        <i class="bi bi-check-circle me-1"></i>Actualizar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <p>&copy; 2025 - Panel de Administración - Sistema de Acreditación</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    
+    <script>
+        // Constantes
+        const apiBaseUrl = "https://choosing-rafa.duckdns.org/api";
+        let eventsDataTable, usersDataTable;
+
+        // Funciones de utilidad
+        const showLoading = () => document.getElementById('loadingIndicator').style.display = 'block';
+        const hideLoading = () => document.getElementById('loadingIndicator').style.display = 'none';
+
+        const authenticatedFetch = async (url, options = {}) => {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = 'login.html';
+                return null;
+            }
+            
+            const headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${token}`
+            };
+            
+            try {
+                const response = await fetch(url, { ...options, headers });
+                if (response.status === 401) {
+                    alert('Sesión expirada. Por favor inicie sesión nuevamente.');
+                    logout();
+                    return null;
+                }
+                return response;
+            } catch (error) {
+                console.error('Error en la petición:', error);
+                throw error;
+            }
+        };
+
+        const logout = () => {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('currentEventId');
+            localStorage.removeItem('currentEventName');
+            window.location.href = 'login.html';
+        };
+
+        // Generar código aleatorio
+        const generateCode = (inputId) => {
+            const code = Math.random().toString(36).substr(2, 8).toUpperCase();
+            document.getElementById(inputId).value = code;
+        };
+
+        // Cargar estadísticas del dashboard
+        const loadDashboardStats = async () => {
+            try {
+                // Total de eventos
+                const eventsResponse = await authenticatedFetch(`${apiBaseUrl}/Event/GetAllWithStats`);
+                if (eventsResponse && eventsResponse.ok) {
+                    const events = await eventsResponse.json();
+                    document.getElementById('totalEvents').textContent = events.length;
+                    
+                    // Calcular total de invitados y acreditados
+                    const totalGuests = events.reduce((sum, event) => sum + (event.stats?.totalInvitados || 0), 0);
+                    const totalAccredited = events.reduce((sum, event) => sum + (event.stats?.acreditados || 0), 0);
+                    
+                    document.getElementById('totalGuests').textContent = totalGuests;
+                    document.getElementById('totalAccredited').textContent = totalAccredited;
+                }
+
+                // Total de usuarios
+                const usersResponse = await authenticatedFetch(`${apiBaseUrl}/Auth/users`);
+                if (usersResponse && usersResponse.ok) {
+                    const users = await usersResponse.json();
+                    document.getElementById('totalUsers').textContent = users.length;
+                }
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+            }
+        };
+
+        // Cargar eventos
+        const loadEvents = async () => {
+            try {
+                const response = await authenticatedFetch(`${apiBaseUrl}/Event/GetAllWithStats`);
+                if (!response || !response.ok) return;
+                
+                const events = await response.json();
+                
+                if (eventsDataTable) {
+                    eventsDataTable.destroy();
+                }
+                
+                const tableBody = document.getElementById('eventsTableBody');
+                tableBody.innerHTML = '';
+                
+                events.forEach(event => {
+                    const row = `
+                        <tr>
+                            <td>${event.id}</td>
+                            <td>${event.nombre}</td>
+                            <td>${new Date(event.fechaInicio).toLocaleDateString()}</td>
+                            <td>${new Date(event.fechaFin).toLocaleDateString()}</td>
+                            <td>${event.ubicacion || '-'}</td>
+                            <td>
+                                <span class="badge ${event.activo ? 'bg-success' : 'bg-secondary'} badge-status">
+                                    ${event.activo ? 'Activo' : 'Inactivo'}
+                                </span>
+                            </td>
+                            <td><span class="badge bg-primary">${event.stats?.totalInvitados || 0}</span></td>
+                            <td><span class="badge bg-success">${event.stats?.acreditados || 0}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="editEvent(${event.id})" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-${event.activo ? 'warning' : 'success'}" onclick="toggleEventStatus(${event.id})" title="${event.activo ? 'Desactivar' : 'Activar'}">
+                                    <i class="bi bi-${event.activo ? 'pause' : 'play'}"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="duplicateEvent(${event.id})" title="Duplicar">
+                                    <i class="bi bi-files"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+                
+                eventsDataTable = $('#eventsTable').DataTable({
+                    language: {
+                        url: "//cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json"
+                    },
+                    pageLength: 10,
+                    order: [[0, 'desc']]
+                });
+                
+            } catch (error) {
+                console.error('Error loading events:', error);
+            }
+        };
+
+        // Cargar usuarios
+        const loadUsers = async () => {
+            try {
+                const response = await authenticatedFetch(`${apiBaseUrl}/Auth/users`);
+                if (!response || !response.ok) return;
+                
+                const users = await response.json();
+                
+                if (usersDataTable) {
+                    usersDataTable.destroy();
+                }
+                
+                const tableBody = document.getElementById('usersTableBody');
+                tableBody.innerHTML = '';
+                
+                users.forEach(user => {
+                    const row = `
+                        <tr>
+                            <td>${user.id}</td>
+                            <td>${user.username}</td>
+                            <td>${user.email}</td>
+                            <td>-</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="editUser(${user.id})" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="confirmDeleteUser(${user.id}, '${user.username}')" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+                
+                usersDataTable = $('#usersTable').DataTable({
+                    language: {
+                        url: "//cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json"
+                    },
+                    pageLength: 10,
+                    order: [[0, 'desc']]
+                });
+                
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        };
+
+        // Crear evento
+        const createEvent = async () => {
+            const eventData = {
+                nombre: document.getElementById('eventName').value,
+                descripcion: document.getElementById('eventDescription').value,
+                ubicacion: document.getElementById('eventLocation').value,
+                fechaInicio: new Date(document.getElementById('eventStartDate').value).toISOString(),
+                fechaFin: new Date(document.getElementById('eventEndDate').value).toISOString(),
+                activo: document.getElementById('eventActive').checked,
+                codigoAcceso: document.getElementById('eventCodeAccess').value,
+                codigoAdmin: document.getElementById('eventCodeAdmin').value,
+                codigoStats: document.getElementById('eventCodeStats').value,
+                permitirAccesoPostEvento: false
+            };
+
+            if (!eventData.nombre || !eventData.fechaInicio || !eventData.fechaFin) {
+                alert('Por favor complete los campos obligatorios');
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await authenticatedFetch(`${apiBaseUrl}/Event/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(eventData)
+                });
+
+                if (response && response.ok) {
+                    alert('Evento creado exitosamente');
+                    $('#createEventModal').modal('hide');
+                    document.getElementById('createEventForm').reset();
+                    loadEvents();
+                    loadDashboardStats();
+                } else {
+                    const error = await response.text();
+                    alert(`Error: ${error}`);
+                }
+            } catch (error) {
+                console.error('Error creating event:', error);
+                alert('Error al crear el evento');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // Editar evento
+        const editEvent = async (id) => {
+            try {
+                const response = await authenticatedFetch(`${apiBaseUrl}/Event/${id}`);
+                if (!response || !response.ok) return;
+                
+                const event = await response.json();
+                
+                document.getElementById('editEventId').value = event.id;
+                document.getElementById('editEventName').value = event.nombre;
+                document.getElementById('editEventDescription').value = event.descripcion || '';
+                document.getElementById('editEventLocation').value = event.ubicacion || '';
+                document.getElementById('editEventStartDate').value = new Date(event.fechaInicio).toISOString().slice(0, 16);
+                document.getElementById('editEventEndDate').value = new Date(event.fechaFin).toISOString().slice(0, 16);
+                document.getElementById('editEventActive').checked = event.activo;
+                document.getElementById('editEventCodeAccess').value = event.codigoAcceso || '';
+                document.getElementById('editEventCodeAdmin').value = event.codigoAdmin || '';
+                document.getElementById('editEventCodeStats').value = event.codigoStats || '';
+                
+                $('#editEventModal').modal('show');
+            } catch (error) {
+                console.error('Error loading event:', error);
+            }
+        };
+
+        // Actualizar evento
+        const updateEvent = async () => {
+            const id = document.getElementById('editEventId').value;
+            const eventData = {
+                id: parseInt(id),
+                nombre: document.getElementById('editEventName').value,
+                descripcion: document.getElementById('editEventDescription').value,
+                ubicacion: document.getElementById('editEventLocation').value,
+                fechaInicio: new Date(document.getElementById('editEventStartDate').value).toISOString(),
+                fechaFin: new Date(document.getElementById('editEventEndDate').value).toISOString(),
+                activo: document.getElementById('editEventActive').checked,
+                codigoAcceso: document.getElementById('editEventCodeAccess').value,
+                codigoAdmin: document.getElementById('editEventCodeAdmin').value,
+                codigoStats: document.getElementById('editEventCodeStats').value,
+                permitirAccesoPostEvento: false
+            };
+
+            showLoading();
+            try {
+                const response = await authenticatedFetch(`${apiBaseUrl}/Event/update/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(eventData)
+                });
+
+                if (response && response.ok) {
+                    alert('Evento actualizado exitosamente');
+                    $('#editEventModal').modal('hide');
+                    loadEvents();
+                    loadDashboardStats();
+                } else {
+                    const error = await response.text();
+                    alert(`Error: ${error}`);
+                }
+            } catch (error) {
+                console.error('Error updating event:', error);
+                alert('Error al actualizar el evento');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // Eliminar evento
+        const deleteEvent = async () => {
+            const id = document.getElementById('editEventId').value;
+            const name = document.getElementById('editEventName').value;
+            
+            if (!confirm(`¿Está seguro que desea eliminar el evento "${name}"? Esta acción no se puede deshacer.`)) {
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await authenticatedFetch(`${apiBaseUrl}/Event/delete/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response && response.ok) {
+                    alert('Evento eliminado exitosamente');
+                    $('#editEventModal').modal('hide');
+                    loadEvents();
+                    loadDashboardStats();
+                } else {
+                    const error = await response.text();
+                    alert(`Error: ${error}`);
+                }
+            } catch (error) {
+                console.error('Error deleting event:', error);
+                alert('Error al eliminar el evento');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // Toggle estado del evento
+        const toggleEventStatus = async (id) => {
+            showLoading();
+            try {
+                const response = await authenticatedFetch(`${apiBaseUrl}/Event/toggle-active/${id}`, {
+                    method: 'PUT'
+                });
+
+                if (response && response.ok) {
+                    loadEvents();
+                    loadDashboardStats();
+                } else {
+                    const error = await response.text();
+                    alert(`Error: ${error}`);
+                }
+            } catch (error) {
+                console.error('Error toggling event status:', error);
+                alert('Error al cambiar el estado del evento');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // Duplicar evento
+        const duplicateEvent = async (id) => {
+            const newName = prompt('Ingrese el nombre para el nuevo evento:');
+            if (!newName) return;
+
+            const startDate = prompt('Ingrese la fecha de inicio (YYYY-MM-DD):');
+            if (!startDate) return;
+
+            const endDate = prompt('Ingrese la fecha de fin (YYYY-MM-DD):');
+            if (!endDate) return;
+
+            const duplicateData = {
+                nuevoNombre: newName,
+                nuevaFechaInicio: new Date(startDate).toISOString(),
+                nuevaFechaFin: new Date(endDate).toISOString()
+            };
+
+            showLoading();
+            try {
+                const response = await authenticatedFetch(`${apiBaseUrl}/Event/duplicate/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(duplicateData)
+                });
+
+                if (response && response.ok) {
+                    alert('Evento duplicado exitosamente');
+                    loadEvents();
+                    loadDashboardStats();
+                } else {
+                    const error = await response.text();
+                    alert(`Error: ${error}`);
+                }
+            } catch (error) {
+                console.error('Error duplicating event:', error);
+                alert('Error al duplicar el evento');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // Crear usuario
+        const createUser = async () => {
+            const userData = {
+                username: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                password: document.getElementById('userPassword').value
+            };
+
+            if (!userData.username || !userData.email || !userData.password) {
+                alert('Por favor complete todos los campos');
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await authenticatedFetch(`${apiBaseUrl}/Auth/registro`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                if (response && response.ok) {
+                    alert('Usuario creado exitosamente');
+                    $('#createUserModal').modal('hide');
+                    document.getElementById('createUserForm').reset();
+                    loadUsers();
+                    loadDashboardStats();
+                } else {
+                    const error = await response.text();
+                    alert(`Error: ${error}`);
+                }
+            } catch (error) {
+                console.error('Error creating user:', error);
+                alert('Error al crear el usuario');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // Editar usuario
+        const editUser = async (id) => {
+            try {
+                const response = await authenticatedFetch(`${apiBaseUrl}/Auth/users/${id}`);
+                if (!response || !response.ok) return;
+                
+                const user = await response.json();
+                
+                document.getElementById('editUserId').value = user.id;
+                document.getElementById('editUserName').value = user.username;
+                document.getElementById('editUserEmail').value = user.email;
+                document.getElementById('editUserPassword').value = '';
+                
+                $('#editUserModal').modal('show');
+            } catch (error) {
+                console.error('Error loading user:', error);
+            }
+        };
+
+        // Actualizar usuario
+        const updateUser = async () => {
+            const id = document.getElementById('editUserId').value;
+            const userData = {
+                username: document.getElementById('editUserName').value,
+                email: document.getElementById('editUserEmail').value,
+                password: document.getElementById('editUserPassword').value || undefined
+            };
+
+            showLoading();
+            try {
+                const response = await authenticatedFetch(`${apiBaseUrl}/Auth/users/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                if (response && response.ok) {
+                    alert('Usuario actualizado exitosamente');
+                    $('#editUserModal').modal('hide');
+                    loadUsers();
+                } else {
+                    const error = await response.text();
+                    alert(`Error: ${error}`);
+                }
+            } catch (error) {
+                console.error('Error updating user:', error);
+                alert('Error al actualizar el usuario');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // Confirmar eliminar usuario
+        const confirmDeleteUser = (id, username) => {
+            if (confirm(`¿Está seguro que desea eliminar el usuario "${username}"? Esta acción no se puede deshacer.`)) {
+                deleteUserById(id);
+            }
+        };
+
+        // Eliminar usuario
+        const deleteUserById = async (id) => {
+            showLoading();
+            try {
+                const response = await authenticatedFetch(`${apiBaseUrl}/Auth/users/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response && response.ok) {
+                    alert('Usuario eliminado exitosamente');
+                    loadUsers();
+                    loadDashboardStats();
+                } else {
+                    const error = await response.text();
+                    alert(`Error: ${error}`);
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Error al eliminar el usuario');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // Eliminar usuario desde modal
+        const deleteUser = async () => {
+            const id = document.getElementById('editUserId').value;
+            const username = document.getElementById('editUserName').value;
+            
+            if (confirm(`¿Está seguro que desea eliminar el usuario "${username}"? Esta acción no se puede deshacer.`)) {
+                await deleteUserById(id);
+                $('#editUserModal').modal('hide');
+            }
+        };
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            // Verificar autenticación
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Generar códigos iniciales
+            generateCode('eventCodeAccess');
+            generateCode('eventCodeAdmin');
+            generateCode('eventCodeStats');
+
+            // Cargar datos iniciales
+            loadDashboardStats();
+            loadEvents();
+            loadUsers();
+
+            // Event listeners
+            document.getElementById('logoutButton').addEventListener('click', logout);
+
+            // Actualizar fecha del sistema
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
+
+            // Listener para cambio de tabs
+            document.querySelectorAll('#adminTabs button').forEach(tab => {
+                tab.addEventListener('shown.bs.tab', (e) => {
+                    if (e.target.id === 'users-tab') {
+                        loadUsers();
+                    } else if (e.target.id === 'events-tab') {
+                        loadEvents();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

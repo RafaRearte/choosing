@@ -1,6 +1,7 @@
 ﻿using choosing.Context;
 using choosing.Domain;
 using choosing.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -76,6 +77,117 @@ namespace choosing.Controllers
 
                 }
             });
+        }
+
+        // GET: api/Auth/users (solo para admin)
+        [HttpGet("users")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            try
+            {
+                var users = await _context.Users
+                    .Select(u => new {
+                        u.Id,
+                        u.Username,
+                        u.Email
+                    })
+                    .ToListAsync();
+
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
+        }
+
+        // GET: api/Auth/users/{id}
+        [HttpGet("users/{id}")]
+        public async Task<IActionResult> GetUser(int id)
+        {
+            try
+            {
+                var user = await _context.Users.FindAsync(id);
+                if (user == null)
+                    return NotFound($"Usuario con ID {id} no encontrado");
+
+                var result = new
+                {
+                    user.Id,
+                    user.Username,
+                    user.Email
+                };
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
+        }
+
+        // PUT: api/Auth/users/{id}
+        [HttpPut("users/{id}")]
+        public async Task<IActionResult> UpdateUser(int id, UpdateUserDTO model)
+        {
+            try
+            {
+                var user = await _context.Users.FindAsync(id);
+                if (user == null)
+                    return NotFound($"Usuario con ID {id} no encontrado");
+
+                // Verificar username único (excluyendo el usuario actual)
+                if (await _context.Users.AnyAsync(u => u.Username == model.Username && u.Id != id))
+                    return BadRequest("El nombre de usuario ya existe");
+
+                // Verificar email único (excluyendo el usuario actual)
+                if (await _context.Users.AnyAsync(u => u.Email == model.Email && u.Id != id))
+                    return BadRequest("El email ya está registrado");
+
+                // Actualizar campos
+                user.Username = model.Username;
+                user.Email = model.Email;
+
+                // Solo actualizar password si se proporciona uno nuevo
+                if (!string.IsNullOrEmpty(model.Password))
+                {
+                    user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password);
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    user.Id,
+                    user.Username,
+                    user.Email,
+                    message = "Usuario actualizado correctamente"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
+        }
+
+        // DELETE: api/Auth/users/{id}
+        [HttpDelete("users/{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            try
+            {
+                var user = await _context.Users.FindAsync(id);
+                if (user == null)
+                    return NotFound($"Usuario con ID {id} no encontrado");
+
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+
+                return Ok($"Usuario {user.Username} eliminado correctamente");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
         }
     }
 }

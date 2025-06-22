@@ -82,6 +82,9 @@ namespace choosing.Services.Impl
                 invitado.Empresa = updatedGuest.Empresa;
                 invitado.Categoria = updatedGuest.Categoria;
                 invitado.EventoId = updatedGuest.EventoId;
+                invitado.Lugar = updatedGuest.Lugar;
+                invitado.Telefono = updatedGuest.Telefono;
+                invitado.DayThree = updatedGuest.DayThree;
 
                 await _listRepository.UpdateAsync(invitado);
             }
@@ -157,6 +160,7 @@ namespace choosing.Services.Impl
             invitado.Mail = updatedGuest.Mail;
             invitado.DayOne = updatedGuest.DayOne;
             invitado.DayTwo = updatedGuest.DayTwo;
+            invitado.DayThree = updatedGuest.DayThree;
             invitado.InfoAdicional = updatedGuest.InfoAdicional;
             invitado.Acreditado = updatedGuest.Acreditado;
             invitado.CantEntradas = updatedGuest.CantEntradas;
@@ -164,6 +168,7 @@ namespace choosing.Services.Impl
             invitado.Categoria = updatedGuest.Categoria;
             invitado.EventoId = updatedGuest.EventoId;
             invitado.Lugar = updatedGuest.Lugar;
+            invitado.Telefono = updatedGuest.Telefono;
 
             await _listRepository.UpdateAsync(invitado);
         }

@@ -168,7 +168,7 @@ const accionesColumn = {
         
         // Botón de etiqueta (solo si puede acreditar)
         if (puedeHacerAccion('acreditar')) {
-            actions += `<button type="button" class="btn btn-secondary btn-sm" onclick="printLabel(${data.id}, '${data.nombre}', '${data.apellido}', '${data.dni || ''}', '${data.profesion || ''}', '${data.cargo || ''}', '${data.empresa || ''}')">Etiqueta</button>`;
+            actions += `<button type="button" class="btn btn-secondary btn-sm" onclick="printLabel(${data.id}, '${data.nombre}', '${data.apellido}','${data.mail || ''}', '${data.dni || ''}', '${data.profesion || ''}', '${data.cargo || ''}', '${data.empresa || ''}')">Etiqueta</button>`;
         }
         
         // Botón de acreditar (solo si puede acreditar)
@@ -813,9 +813,9 @@ const loadFilteredData = async (url) => {
 };
 
 // Imprimir etiqueta y acreditar invitado
-const printLabel = async (id,nombre, apellido, dni, profesion, cargo, empresa) => {
+const printLabel = async (id,nombre, apellido,email, dni, profesion, cargo, empresa) => {
     try {
-        // Si hay DNI, acreditar al invitado
+        // Si hay id, acreditar al invitado
         if (id) {
             const response = await authenticatedFetch(`${apiUrl}/updateAccreditStatusById/${id}?eventId=${currentEventId}`, {
                 method: 'PUT',
@@ -831,26 +831,46 @@ const printLabel = async (id,nombre, apellido, dni, profesion, cargo, empresa) =
             }
         }
         
-        // Luego imprimir la etiqueta
+        // Generar vCard para el QR
+        const vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${nombre} ${apellido}
+ORG:${empresa || ''}
+TITLE:${profesion || ''}
+EMAIL:${email}
+NOTE:DNI: ${dni || ''} 
+END:VCARD`;
+        
+// Generar QR usando la nueva biblioteca
+        const qr = qrcode(0, 'L');
+        qr.addData(vcard);
+        qr.make();
+        
+        // Crear imagen del QR
+        const qrSvg = qr.createSvgTag(2, 0);
+        
+        
+        // Etiqueta con QR
         const etiquetaHTML = `
         <div style="
             width: 90mm;
             height: 26mm;
             font-family: Arial, sans-serif;
-            font-size: 16pt;
-            line-height: 1.1;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
             margin: 0;
-            padding: 0mm;
+            padding: 2mm;
             box-sizing: border-box;
         ">
-            <div style="font-weight: bold;">${nombre} ${apellido}</div>
-            <div>${profesion || ''}</div>
-            <div>${empresa || ''}</div>
-            ${dni ? `<div>DNI: ${dni}</div>` : ''}
+            <div style="flex: 1; text-align: center;">
+                <div style="font-weight: bold; font-size: 16pt; margin-bottom: 2px;">${nombre} ${apellido}</div>
+                <div style="font-size: 12pt; margin-bottom: 1px;">${empresa || ''}</div>
+                <div style="font-size: 12pt; margin-bottom: 1px;">${cargo || ''}</div>
+                ${dni ? `<div style="font-size: 10pt;">DNI: ${dni}</div>` : ''}
+            </div>
+            <div style="margin-right: 5mm; width: 20mm; height: 20mm;">
+                ${qrSvg}
+            </div>
         </div>
         `;
         
@@ -938,3 +958,268 @@ document.addEventListener("DOMContentLoaded", function() {
         // document.querySelector('.navbar-brand').innerHTML += ` <small class="badge bg-secondary">${accessInfo.tipoAcceso}</small>`;
     }
     });
+
+    // Variables para el modo escaneo
+let scanModalInstance = null;
+let scanTimeout = null;
+
+// Función para abrir el modal de escaneo
+const openScanMode = () => {
+    if (!puedeHacerAccion('acreditar')) {
+        alert('No tiene permisos para acreditar invitados');
+        return;
+    }
+    
+    // Mostrar modal
+    scanModalInstance = new bootstrap.Modal(document.getElementById('scanModal'));
+    scanModalInstance.show();
+    
+    // Resetear el campo
+    document.getElementById('scanInput').value = '';
+    document.getElementById('scanResult').style.display = 'none';
+    document.getElementById('scanSpinner').style.display = 'block';
+    
+    // Focus en el input para que la lectora escriba ahí
+    setTimeout(() => {
+        document.getElementById('scanInput').focus();
+    }, 500);
+};
+
+// Función para procesar el código escaneado (versión mejorada)
+const processScanInput = (scannedData) => {
+    if (!scannedData.trim()) return;
+    
+    console.log('Código escaneado:', scannedData);
+    
+    // Ocultar spinner
+    document.getElementById('scanSpinner').style.display = 'none';
+    
+    // Determinar tipo de código
+    if (scannedData.startsWith('QR:')) {
+        // Es un QR personalizado - extraer ID
+        const guestId = scannedData.replace('QR:', '');
+        searchGuestById(guestId);
+    } else if (scannedData.includes('@') && scannedData.length > 50) {
+        // Es muy probable que sea un PDF417 de DNI argentino
+        const parsedDni = parseDniFromPdf417(scannedData);
+        if (parsedDni) {
+            searchGuestByDni(parsedDni);
+        } else {
+            showScanError('No se pudo extraer el DNI del código PDF417');
+        }
+    } else if (/^\d{7,8}$/.test(scannedData.trim())) {
+        // Es un DNI numérico directo
+        searchGuestByDni(scannedData.trim());
+    } else {
+        showScanError(`Código no reconocido. Tipo: ${scannedData.length > 20 ? 'PDF417' : 'Otro'}`);
+    }
+};
+
+// Función para parsear DNI del código PDF417 argentino
+const parseDniFromPdf417 = (pdf417Data) => {
+    try {
+        console.log('Código PDF417 recibido:', pdf417Data);
+        
+        // Formato real: NRO_TRAMITE@APELLIDOS@NOMBRES@SEXO@DNI@TIPO@FECHA_NAC@FECHA_EMISION@COD_SEGURIDAD
+        // Ejemplo: 00509616293@REARTE ARIZA@CESAR RAFAEL@M@44274648@A@11/09/2002@16/08/2017@207
+        const parts = pdf417Data.split('@');
+        
+        if (parts.length >= 5) {
+            // El DNI está en la posición 4 (índice 4)
+            const dni = parts[4].trim();
+            
+            // Validar que sea un DNI válido (7-8 dígitos)
+            if (/^\d{7,8}$/.test(dni)) {
+                console.log('DNI extraído del PDF417:', dni);
+                return dni;
+            }
+        }
+        
+        // Método de respaldo: buscar secuencia de 7-8 dígitos que no sea el número de trámite
+        const dniMatches = pdf417Data.match(/\b\d{7,8}\b/g);
+        if (dniMatches && dniMatches.length > 1) {
+            // El primer match suele ser el nro de trámite (más largo), el segundo el DNI
+            for (let i = 1; i < dniMatches.length; i++) {
+                if (dniMatches[i].length >= 7 && dniMatches[i].length <= 8) {
+                    console.log('DNI extraído por método alternativo:', dniMatches[i]);
+                    return dniMatches[i];
+                }
+            }
+        }
+        
+        console.warn('No se pudo extraer DNI del código PDF417');
+        return null;
+    } catch (error) {
+        console.error('Error parsing PDF417:', error);
+        return null;
+    }
+};
+
+// Buscar invitado por ID
+const searchGuestById = async (guestId) => {
+    try {
+        const response = await authenticatedFetch(`${apiUrl}/GetById/${guestId}?eventId=${currentEventId}`);
+        
+        if (!response || !response.ok) {
+            showScanError(`No se encontró invitado con ID: ${guestId}`);
+            return;
+        }
+        
+        const guest = await response.json();
+        showGuestFound(guest);
+    } catch (error) {
+        console.error('Error buscando por ID:', error);
+        showScanError('Error al buscar el invitado');
+    }
+};
+
+// Buscar invitado por DNI
+const searchGuestByDni = async (dni) => {
+    try {
+        const response = await authenticatedFetch(`${apiUrl}/searchByDni?dni=${dni}&eventId=${currentEventId}`);
+        
+        if (!response || !response.ok) {
+            showScanError(`No se encontró invitado con DNI: ${dni}`);
+            return;
+        }
+        
+        const guest = await response.json();
+        showGuestFound(guest);
+    } catch (error) {
+        console.error('Error buscando por DNI:', error);
+        showScanError('Error al buscar el invitado');
+    }
+};
+
+// Mostrar invitado encontrado
+const showGuestFound = (guest) => {
+    const isAccredited = guest.acreditado > 0;
+    const statusBadge = isAccredited ? 
+        '<span class="badge bg-success">YA ACREDITADO</span>' : 
+        '<span class="badge bg-warning">PENDIENTE</span>';
+    
+    const resultHtml = `
+        <div class="alert alert-success">
+            <h5><i class="bi bi-person-check me-2"></i>Invitado Encontrado</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>${guest.nombre} ${guest.apellido}</strong><br>
+                    ${guest.dni ? `DNI: ${guest.dni}<br>` : ''}
+                    ${guest.empresa ? `Empresa: ${guest.empresa}<br>` : ''}
+                    ${guest.categoria ? `Categoría: ${guest.categoria}` : ''}
+                </div>
+                <div class="col-md-6 text-end">
+                    <h4>${statusBadge}</h4>
+                    ${isAccredited && guest.horaAcreditacion ? 
+                        `<small class="text-muted">Acreditado: ${new Date(guest.horaAcreditacion).toLocaleString()}</small>` : 
+                        ''}
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-grid gap-2">
+            ${!isAccredited ? `
+                <button class="btn btn-success btn-lg" onclick="quickAccredit(${guest.id})">
+                    <i class="bi bi-check-lg me-2"></i>Acreditar Ahora
+                </button>
+                <button class="btn btn-primary btn-lg" onclick="accreditAndPrint(${guest.id}, '${guest.nombre}', '${guest.apellido}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}')">
+                    <i class="bi bi-printer me-2"></i>Acreditar e Imprimir
+                </button>
+            ` : `
+                <button class="btn btn-outline-primary btn-lg" onclick="printLabel(${guest.id}, '${guest.nombre}', '${guest.apellido}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}')">
+                    <i class="bi bi-printer me-2"></i>Reimprimir Etiqueta
+                </button>
+            `}
+            <button class="btn btn-outline-secondary" onclick="openEditModal(${guest.id}); closeScanModal();">
+                <i class="bi bi-pencil me-2"></i>Ver/Editar Detalles
+            </button>
+        </div>
+    `;
+    
+    document.getElementById('scanResult').innerHTML = resultHtml;
+    document.getElementById('scanResult').style.display = 'block';
+};
+
+// Mostrar error de escaneo
+const showScanError = (message) => {
+    const errorHtml = `
+        <div class="alert alert-danger">
+            <h5><i class="bi bi-exclamation-triangle me-2"></i>No Encontrado</h5>
+            <p>${message}</p>
+            <button class="btn btn-warning btn-sm" onclick="resetScanMode()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Escanear Nuevamente
+            </button>
+        </div>
+    `;
+    
+    document.getElementById('scanResult').innerHTML = errorHtml;
+    document.getElementById('scanResult').style.display = 'block';
+};
+
+// Acreditación rápida
+const quickAccredit = async (guestId) => {
+    try {
+        const response = await authenticatedFetch(`${apiUrl}/acreditarById/${guestId}?eventId=${currentEventId}`, {
+            method: 'PUT'
+        });
+        
+        if (response && response.ok) {
+            alert('✅ Invitado acreditado exitosamente');
+            closeScanModal();
+            fetchGuests(); // Actualizar tabla
+        } else {
+            alert('Error al acreditar invitado');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al acreditar invitado');
+    }
+};
+
+// Acreditar e imprimir
+const accreditAndPrint = async (id, nombre, apellido, dni, profesion, cargo, empresa) => {
+    await quickAccredit(id);
+    setTimeout(() => {
+        printLabel(id, nombre, apellido, dni, profesion, cargo, empresa);
+    }, 500);
+};
+
+// Resetear modo escaneo
+const resetScanMode = () => {
+    document.getElementById('scanInput').value = '';
+    document.getElementById('scanResult').style.display = 'none';
+    document.getElementById('scanSpinner').style.display = 'block';
+    document.getElementById('scanInput').focus();
+};
+
+// Cerrar modal de escaneo
+const closeScanModal = () => {
+    if (scanModalInstance) {
+        scanModalInstance.hide();
+    }
+};
+
+// Event Listeners para el escaneo
+document.addEventListener('DOMContentLoaded', function() {
+    // Botón de escaneo
+    document.getElementById('scanModeBtn').addEventListener('click', openScanMode);
+    
+    // Input de escaneo - detectar cuando se completa el escaneo
+    document.getElementById('scanInput').addEventListener('input', function(e) {
+        clearTimeout(scanTimeout);
+        
+        // Esperar un poco después del último carácter para procesar
+        scanTimeout = setTimeout(() => {
+            const value = e.target.value.trim();
+            if (value.length > 3) { // Mínimo 4 caracteres
+                processScanInput(value);
+            }
+        }, 300); // 300ms después del último carácter
+    });
+    
+    
+    // Auto-focus cuando se abre el modal
+    document.getElementById('scanModal').addEventListener('shown.bs.modal', function() {
+        document.getElementById('scanInput').focus();
+    });
+});
