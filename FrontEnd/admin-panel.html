@@ -16,14 +16,14 @@
     <style>
         .admin-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 80%;
+            height: 85%;
         }
         .admin-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
         .stats-number {
-            font-size: 2rem;
+            font-size: 1rem;
             font-weight: bold;
             color: #0d6efd;
         }
@@ -153,7 +153,6 @@
                                                 <th>Nombre</th>
                                                 <th>Fecha Inicio</th>
                                                 <th>Fecha Fin</th>
-                                                <th>Ubicación</th>
                                                 <th>Estado</th>
                                                 <th>Invitados</th>
                                                 <th>Acreditados</th>
@@ -192,7 +191,6 @@
                                                 <th>ID</th>
                                                 <th>Usuario</th>
                                                 <th>Email</th>
-                                                <th>Contraseña</th>
                                                 <th>Acciones</th>
                                             </tr>
                                         </thead>
@@ -678,7 +676,6 @@
                             <td>${event.nombre}</td>
                             <td>${new Date(event.fechaInicio).toLocaleDateString()}</td>
                             <td>${new Date(event.fechaFin).toLocaleDateString()}</td>
-                            <td>${event.ubicacion || '-'}</td>
                             <td>
                                 <span class="badge ${event.activo ? 'bg-success' : 'bg-secondary'} badge-status">
                                     ${event.activo ? 'Activo' : 'Inactivo'}
@@ -739,7 +736,6 @@
                             <td>${user.id}</td>
                             <td>${user.username}</td>
                             <td>${user.email}</td>
-                            <td>-</td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary" onclick="editUser(${user.id})" title="Editar">
                                     <i class="bi bi-pencil"></i>
