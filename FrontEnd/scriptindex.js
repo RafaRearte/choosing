@@ -833,9 +833,55 @@ const loadFilteredData = async (url) => {
     }
 };
 
-// Imprimir etiqueta y acreditar invitado
-const printLabel = async (id,nombre, apellido,telefono,email, dni, profesion, cargo, empresa) => {
+// Función para normalizar nombres y evitar problemas con el vCard
+const normalizeNameForVCard = (text) => {
+    if (!text) return '';
+    
+    return text
+        .trim()
+        // Reemplazar caracteres problemáticos
+        .replace(/[^\w\s\-\.]/g, '') // Solo letras, números, espacios, guiones y puntos
+        // Normalizar espacios múltiples
+        .replace(/\s+/g, ' ')
+        // Limitar longitud para evitar problemas
+        .substring(0, 50)
+        .trim();
+};
+
+// Función mejorada para dividir nombres largos
+const splitLongName = (fullName) => {
+    if (!fullName) return { nombre: '', apellido: '' };
+    
+    const normalized = normalizeNameForVCard(fullName);
+    const parts = normalized.split(' ');
+    
+    if (parts.length === 1) {
+        return { nombre: parts[0], apellido: '' };
+    } else if (parts.length === 2) {
+        return { nombre: parts[0], apellido: parts[1] };
+    } else {
+        // Si hay más de 2 palabras, tomar la primera como nombre y el resto como apellido
+        return { 
+            nombre: parts[0], 
+            apellido: parts.slice(1).join(' ').substring(0, 30) // Limitar apellido
+        };
+    }
+};
+
+// Función printLabel corregida con normalización
+const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa) => {
     try {
+        console.log('=== DEBUG PRINT LABEL ===');
+        console.log('ID:', id);
+        console.log('Nombre ORIGINAL:', nombre);
+        console.log('Apellido ORIGINAL:', apellido);
+        console.log('Email:', email);
+        console.log('DNI:', dni);
+        console.log('Profesion:', profesion);
+        console.log('Cargo:', cargo);
+        console.log('Empresa:', empresa);
+        console.log('Telefono:', telefono);
+
         // Si hay id, acreditar al invitado
         if (id) {
             const response = await authenticatedFetch(`${apiUrl}/updateAccreditStatusById/${id}?eventId=${currentEventId}`, {
@@ -848,22 +894,86 @@ const printLabel = async (id,nombre, apellido,telefono,email, dni, profesion, ca
             
             if (!response || !response.ok) {
                 console.error('Error al acreditar al invitado');
-                // Continuamos con la impresión aunque no se haya podido acreditar
             }
         }
         
-        // Generar vCard para el QR
-        const vcard = `BEGIN:VCARD
-VERSION:3.0
-FN:${nombre} ${apellido}
-ORG:${empresa || ''}
-TITLE:${profesion || ''}
-EMAIL:${email}
-NOTE:DNI: ${dni || ''} 
-TEL:${telefono || ''}
-END:VCARD`;
+        // Normalizar nombres
+        let nombreNormalizado = normalizeNameForVCard(nombre);
+        let apellidoNormalizado = normalizeNameForVCard(apellido);
         
-// Generar QR usando la nueva biblioteca
+        // Si el apellido es muy largo o problemático, dividir el nombre completo
+        if (apellidoNormalizado.length > 25 || apellidoNormalizado.includes('rapidos') || apellidoNormalizado.includes('furioso')) {
+            const fullName = `${nombreNormalizado} ${apellidoNormalizado}`.trim();
+            const split = splitLongName(fullName);
+            nombreNormalizado = split.nombre;
+            apellidoNormalizado = split.apellido;
+        }
+        
+        console.log('Nombre NORMALIZADO:', nombreNormalizado);
+        console.log('Apellido NORMALIZADO:', apellidoNormalizado);
+        
+        // Otros campos normalizados
+        const emailLimpio = (email || '').trim().substring(0, 50);
+        const telefonoLimpio = (telefono || '').toString().replace(/[^\d\+\-\s]/g, '').trim();
+        const dniLimpio = (dni || '').toString().replace(/[^\d]/g, '').trim();
+        const profesionLimpia = normalizeNameForVCard(profesion).substring(0, 30);
+        const cargoLimpio = normalizeNameForVCard(cargo).substring(0, 30);
+        const empresaLimpia = normalizeNameForVCard(empresa).substring(0, 40);
+        
+        // Nombre completo para mostrar
+        const nombreCompletoOriginal = `${nombre || ''} ${apellido || ''}`.trim();
+        const nombreCompletoNormalizado = `${nombreNormalizado} ${apellidoNormalizado}`.trim();
+        
+        console.log('Nombre completo ORIGINAL:', nombreCompletoOriginal);
+        console.log('Nombre completo NORMALIZADO:', nombreCompletoNormalizado);
+        
+        // Verificar que tenemos al menos un nombre
+        if (!nombreCompletoNormalizado) {
+            alert('Error: No se puede generar el código QR sin nombre');
+            return;
+        }
+        
+        // Generar vCard con datos normalizados pero mostrando originales en la etiqueta
+        let vcard = 'BEGIN:VCARD\n';
+        vcard += 'VERSION:3.0\n';
+        
+        // Usar nombres normalizados para el vCard
+        vcard += `N:${apellidoNormalizado};${nombreNormalizado};;;\n`;
+        vcard += `FN:${nombreCompletoNormalizado}\n`;
+        
+        // Solo agregar campos si tienen contenido
+        if (empresaLimpia) {
+            vcard += `ORG:${empresaLimpia}\n`;
+        }
+        
+        //if (cargoLimpio) {
+        //    vcard += `TITLE:${cargoLimpio}\n`;
+        //}
+        
+        if (emailLimpio) {
+            vcard += `EMAIL:${emailLimpio}\n`;
+        }
+        
+        if (telefonoLimpio) {
+            vcard += `TEL:${telefonoLimpio}\n`;
+        }
+        
+        //// Notas con información adicional
+        //let notas = [];
+        //if (dniLimpio) notas.push(`DNI: ${dniLimpio}`);
+        //if (profesionLimpia) notas.push(`Profesion: ${profesionLimpia}`);
+        //
+        //if (notas.length > 0) {
+        //    vcard += `NOTE:${notas.join(' - ')}\n`;
+        //}
+        
+        vcard += 'END:VCARD';
+        
+        console.log('VCARD GENERADO:');
+        console.log(vcard);
+        console.log('========================');
+        
+        // Generar QR usando la biblioteca
         const qr = qrcode(0, 'L');
         qr.addData(vcard);
         qr.make();
@@ -871,8 +981,7 @@ END:VCARD`;
         // Crear imagen del QR
         const qrSvg = qr.createSvgTag(2, 0);
         
-        
-        // Etiqueta con QR
+        // Etiqueta con nombres ORIGINALES para mostrar (más legibles)
         const etiquetaHTML = `
         <div style="
             width: 90mm;
@@ -885,9 +994,9 @@ END:VCARD`;
             box-sizing: border-box;
         ">
             <div style="flex: 1; text-align: center;">
-                <div style="font-weight: bold; font-size: 16pt; margin-bottom: 2px;">${nombre} ${apellido}</div>
-                <div style="font-size: 12pt; margin-bottom: 1px;">${empresa || ''}</div>
-                <div style="font-size: 12pt; margin-bottom: 1px;">${cargo || ''}</div>
+                <div style="font-weight: bold; font-size: 16pt; margin-bottom: 2px;">${nombreCompletoOriginal}</div>
+                ${empresa ? `<div style="font-size: 12pt; margin-bottom: 1px;">${empresa}</div>` : ''}
+                ${cargo ? `<div style="font-size: 12pt; margin-bottom: 1px;">${cargo}</div>` : ''}
                 ${telefono ? `<div style="font-size: 10pt;">Teléfono: ${telefono}</div>` : ''}
                 ${dni ? `<div style="font-size: 10pt;">DNI: ${dni}</div>` : ''}
             </div>
@@ -904,9 +1013,10 @@ END:VCARD`;
         
         // Actualizar la tabla después de acreditar
         fetchGuests();
+        
     } catch (error) {
         console.error('Error:', error);
-        alert('Ocurrió un error al acreditar al invitado');
+        alert('Ocurrió un error al generar la etiqueta: ' + error.message);
     }
 };
 
@@ -1145,11 +1255,11 @@ const showGuestFound = (guest) => {
                 <button class="btn btn-success btn-lg" onclick="quickAccredit(${guest.id})">
                     <i class="bi bi-check-lg me-2"></i>Acreditar Ahora
                 </button>
-                <button class="btn btn-primary btn-lg" onclick="accreditAndPrint(${guest.id}, '${guest.nombre}', '${guest.apellido}','${guest.telefono || ''}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}')">
+                <button class="btn btn-primary btn-lg" onclick="accreditAndPrint(${guest.id}, '${guest.nombre}', '${guest.apellido}','${guest.telefono || ''}', '${guest.email || ''}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}')">
                     <i class="bi bi-printer me-2"></i>Acreditar e Imprimir
                 </button>
             ` : `
-                <button class="btn btn-outline-primary btn-lg" onclick="printLabel(${guest.id}, '${guest.nombre}', '${guest.apellido}','${guest.telefono || ''}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}')">
+                <button class="btn btn-outline-primary btn-lg" onclick="printLabel(${guest.id}, '${guest.nombre}', '${guest.apellido}','${guest.telefono || ''}', '${guest.email || ''}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}')">
                     <i class="bi bi-printer me-2"></i>Reimprimir Etiqueta
                 </button>
             `}

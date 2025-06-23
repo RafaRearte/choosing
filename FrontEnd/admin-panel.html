@@ -16,14 +16,14 @@
     <style>
         .admin-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 100%;
+            height: 80%;
         }
         .admin-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
         .stats-number {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: bold;
             color: #0d6efd;
         }
@@ -75,44 +75,40 @@
     <!-- Main Content -->
     <div class="container-fluid my-4">
         <!-- Stats Dashboard -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card admin-card bg-primary text-white">
-                    <div class="card-body text-center">
-                        <i class="bi bi-calendar-event display-4"></i>
-                        <h5 class="card-title mt-2">Eventos</h5>
-                        <p class="stats-number text-white" id="totalEvents">0</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card admin-card bg-success text-white">
-                    <div class="card-body text-center">
-                        <i class="bi bi-people display-4"></i>
-                        <h5 class="card-title mt-2">Usuarios</h5>
-                        <p class="stats-number text-white" id="totalUsers">0</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card admin-card bg-info text-white">
-                    <div class="card-body text-center">
-                        <i class="bi bi-person-check display-4"></i>
-                        <h5 class="card-title mt-2">Invitados</h5>
-                        <p class="stats-number text-white" id="totalGuests">0</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card admin-card bg-warning text-white">
-                    <div class="card-body text-center">
-                        <i class="bi bi-check-circle display-4"></i>
-                        <h5 class="card-title mt-2">Acreditados</h5>
-                        <p class="stats-number text-white" id="totalAccredited">0</p>
-                    </div>
-                </div>
+        <div class="row mb-3">
+    <div class="col-md-3 col-6 mb-2">
+        <div class="card admin-card compact bg-primary text-white">
+            <div class="card-body text-center py-2">
+                <div class="stats-number text-white" id="totalEvents">0</div>
+                <small class="d-block">Eventos</small>
             </div>
         </div>
+    </div>
+    <div class="col-md-3 col-6 mb-2">
+        <div class="card admin-card compact bg-success text-white">
+            <div class="card-body text-center py-2">
+                <div class="stats-number text-white" id="totalUsers">0</div>
+                <small class="d-block">Usuarios</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-2">
+        <div class="card admin-card compact bg-info text-white">
+            <div class="card-body text-center py-2">
+                <div class="stats-number text-white" id="totalGuests">0</div>
+                <small class="d-block">Invitados</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-2">
+        <div class="card admin-card compact bg-warning text-white">
+            <div class="card-body text-center py-2">
+                <div class="stats-number text-white" id="totalAccredited">0</div>
+                <small class="d-block">Acreditados</small>
+            </div>
+        </div>
+    </div>
+</div>
 
         <!-- Navigation Tabs -->
         <ul class="nav nav-pills mb-4" id="adminTabs" role="tablist">
@@ -196,7 +192,7 @@
                                                 <th>ID</th>
                                                 <th>Usuario</th>
                                                 <th>Email</th>
-                                                <th>Fecha Registro</th>
+                                                <th>Contraseña</th>
                                                 <th>Acciones</th>
                                             </tr>
                                         </thead>
@@ -338,7 +334,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="createEvent()">
+                    <button type="button" class="btn btn-primary" onclick="createNewEvent()">
                         <i class="bi bi-check-circle me-1"></i>Crear Evento
                     </button>
                 </div>
@@ -421,11 +417,11 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger me-auto" onclick="deleteEvent()">
+                    <button type="button" class="btn btn-danger me-auto" onclick="deleteEventData()">
                         <i class="bi bi-trash me-1"></i>Eliminar
                     </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="updateEvent()">
+                    <button type="button" class="btn btn-primary" onclick="updateEventData()">
                         <i class="bi bi-check-circle me-1"></i>Actualizar
                     </button>
                 </div>
@@ -505,6 +501,69 @@
                     <button type="button" class="btn btn-primary" onclick="updateUser()">
                         <i class="bi bi-check-circle me-1"></i>Actualizar
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuración de Columnas -->
+    <div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="configModalLabel">Configuración de Columnas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="configForm">
+                        <div class="mb-3">
+                            <h6 class="fw-bold">Campos a mostrar:</h6>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configDni" checked>
+                            <label class="form-check-label" for="configDni">DNI</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configEmail" checked>
+                            <label class="form-check-label" for="configEmail">Email</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configEmpresa" checked>
+                            <label class="form-check-label" for="configEmpresa">Empresa</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configCategoria" checked>
+                            <label class="form-check-label" for="configCategoria">Categoría</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configProfesion" checked>
+                            <label class="form-check-label" for="configProfesion">Profesión</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configCargo" checked>
+                            <label class="form-check-label" for="configCargo">Cargo</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configLugar" checked>
+                            <label class="form-check-label" for="configLugar">Lugar</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configTelefono" checked>
+                            <label class="form-check-label" for="configTelefono">Telefono</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configDias" checked>
+                            <label class="form-check-label" for="configDias">Días (Día 1/Día 2/Día 3)</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configInfoAdicional" checked>
+                            <label class="form-check-label" for="configInfoAdicional">Información Adicional</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveConfigBtn">Guardar</button>
                 </div>
             </div>
         </div>
@@ -628,8 +687,11 @@
                             <td><span class="badge bg-primary">${event.stats?.totalInvitados || 0}</span></td>
                             <td><span class="badge bg-success">${event.stats?.acreditados || 0}</span></td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary" onclick="editEvent(${event.id})" title="Editar">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editEventData(${event.id})" title="Editar">
                                     <i class="bi bi-pencil"></i>
+                                </button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="configureEventColumns(${event.id})" title="Configurar Columnas">
+                                    <i class="bi bi-gear"></i>
                                 </button>
                                 <button class="btn btn-sm btn-outline-${event.activo ? 'warning' : 'success'}" onclick="toggleEventStatus(${event.id})" title="${event.activo ? 'Desactivar' : 'Activar'}">
                                     <i class="bi bi-${event.activo ? 'pause' : 'play'}"></i>
@@ -705,7 +767,7 @@
         };
 
         // Crear evento
-        const createEvent = async () => {
+        const createNewEvent = async () => {
             const eventData = {
                 nombre: document.getElementById('eventName').value,
                 descripcion: document.getElementById('eventDescription').value,
@@ -751,7 +813,7 @@
         };
 
         // Editar evento
-        const editEvent = async (id) => {
+        const editEventData = async (id) => {
             try {
                 const response = await authenticatedFetch(`${apiBaseUrl}/Event/${id}`);
                 if (!response || !response.ok) return;
@@ -776,8 +838,12 @@
         };
 
         // Actualizar evento
-        const updateEvent = async () => {
+        const updateEventData = async () => {
             const id = document.getElementById('editEventId').value;
+
+            // PRIMERO obtener el evento existente
+            const existingResponse = await authenticatedFetch(`${apiBaseUrl}/Event/${id}`);
+            const existingEvent = await existingResponse.json();
             const eventData = {
                 id: parseInt(id),
                 nombre: document.getElementById('editEventName').value,
@@ -789,7 +855,8 @@
                 codigoAcceso: document.getElementById('editEventCodeAccess').value,
                 codigoAdmin: document.getElementById('editEventCodeAdmin').value,
                 codigoStats: document.getElementById('editEventCodeStats').value,
-                permitirAccesoPostEvento: false
+                permitirAccesoPostEvento: false,
+                configuracionJson: existingEvent?.configuracionJson || "{}"
             };
 
             showLoading();
@@ -818,7 +885,7 @@
         };
 
         // Eliminar evento
-        const deleteEvent = async () => {
+        const deleteEventData = async () => {
             const id = document.getElementById('editEventId').value;
             const name = document.getElementById('editEventName').value;
             
@@ -1081,7 +1148,121 @@
                     }
                 });
             });
+            document.getElementById('saveConfigBtn').addEventListener('click', function() {
+    // Necesitamos guardar el eventoId actual
+    const eventoId = document.getElementById('saveConfigBtn').getAttribute('data-event-id');
+    if (eventoId) {
+        guardarConfiguracion(eventoId);
+    } else {
+        alert('Error: No se encontró el ID del evento');
+    }
+});
         });
+
+// Función para configurar el evento actual
+function configureEventColumns(eventId) {
+    // Verificar que se ha recibido un eventId válido
+    if (!eventId) {
+        alert("Error: ID de evento no válido");
+        return;
+    }
+
+    // Mostrar loading
+    showLoading();
+    
+    // Obtener configuración del evento específico
+    fetch(`${apiBaseUrl}/Event/${eventId}`, {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Error al obtener datos del evento');
+        return response.json();
+    })
+    .then(evento => {
+        // Mostrar modal de configuración
+        mostrarModalConfiguracion(evento);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al cargar la configuración del evento');
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
+// Función para mostrar modal de configuración
+function mostrarModalConfiguracion(evento) {
+    // Cargar configuración actual (si existe)
+    const configuracion = evento.configuracionJson ? JSON.parse(evento.configuracionJson) : {};
+    
+    // Asignar valores a los checkboxes
+    document.getElementById('configDni').checked = configuracion.mostrarDni !== false;
+    document.getElementById('configEmail').checked = configuracion.mostrarEmail !== false;
+    document.getElementById('configEmpresa').checked = configuracion.mostrarEmpresa !== false;
+    document.getElementById('configCategoria').checked = configuracion.mostrarCategoria !== false;
+    document.getElementById('configProfesion').checked = configuracion.mostrarProfesion !== false;
+    document.getElementById('configCargo').checked = configuracion.mostrarCargo !== false;
+    document.getElementById('configDias').checked = configuracion.mostrarDias !== false;
+    document.getElementById('configInfoAdicional').checked = configuracion.mostrarInfoAdicional !== false;
+    document.getElementById('configLugar').checked = configuracion.mostrarLugar !== false;
+    document.getElementById('configTelefono').checked = configuracion.mostrarTelefono !== false;
+    
+    // Guardar el eventoId en el botón para usarlo después
+    document.getElementById('saveConfigBtn').setAttribute('data-event-id', evento.id);
+    
+
+    // Mostrar el modal
+    const modalInstance = new bootstrap.Modal(document.getElementById('configModal'));
+    modalInstance.show();
+}
+
+function guardarConfiguracion(eventoId) {
+    // Recopilar configuración del formulario
+    const configuracion = {
+        mostrarDni: document.getElementById('configDni').checked,
+        mostrarEmail: document.getElementById('configEmail').checked,
+        mostrarEmpresa: document.getElementById('configEmpresa').checked,
+        mostrarCategoria: document.getElementById('configCategoria').checked,
+        mostrarProfesion: document.getElementById('configProfesion').checked,
+        mostrarCargo: document.getElementById('configCargo').checked,
+        mostrarLugar: document.getElementById('configLugar').checked,
+        mostrarDias: document.getElementById('configDias').checked,
+        mostrarInfoAdicional: document.getElementById('configInfoAdicional').checked,
+        mostrarTelefono: document.getElementById('configTelefono').checked
+    };
+    
+    // Guardar configuración directamente usando endpoint específico
+    showLoading();
+    
+    fetch(`${apiBaseUrl}/Event/update-config/${eventoId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify(JSON.stringify(configuracion))
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Error al guardar la configuración');
+        
+        // Cerrar el modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('configModal'));
+        modal.hide();
+        
+        alert('Configuración guardada correctamente');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al guardar la configuración: ' + error.message);
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
     </script>
 </body>
 </html>

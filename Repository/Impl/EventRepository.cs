@@ -60,12 +60,32 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                _context.Events.Update(updatedEvent);
+                // Obtener el evento existente
+                var existingEvent = await _context.Events.FindAsync(updatedEvent.Id);
+                if (existingEvent == null)
+                    throw new Exception($"Event with ID {updatedEvent.Id} not found");
+
+                // Actualizar solo los campos necesarios
+                existingEvent.Nombre = updatedEvent.Nombre;
+                existingEvent.Descripcion = updatedEvent.Descripcion;
+                existingEvent.Ubicacion = updatedEvent.Ubicacion;
+                existingEvent.FechaInicio = updatedEvent.FechaInicio;
+                existingEvent.FechaFin = updatedEvent.FechaFin;
+                existingEvent.Activo = updatedEvent.Activo;
+                existingEvent.CodigoAcceso = updatedEvent.CodigoAcceso;
+                existingEvent.CodigoAdmin = updatedEvent.CodigoAdmin;
+                existingEvent.CodigoStats = updatedEvent.CodigoStats;
+                existingEvent.PermitirAccesoPostEvento = updatedEvent.PermitirAccesoPostEvento;
+
+                // Solo actualizar ConfiguracionJson si viene con datos
+                if (!string.IsNullOrEmpty(updatedEvent.ConfiguracionJson))
+                    existingEvent.ConfiguracionJson = updatedEvent.ConfiguracionJson;
+
                 await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                throw new Exception("Error updating event", ex);
+                throw new Exception($"Error updating event: {ex.Message}", ex);
             }
         }
 
