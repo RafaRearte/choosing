@@ -1,8 +1,10 @@
 let eventoActivo = false;
 
 const puedeHacerAccion = (accion) => {
-     if (!eventoActivo) return false;
     const eventAccess = JSON.parse(localStorage.getItem('currentEventAccess') || '{}');
+    
+    // 🔥 SI NO ES ADMIN Y EVENTO NO ESTÁ ACTIVO, NO PUEDE NADA
+    if (!eventoActivo && eventAccess.tipoAcceso !== 'Admin') return false;
     
     switch(accion) {
         case 'acreditar':
@@ -14,7 +16,7 @@ const puedeHacerAccion = (accion) => {
         case 'configurar':
             return eventAccess.permisos?.puedeConfigurar || false;
         default:
-            return true; // Por defecto puede ver
+            return true;
     }
 };
 
