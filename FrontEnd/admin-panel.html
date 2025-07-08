@@ -586,21 +586,6 @@
         const showLoading = () => document.getElementById('loadingIndicator').style.display = 'block';
         const hideLoading = () => document.getElementById('loadingIndicator').style.display = 'none';
 
-        // Función helper para convertir fecha a formato datetime-local
-const formatDateForInput = (dateString) => {
-    const date = new Date(dateString);
-    
-    // Obtener los componentes de fecha en hora local
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    
-    // Formato: YYYY-MM-DDTHH:MM
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
-
         const authenticatedFetch = async (url, options = {}) => {
             const token = localStorage.getItem('authToken');
             if (!token) {
@@ -836,9 +821,14 @@ const formatDateForInput = (dateString) => {
                 document.getElementById('editEventDescription').value = event.descripcion || '';
                 document.getElementById('editEventLocation').value = event.ubicacion || '';
                 
-                document.getElementById('editEventStartDate').value = formatDateForInput(event.fechaInicio);
-                document.getElementById('editEventEndDate').value = formatDateForInput(event.fechaFin);
-        
+                // 🔥 SOLUCIÓN: Usar el string directamente sin convertir a Date
+                // Si viene "2025-07-10T10:00:00", tomar solo los primeros 16 caracteres
+                const startFormatted = event.fechaInicio.slice(0, 16);
+                const endFormatted = event.fechaFin.slice(0, 16);
+
+                document.getElementById('editEventStartDate').value = startFormatted;
+                document.getElementById('editEventEndDate').value = endFormatted;
+                
                 document.getElementById('editEventActive').checked = event.activo;
                 document.getElementById('editEventCodeAccess').value = event.codigoAcceso || '';
                 document.getElementById('editEventCodeAdmin').value = event.codigoAdmin || '';
