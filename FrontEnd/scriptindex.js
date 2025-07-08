@@ -1,4 +1,7 @@
+let eventoActivo = false;
+
 const puedeHacerAccion = (accion) => {
+     if (!eventoActivo) return false;
     const eventAccess = JSON.parse(localStorage.getItem('currentEventAccess') || '{}');
     
     switch(accion) {
@@ -72,6 +75,8 @@ const fetchEventData = async () => {
         
         if (!response.ok) throw new Error('Error al obtener los datos del evento');
         eventData = await response.json();
+
+        eventoActivo = eventData.activo;
         
         // Actualizar título con el nombre del evento
         document.title = `Acreditación - ${eventData.nombre}`;
@@ -654,6 +659,8 @@ const updateCounters = (guests, newCount = null) => {
 // Obtener y mostrar invitados
 const fetchGuests = async () => {
     try {
+        await fetchEventData();
+        
         const response = await authenticatedFetch(`${apiUrl}/GetAll?eventId=${currentEventId}`);
         if (!response) return; // Si hay redirección por token inválido
         
@@ -673,6 +680,9 @@ const fetchGuests = async () => {
         } else {
             updateCounters(guests);
         }
+
+        configurarElementosSegunPermisos();
+
     } catch (error) {
         console.error('Error fetching guests:', error);
     }
