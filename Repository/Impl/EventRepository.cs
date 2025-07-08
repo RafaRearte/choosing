@@ -46,6 +46,9 @@ namespace choosing.Repository.Impl
         {
             try
             {
+                newEvent.FechaInicio = newEvent.FechaInicio.ToLocalTime();
+                newEvent.FechaFin = newEvent.FechaFin.ToLocalTime();
+
                 await _context.Events.AddAsync(newEvent);
                 await _context.SaveChangesAsync();
                 return newEvent;
@@ -69,8 +72,8 @@ namespace choosing.Repository.Impl
                 existingEvent.Nombre = updatedEvent.Nombre;
                 existingEvent.Descripcion = updatedEvent.Descripcion;
                 existingEvent.Ubicacion = updatedEvent.Ubicacion;
-                existingEvent.FechaInicio = updatedEvent.FechaInicio;
-                existingEvent.FechaFin = updatedEvent.FechaFin;
+                existingEvent.FechaInicio = updatedEvent.FechaInicio.ToLocalTime();
+                existingEvent.FechaFin = updatedEvent.FechaFin.ToLocalTime();
                 existingEvent.Activo = updatedEvent.Activo;
                 existingEvent.CodigoAcceso = updatedEvent.CodigoAcceso;
                 existingEvent.CodigoAdmin = updatedEvent.CodigoAdmin;
