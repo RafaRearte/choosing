@@ -302,35 +302,37 @@
 
     // Función para obtener los eventos
     const fetchEvents = async () => {
-        showLoading();
+    showLoading();
+    
+    try {
+        // 🔥 USAR EL ENDPOINT QUE YA TIENE STATS INCLUIDAS
+        const response = await authenticatedFetch(`${apiBaseUrl}/Event/GetAllWithStats`);
         
-        try {
-            const response = await authenticatedFetch(`${apiBaseUrl}/Event/GetAll`);
-            
-            if (!response) return;
-            
-            if (!response.ok) throw new Error('Error al obtener los eventos');
-            const events = await response.json();
-            
-            displayEvents(events);
-        } catch (error) {
-            console.error('Error fetching events:', error);
-            
-            document.getElementById('eventsList').innerHTML = `
-                <div class="col-12 text-center">
-                    <div class="alert alert-danger">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        Error al cargar los eventos. Por favor intente nuevamente.
-                    </div>
-                    <button class="btn btn-primary mt-3" onclick="fetchEvents()">
-                        <i class="bi bi-arrow-clockwise me-2"></i>Reintentar
-                    </button>
+        if (!response) return;
+        
+        if (!response.ok) throw new Error('Error al obtener los eventos');
+        const events = await response.json();
+        
+        // 🔥 YA NO NECESITAS fetchEventStats, los stats ya vienen incluidos
+        displayEvents(events);
+    } catch (error) {
+        console.error('Error fetching events:', error);
+        
+        document.getElementById('eventsList').innerHTML = `
+            <div class="col-12 text-center">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Error al cargar los eventos. Por favor intente nuevamente.
                 </div>
-            `;
-        } finally {
-            hideLoading();
-        }
-    };
+                <button class="btn btn-primary mt-3" onclick="fetchEvents()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Reintentar
+                </button>
+            </div>
+        `;
+    } finally {
+        hideLoading();
+    }
+};
 
     // Función para obtener estadísticas de un evento
     const fetchEventStats = async (eventId) => {
@@ -359,80 +361,81 @@
 
     // Función para mostrar los eventos
     const displayEvents = async (events) => {
-        const eventsContainer = document.getElementById('eventsList');
-        eventsContainer.innerHTML = '';
-        
-        if (!events || events.length === 0) {
-            eventsContainer.innerHTML = `
-                <div class="col-12 text-center py-5">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i>
-                        No hay eventos disponibles en este momento.
-                    </div>
+    const eventsContainer = document.getElementById('eventsList');
+    eventsContainer.innerHTML = '';
+    
+    if (!events || events.length === 0) {
+        eventsContainer.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    No hay eventos disponibles en este momento.
                 </div>
-            `;
-            return;
-        }
+            </div>
+        `;
+        return;
+    }
+    
+    // Mostrar eventos activos primero
+    const sortedEvents = [...events].sort((a, b) => {
+        if (a.activo !== b.activo) return b.activo ? 1 : -1;
+        return new Date(b.fechaInicio) - new Date(a.fechaInicio);
+    });
+    
+    // 🔥 SIN LOOP ASYNC - Los stats ya vienen en cada evento
+    sortedEvents.forEach(event => {
+        // Formatear fechas
+        const startDate = new Date(event.fechaInicio);
+        const endDate = new Date(event.fechaFin);
         
-        // Mostrar eventos activos primero
-        const sortedEvents = [...events].sort((a, b) => {
-            if (a.activo !== b.activo) return b.activo ? 1 : -1;
-            return new Date(b.fechaInicio) - new Date(a.fechaInicio);
+        const formattedStartDate = startDate.toLocaleDateString('es-AR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
         });
         
-        for (const event of sortedEvents) {
-            // Formatear fechas
-            const startDate = new Date(event.fechaInicio);
-            const endDate = new Date(event.fechaFin);
-            
-            const formattedStartDate = startDate.toLocaleDateString('es-AR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-            
-            const formattedEndDate = endDate.toLocaleDateString('es-AR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-            
-            // Obtener estadísticas del evento
-            const stats = await fetchEventStats(event.id);
-            
-            // Crear tarjeta de evento
-            const card = document.createElement('div');
-            card.className = 'col-md-4';
-            card.innerHTML = `
-                <div class="card event-card" onclick="selectEvent(${event.id}, '${event.nombre}')">
-                    <div class="card-body">
-                        <h5 class="card-title">${event.nombre}</h5>
-                        <p class="card-text">${event.descripcion || 'Sin descripción'}</p>
-                        <div class="event-date">
-                            <i class="bi bi-calendar-event me-1"></i>
-                            ${formattedStartDate} - ${formattedEndDate}
-                        </div>
-                        <div class="event-location">
-                            <i class="bi bi-geo-alt me-1"></i>
-                            ${event.ubicacion || 'Ubicación no especificada'}
-                        </div>
-                        <div class="event-attendees">
-                            <i class="bi bi-people me-1"></i>
-                            <span class="me-2">Invitados:</span>
-                            <span class="badge bg-primary">${stats.total}</span>
-                            <span class="ms-2 me-1">Acreditados:</span>
-                            <span class="badge bg-success">${stats.acreditados}</span>
-                        </div>
-                        ${event.activo ? 
-                            '<span class="badge bg-success event-badge">Activo</span>' : 
-                            '<span class="badge bg-secondary event-badge">Inactivo</span>'
-                        }
+        const formattedEndDate = endDate.toLocaleDateString('es-AR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        
+        // 🔥 USAR STATS QUE YA VIENEN CON EL EVENTO
+        const stats = event.stats || { totalInvitados: 0, acreditados: 0 };
+        
+        // Crear tarjeta de evento
+        const card = document.createElement('div');
+        card.className = 'col-md-4';
+        card.innerHTML = `
+            <div class="card event-card" onclick="selectEvent(${event.id}, '${event.nombre}')">
+                <div class="card-body">
+                    <h5 class="card-title">${event.nombre}</h5>
+                    <p class="card-text">${event.descripcion || 'Sin descripción'}</p>
+                    <div class="event-date">
+                        <i class="bi bi-calendar-event me-1"></i>
+                        ${formattedStartDate} - ${formattedEndDate}
                     </div>
+                    <div class="event-location">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        ${event.ubicacion || 'Ubicación no especificada'}
+                    </div>
+                    <div class="event-attendees">
+                        <i class="bi bi-people me-1"></i>
+                        <span class="me-2">Invitados:</span>
+                        <span class="badge bg-primary">${stats.totalInvitados}</span>
+                        <span class="ms-2 me-1">Acreditados:</span>
+                        <span class="badge bg-success">${stats.acreditados}</span>
+                    </div>
+                    ${event.activo ? 
+                        '<span class="badge bg-success event-badge">Activo</span>' : 
+                        '<span class="badge bg-secondary event-badge">Inactivo</span>'
+                    }
                 </div>
-            `;
-            eventsContainer.appendChild(card);
-        }
-    };
+            </div>
+        `;
+        eventsContainer.appendChild(card);
+    });
+};
 
     // Función para seleccionar un evento
     const selectEvent = async (eventId, eventName) => {
