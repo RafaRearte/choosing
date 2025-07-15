@@ -1,5 +1,6 @@
 let eventoActivo = false;
 
+
 const puedeHacerAccion = (accion) => {
     const eventAccess = JSON.parse(localStorage.getItem('currentEventAccess') || '{}');
     
@@ -639,8 +640,8 @@ const toggleAccreditStatus = async (id, currentStatus) => {
 };
 
 // URLs para las APIs
-const apiUrl = "https://choosing-rafa.duckdns.org/api/List";
-const eventApiUrl = "https://choosing-rafa.duckdns.org/api/Event";
+const apiUrl = "https://rafa-choosing.duckdns.org/api/List";
+const eventApiUrl = "https://rafa-choosing.duckdns.org/api/Event";
 
 // Actualizar Contadores
 const updateCounters = (guests, newCount = null) => {
@@ -1040,6 +1041,9 @@ function loadUserInfo() {
     if (userData) {
         // Mostrar el nombre del usuario
         document.getElementById('userName').textContent = userData.name || 'Usuario';
+        if (userData.name === 'admin' || userData.name === 'rafa') {
+            document.getElementById('adminSection').style.display = 'block';
+        }
     }
     
     // Mostrar el nombre del evento

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Invitados - Evento</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .logo p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .loading .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .success-message {
+            display: none;
+            background: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error-message {
+            display: none;
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .qr-preview {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .qr-code {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>🎉 EventoPro</h1>
+            <p>Registro de Invitados</p>
+        </div>
+        
+        <form id="registroForm">
+            <div class="form-group">
+                <label for="evento">Seleccionar Evento</label>
+                <select id="evento" name="evento" required>
+                    <option value="">-- Selecciona un evento --</option>
+                    <option value="1">Conferencia Tech 2025 - 15/08/2025</option>
+                    <option value="2">Summit de Marketing - 22/08/2025</option>
+                    <option value="3">Expo Innovación - 30/08/2025</option>
+                    <option value="4">Meetup Desarrolladores - 05/09/2025</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="nombre">Nombre Completo</label>
+                <input type="text" id="nombre" name="nombre" required placeholder="Juan Pérez">
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required placeholder="juan@email.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <input type="tel" id="telefono" name="telefono" placeholder="+54 9 11 1234-5678">
+            </div>
+            
+            <div class="form-group">
+                <label for="empresa">Empresa/Organización</label>
+                <input type="text" id="empresa" name="empresa" placeholder="Mi Empresa S.A.">
+            </div>
+            
+            <div class="form-group">
+                <label for="stand">Stand que lo invita (opcional)</label>
+                <select id="stand" name="stand">
+                    <option value="">-- Sin stand específico --</option>
+                    <option value="1">Stand 01 - TechCorp</option>
+                    <option value="2">Stand 02 - InnovateLab</option>
+                    <option value="3">Stand 03 - FutureSoft</option>
+                    <option value="4">Stand 04 - DataFlow</option>
+                    <option value="5">Stand 05 - CloudTech</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn-submit" id="submitBtn">
+                Registrarse al Evento
+            </button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Procesando registro y enviando invitación...</p>
+        </div>
+        
+        <div class="success-message" id="successMessage">
+            <h3>✅ ¡Registro Exitoso!</h3>
+            <p>Te hemos enviado tu invitación por email con el código QR para el acceso al evento.</p>
+            <div class="qr-preview" id="qrPreview">
+                <p><strong>Vista previa de tu QR:</strong></p>
+                <div class="qr-code" id="qrCode"></div>
+                <p><small>ID: <span id="invitadoId"></span></small></p>
+            </div>
+        </div>
+        
+        <div class="error-message" id="errorMessage">
+            <h3>❌ Error en el registro</h3>
+            <p id="errorText">Hubo un problema. Por favor intenta nuevamente.</p>
+        </div>
+    </div>
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    
+    <script>
+        // Simulación de base de datos en memoria
+        let invitados = [];
+        let nextId = 1001;
+        
+        // Eventos disponibles
+        const eventos = {
+            "1": "Conferencia Tech 2025",
+            "2": "Summit de Marketing", 
+            "3": "Expo Innovación",
+            "4": "Meetup Desarrolladores"
+        };
+        
+        // Stands disponibles
+        const stands = {
+            "1": "TechCorp",
+            "2": "InnovateLab", 
+            "3": "FutureSoft",
+            "4": "DataFlow",
+            "5": "CloudTech"
+        };
+        
+        // Simulación de API para registrar invitado
+        function registrarInvitado(datosInvitado) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    // Simular validación
+                    if (!datosInvitado.email || !datosInvitado.nombre || !datosInvitado.evento) {
+                        reject('Datos incompletos');
+                        return;
+                    }
+                    
+                    // Crear nuevo invitado
+                    const nuevoInvitado = {
+                        id: nextId++,
+                        ...datosInvitado,
+                        fechaRegistro: new Date().toISOString(),
+                        estado: 'pendiente'
+                    };
+                    
+                    invitados.push(nuevoInvitado);
+                    resolve(nuevoInvitado);
+                }, 1500); // Simular delay de red
+            });
+        }
+        
+        // Simulación de envío de email con PDF
+        function enviarInvitacionEmail(invitado) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    console.log('📧 Enviando email a:', invitado.email);
+                    console.log('📄 Generando PDF con QR ID:', invitado.id);
+                    console.log('🎫 Invitación enviada para evento:', eventos[invitado.evento]);
+                    
+                    // En la vida real, aquí harías:
+                    // 1. Generar PDF con jsPDF + QR
+                    // 2. Enviar email con Mailgun/SendGrid
+                    // 3. Guardar log del envío
+                    
+                    resolve({
+                        emailEnviado: true,
+                        fechaEnvio: new Date().toISOString()
+                    });
+                }, 1000);
+            });
+        }
+        
+        // Generar QR Code
+        function generarQR(invitadoId) {
+            const qr = new QRious({
+                element: document.getElementById('qrCode'),
+                value: `EVENTO_ID_${invitadoId}`,
+                size: 150,
+                level: 'M'
+            });
+        }
+        
+        // Manejar envío del formulario
+        document.getElementById('registroForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const datosInvitado = {
+                nombre: formData.get('nombre'),
+                email: formData.get('email'),
+                telefono: formData.get('telefono') || null,
+                empresa: formData.get('empresa') || null,
+                evento: formData.get('evento'),
+                stand: formData.get('stand') || null
+            };
+            
+            // Mostrar loading
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            try {
+                // 1. Registrar invitado
+                const invitado = await registrarInvitado(datosInvitado);
+                console.log('✅ Invitado registrado:', invitado);
+                
+                // 2. Enviar email con invitación
+                const emailResult = await enviarInvitacionEmail(invitado);
+                console.log('✅ Email enviado:', emailResult);
+                
+                // 3. Mostrar éxito
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('qrPreview').style.display = 'block';
+                document.getElementById('invitadoId').textContent = invitado.id;
+                
+                // 4. Generar QR preview
+                generarQR(invitado.id);
+                
+                // 5. Limpiar formulario
+                this.reset();
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('errorText').textContent = error;
+            } finally {
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+        
+        // Log para debugging
+        console.log('🚀 Sistema de registro inicializado');
+        console.log('📊 Invitados registrados:', invitados.length);
+    </script>
+</body>
+</html>
