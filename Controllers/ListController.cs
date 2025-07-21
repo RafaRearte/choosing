@@ -329,5 +329,71 @@ namespace choosing.Controllers
                 return StatusCode(500, $"Error interno al actualizar estado de acreditación: {ex.Message}");
             }
         }
+        [HttpGet("searchByIdCode")]
+        public async Task<IActionResult> GetInvitadoByIdCode([FromQuery] string idCode, [FromQuery] int eventId)
+        {
+            if (string.IsNullOrWhiteSpace(idCode))
+                return BadRequest("Se requiere un código válido");
+
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            var invitado = await _listService.GetInvitadoByIdCodeAndEventIdAsync(idCode, eventId);
+            if (invitado == null)
+                return NotFound($"No se encontró un invitado con el código {idCode} en el evento especificado");
+
+            return Ok(invitado);
+        }
+
+        // Acreditar por IdCode
+        [HttpPut("acreditarByIdCode/{idCode}")]
+        public async Task<IActionResult> AcreditarInvitadoByIdCode(string idCode, [FromQuery] int eventId)
+        {
+            if (string.IsNullOrWhiteSpace(idCode))
+                return BadRequest("Se requiere un código válido");
+
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            var invitado = await _listService.GetInvitadoByIdCodeAndEventIdAsync(idCode, eventId);
+            if (invitado == null)
+                return NotFound($"No se encontró un invitado con el código {idCode} en el evento especificado");
+
+            await _listService.AcreditarInvitadoAsync(invitado);
+            return Ok(invitado);
+        }
+
+        // Actualizar estado de acreditación por IdCode
+        [HttpPut("updateAccreditStatusByIdCode/{idCode}")]
+        public async Task<IActionResult> UpdateAccreditStatusByIdCode(string idCode, [FromBody] AccreditStatusDto status, [FromQuery] int eventId)
+        {
+            if (string.IsNullOrWhiteSpace(idCode))
+                return BadRequest("Se requiere un código válido");
+
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            try
+            {
+                var invitado = await _listService.GetInvitadoByIdCodeAndEventIdAsync(idCode, eventId);
+                if (invitado == null)
+                    return NotFound($"No se encontró un invitado con el código {idCode} en el evento especificado");
+
+                // Actualizar solo el estado de acreditación
+                invitado.Acreditado = status.Acreditado;
+                // Si está siendo acreditado, guardar la hora actual
+                if (status.Acreditado > 0)
+                {
+                    invitado.horaAcreditacion = DateTime.Now;
+                }
+
+                await _listService.UpdateAccreditStatusAsync(invitado);
+                return Ok(invitado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno al actualizar estado de acreditación: {ex.Message}");
+            }
+        }
     }
 }

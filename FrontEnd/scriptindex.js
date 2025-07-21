@@ -1204,19 +1204,15 @@ const processScanInput = (scannedData) => {
             showScanError('No se pudo extraer el DNI del código PDF417');
         }
 
-    // 2. Solo números
-    } else if (/^\d+$/.test(cleanData)) {
-        if (cleanData.length === 7 || cleanData.length === 8) {
-            // DNI numérico directo
-            searchGuestByDni(cleanData);
-        } else {
-            // ID escaneado desde QR
-            searchGuestById(cleanData);
-        }
+    // 3. 🆕 CÓDIGOS ALFANUMÉRICOS (IdCode de invitaciones externas)
+    } else if (/^[A-Za-z0-9\-_]+$/.test(cleanData) && cleanData.length >= 6) {
+        // Código de barras o QR de invitación externa
+        console.log('🎫 Detectado código de invitación externa:', cleanData);
+        searchGuestByIdCode(cleanData);
 
-    // 3. Otro
+    // 4. Otro formato no reconocido
     } else {
-        showScanError(`Código no reconocido. Longitud: ${cleanData.length}`);
+        showScanError(`Código no reconocido. Formato: "${cleanData}". Longitud: ${cleanData.length}`);
     }
 };
 
@@ -1245,7 +1241,46 @@ const parseDniFromPdf417 = (data) => {
     }
 };
 
+// 🆕 NUEVA FUNCIÓN PARA BUSCAR POR IdCode
+const searchGuestByIdCode = async (idCode) => {
+    try {
+        console.log('🔍 Buscando invitado por IdCode:', idCode);
+        
+        const response = await authenticatedFetch(`${apiUrl}/searchByIdCode?idCode=${encodeURIComponent(idCode)}&eventId=${currentEventId}`);
+        
+        if (!response || !response.ok) {
+            showScanError(`No se encontró invitado con el código: ${idCode}`);
+            return;
+        }
+        
+        const guest = await response.json();
+        console.log('✅ Invitado encontrado por IdCode:', guest);
+        showGuestFound(guest);
+    } catch (error) {
+        console.error('Error buscando por IdCode:', error);
+        showScanError('Error al buscar el invitado por código');
+    }
+};
 
+// 🆕 ACREDITACIÓN RÁPIDA POR IdCode
+const quickAccreditByIdCode = async (idCode) => {
+    try {
+        const response = await authenticatedFetch(`${apiUrl}/acreditarByIdCode/${encodeURIComponent(idCode)}?eventId=${currentEventId}`, {
+            method: 'PUT'
+        });
+        
+        if (response && response.ok) {
+            alert('✅ Invitado acreditado exitosamente');
+            closeScanModal();
+            fetchGuests(); // Actualizar tabla
+        } else {
+            alert('Error al acreditar invitado');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al acreditar invitado');
+    }
+};
 
 
 // Buscar invitado por ID
@@ -1291,6 +1326,10 @@ const showGuestFound = (guest) => {
         '<span class="badge bg-success">YA ACREDITADO</span>' : 
         '<span class="badge bg-warning">PENDIENTE</span>';
     
+    // 🆕 MOSTRAR INFORMACIÓN DEL IdCode SI EXISTE
+    const idCodeInfo = guest.idCode ? 
+        `<small class="text-muted d-block">Código de invitación: ${guest.idCode}</small>` : '';
+    
     const resultHtml = `
         <div class="alert alert-success">
             <h5><i class="bi bi-person-check me-2"></i>Invitado Encontrado</h5>
@@ -1299,7 +1338,8 @@ const showGuestFound = (guest) => {
                     <strong>${guest.nombre} ${guest.apellido}</strong><br>
                     ${guest.dni ? `DNI: ${guest.dni}<br>` : ''}
                     ${guest.empresa ? `Empresa: ${guest.empresa}<br>` : ''}
-                    ${guest.categoria ? `Categoría: ${guest.categoria}` : ''}
+                    ${guest.categoria ? `Categoría: ${guest.categoria}<br>` : ''}
+                    ${idCodeInfo}
                 </div>
                 <div class="col-md-6 text-end">
                     <h4>${statusBadge}</h4>

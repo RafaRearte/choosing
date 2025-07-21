@@ -26,5 +26,7 @@ namespace choosing.Services.Interfaces
         Task<Guest?> GetInvitadoByIdAndEventIdAsync(int id, int eventId);
         Task DeleteInvitadoByIdAsync(int id);
         Task UpdateInvitadoByIdAsync(int id, Guest updatedGuest);
+        Task<Guest?> GetInvitadoByIdCodeAsync(string idCode);
+        Task<Guest?> GetInvitadoByIdCodeAndEventIdAsync(string idCode, int eventId);
     }
 }

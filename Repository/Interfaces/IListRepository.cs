@@ -22,5 +22,7 @@ namespace choosing.Repository.Interfaces
         Task<Guest?> GetByIdAsync(int id);
         Task<Guest?> GetByIdAndEventIdAsync(int id, int eventId);
         Task DeleteByIdAsync(int id);
+        Task<Guest?> GetByIdCodeAsync(string idCode);
+        Task<Guest?> GetByIdCodeAndEventIdAsync(string idCode, int eventId);
     }
 }

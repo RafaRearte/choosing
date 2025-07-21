@@ -46,6 +46,8 @@ namespace choosing.Domain
         public string? Lugar { get; set; }
 
         public string? Telefono { get; set; }
+
+        public string? IdCode { get; set; }
     }
 }
 

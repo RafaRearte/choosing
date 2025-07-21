@@ -226,5 +226,31 @@ namespace choosing.Repository.Impl
             }
         }
 
+        public async Task<Guest?> GetByIdCodeAsync(string idCode)
+        {
+            try
+            {
+                return await _context.Guests
+                    .FirstOrDefaultAsync(g => g.IdCode == idCode);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error retrieving guest with IdCode {idCode}", ex);
+            }
+        }
+
+        public async Task<Guest?> GetByIdCodeAndEventIdAsync(string idCode, int eventId)
+        {
+            try
+            {
+                return await _context.Guests
+                    .FirstOrDefaultAsync(g => g.IdCode == idCode && g.EventoId == eventId);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error retrieving guest with IdCode {idCode} for event {eventId}", ex);
+            }
+        }
+
     }
 }

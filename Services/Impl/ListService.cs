@@ -172,5 +172,15 @@ namespace choosing.Services.Impl
 
             await _listRepository.UpdateAsync(invitado);
         }
+
+        public async Task<Guest?> GetInvitadoByIdCodeAsync(string idCode)
+        {
+            return await _listRepository.GetByIdCodeAsync(idCode);
+        }
+
+        public async Task<Guest?> GetInvitadoByIdCodeAndEventIdAsync(string idCode, int eventId)
+        {
+            return await _listRepository.GetByIdCodeAndEventIdAsync(idCode, eventId);
+        }
     }
 }

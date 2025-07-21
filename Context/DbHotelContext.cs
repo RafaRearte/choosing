@@ -74,6 +74,9 @@ public partial class DbHotelContext : DbContext
                         .HasMaxLength(255)
                         .HasColumnName("lugar");
             entity.Property(e => e.Telefono).HasMaxLength(50).HasColumnName("telefono");
+            entity.Property(e => e.IdCode)
+            .HasMaxLength(100)
+            .HasColumnName("id_code");
         });
 
         modelBuilder.Entity<EventModel>(entity =>
