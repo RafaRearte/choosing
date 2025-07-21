@@ -177,6 +177,10 @@ const accionesColumn = {
         
         // Botón de información (siempre visible)
         actions += `<button type="button" class="btn btn-primary btn-sm" onclick="openEditModal(${data.id})">Info</button>`;
+
+        actions += `<button type="button" class="btn btn-info btn-sm" onclick="openGuestQr(${data.id}, '${data.nombre}', '${data.apellido}')">
+          <i class="bi bi-qr-code-scan"></i>
+        </button>`;
         
         // Botón de etiqueta (solo si puede acreditar)
         if (puedeHacerAccion('acreditar')) {
@@ -1033,6 +1037,35 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
     }
 };
 
+const openGuestQr = (id, nombre, apellido) => {
+    const qrContent = `${id}`; // solo el ID para escanear
+
+    // Crear el QR
+    const qr = qrcode(0, 'L');
+    qr.addData(qrContent);
+    qr.make();
+    const qrHtml = qr.createSvgTag(4, 0); // tamaño x4
+
+    // Abrir nueva ventana con el QR
+    const html = `
+        <html>
+        <head>
+            <title>QR Invitado</title>
+        </head>
+        <body style="text-align: center; font-family: sans-serif;">
+            <h2>${nombre} ${apellido}</h2>
+            <div>${qrHtml}</div>
+            <p>ID: ${id}</p>
+            <button onclick="window.print()">Imprimir</button>
+        </body>
+        </html>
+    `;
+
+    const qrWindow = window.open('', '_blank');
+    qrWindow.document.write(html);
+    qrWindow.document.close();
+};
+
 // Función para cargar información del usuario
 function loadUserInfo() {
     // Obtener datos del usuario del localStorage (guardados durante el login)
@@ -1134,75 +1167,86 @@ const openScanMode = () => {
     }, 500);
 };
 
+const resetScan = () => {
+    // Limpiar input y spinner
+    const input = document.getElementById('scanInput');
+    const result = document.getElementById('scanResult');
+    const spinner = document.getElementById('scanSpinner');
+
+    if (input) input.value = '';
+    if (result) result.style.display = 'none';
+    if (spinner) spinner.style.display = 'block';
+
+    // Dejar el foco de nuevo en el input
+    setTimeout(() => {
+        input.focus();
+    }, 200);
+};
+
+
 // Función para procesar el código escaneado (versión mejorada)
 const processScanInput = (scannedData) => {
     if (!scannedData.trim()) return;
-    
+
     console.log('Código escaneado:', scannedData);
-    
+    const cleanData = scannedData.trim();
+
     // Ocultar spinner
-    document.getElementById('scanSpinner').style.display = 'none';
-    
-    // Determinar tipo de código
-    if (scannedData.startsWith('QR:')) {
-        // Es un QR personalizado - extraer ID
-        const guestId = scannedData.replace('QR:', '');
-        searchGuestById(guestId);
-    } else if (scannedData.includes('@') && scannedData.length > 50) {
-        // Es muy probable que sea un PDF417 de DNI argentino
-        const parsedDni = parseDniFromPdf417(scannedData);
-        if (parsedDni) {
-            searchGuestByDni(parsedDni);
+    const spinner = document.getElementById('scanSpinner');
+    if (spinner) spinner.style.display = 'none';
+
+    // 1. PDF417 (más de 50 caracteres)
+    if (cleanData.length > 50) {
+        const dni = parseDniFromPdf417(cleanData);
+        if (dni) {
+            searchGuestByDni(dni);
         } else {
             showScanError('No se pudo extraer el DNI del código PDF417');
         }
-    } else if (/^\d{7,8}$/.test(scannedData.trim())) {
-        // Es un DNI numérico directo
-        searchGuestByDni(scannedData.trim());
+
+    // 2. Solo números
+    } else if (/^\d+$/.test(cleanData)) {
+        if (cleanData.length === 7 || cleanData.length === 8) {
+            // DNI numérico directo
+            searchGuestByDni(cleanData);
+        } else {
+            // ID escaneado desde QR
+            searchGuestById(cleanData);
+        }
+
+    // 3. Otro
     } else {
-        showScanError(`Código no reconocido. Tipo: ${scannedData.length > 20 ? 'PDF417' : 'Otro'}`);
+        showScanError(`Código no reconocido. Longitud: ${cleanData.length}`);
     }
 };
 
+
+
 // Función para parsear DNI del código PDF417 argentino
-const parseDniFromPdf417 = (pdf417Data) => {
+const parseDniFromPdf417 = (data) => {
     try {
-        console.log('Código PDF417 recibido:', pdf417Data);
-        
-        // Formato real: NRO_TRAMITE@APELLIDOS@NOMBRES@SEXO@DNI@TIPO@FECHA_NAC@FECHA_EMISION@COD_SEGURIDAD
-        // Ejemplo: 00509616293@REARTE ARIZA@CESAR RAFAEL@M@44274648@A@11/09/2002@16/08/2017@207
-        const parts = pdf417Data.split('@');
-        
-        if (parts.length >= 5) {
-            // El DNI está en la posición 4 (índice 4)
-            const dni = parts[4].trim();
-            
-            // Validar que sea un DNI válido (7-8 dígitos)
-            if (/^\d{7,8}$/.test(dni)) {
-                console.log('DNI extraído del PDF417:', dni);
-                return dni;
-            }
+        console.log('Código recibido:', data);
+
+        // Buscar todos los números de 7 u 8 dígitos
+        const matches = data.match(/\d{7,8}/g);
+
+        if (matches && matches.length >= 2) {
+            const dni = matches[1];
+            console.log('DNI extraído:', dni);
+            return dni;
         }
-        
-        // Método de respaldo: buscar secuencia de 7-8 dígitos que no sea el número de trámite
-        const dniMatches = pdf417Data.match(/\b\d{7,8}\b/g);
-        if (dniMatches && dniMatches.length > 1) {
-            // El primer match suele ser el nro de trámite (más largo), el segundo el DNI
-            for (let i = 1; i < dniMatches.length; i++) {
-                if (dniMatches[i].length >= 7 && dniMatches[i].length <= 8) {
-                    console.log('DNI extraído por método alternativo:', dniMatches[i]);
-                    return dniMatches[i];
-                }
-            }
-        }
-        
-        console.warn('No se pudo extraer DNI del código PDF417');
+
+        console.warn('No se encontró un DNI válido');
         return null;
+
     } catch (error) {
-        console.error('Error parsing PDF417:', error);
+        console.error('Error al parsear PDF417:', error);
         return null;
     }
 };
+
+
+
 
 // Buscar invitado por ID
 const searchGuestById = async (guestId) => {

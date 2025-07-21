@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro al Evento</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .form-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .loading .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .success-message, .error-message {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="logo">
+            <h1><i class="bi bi-calendar-event"></i> Registro al Evento</h1>
+            <p class="text-muted">Complete sus datos para recibir su invitación</p>
+        </div>
+        
+        <form id="registroForm">
+            <!-- Selección de Evento -->
+            <div class="mb-3">
+                <label for="eventoSelect" class="form-label">
+                    <i class="bi bi-calendar-check me-2"></i>Seleccionar Evento *
+                </label>
+                <select class="form-select" id="eventoSelect" required>
+                    <option value="">Cargando eventos...</option>
+                </select>
+            </div>
+
+            <!-- Selección de Stand (simulado) -->
+            <div class="mb-3">
+                <label for="standSelect" class="form-label">
+                    <i class="bi bi-shop me-2"></i>Stand que lo invita
+                </label>
+                <select class="form-select" id="standSelect">
+                    <option value="">Sin stand específico</option>
+                    <option value="1">Stand 01 - TechCorp</option>
+                    <option value="2">Stand 02 - InnovateLab</option>
+                    <option value="3">Stand 03 - FutureSoft</option>
+                    <option value="4">Stand 04 - DataFlow</option>
+                    <option value="5">Stand 05 - CloudTech</option>
+                </select>
+            </div>
+            
+            <!-- Datos personales -->
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="nombre" class="form-label">
+                        <i class="bi bi-person me-2"></i>Nombre *
+                    </label>
+                    <input type="text" class="form-control" id="nombre" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="apellido" class="form-label">
+                        <i class="bi bi-person me-2"></i>Apellido *
+                    </label>
+                    <input type="text" class="form-control" id="apellido" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">
+                    <i class="bi bi-envelope me-2"></i>Email *
+                </label>
+                <input type="email" class="form-control" id="email" required 
+                       placeholder="su.email@ejemplo.com">
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="dni" class="form-label">
+                        <i class="bi bi-card-text me-2"></i>DNI
+                    </label>
+                    <input type="number" class="form-control" id="dni">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="telefono" class="form-label">
+                        <i class="bi bi-phone me-2"></i>Teléfono
+                    </label>
+                    <input type="tel" class="form-control" id="telefono">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="empresa" class="form-label">
+                    <i class="bi bi-building me-2"></i>Empresa/Organización
+                </label>
+                <input type="text" class="form-control" id="empresa">
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="profesion" class="form-label">
+                        <i class="bi bi-briefcase me-2"></i>Profesión
+                    </label>
+                    <input type="text" class="form-control" id="profesion">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="cargo" class="form-label">
+                        <i class="bi bi-person-badge me-2"></i>Cargo
+                    </label>
+                    <input type="text" class="form-control" id="cargo">
+                </div>
+            </div>
+
+            <!-- Días de asistencia -->
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="bi bi-calendar3 me-2"></i>Días de Asistencia
+                </label>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="dayOne" checked>
+                    <label class="form-check-label" for="dayOne">Día 1</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="dayTwo" checked>
+                    <label class="form-check-label" for="dayTwo">Día 2</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="dayThree">
+                    <label class="form-check-label" for="dayThree">Día 3</label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+                <i class="bi bi-send me-2"></i>Registrarse y Recibir Invitación
+            </button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Registrando y enviando invitación por email...</p>
+        </div>
+        
+        <div class="success-message" id="successMessage">
+            <h4><i class="bi bi-check-circle me-2"></i>¡Registro Exitoso!</h4>
+            <p>Su registro ha sido completado exitosamente.</p>
+            <p><strong>ID de Invitado:</strong> <span id="invitadoId"></span></p>
+            
+            <!-- 🔥 BOTÓN PARA DESCARGAR PDF -->
+            <div class="mt-3">
+                <button type="button" class="btn btn-success btn-lg" id="downloadPdfBtn">
+                    <i class="bi bi-download me-2"></i>Descargar Invitación PDF
+                </button>
+            </div>
+            
+            <div class="mt-3">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Su invitación incluye un código QR único para el acceso al evento
+                </small>
+            </div>
+        </div>
+        
+        <div class="error-message" id="errorMessage">
+            <h4><i class="bi bi-exclamation-triangle me-2"></i>Error en el Registro</h4>
+            <p id="errorText">Hubo un problema. Por favor intente nuevamente.</p>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jsPDF para generar PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- QRious para QR más compatible con PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    
+    <script>
+        // 🔥 USAR TUS APIs REALES
+        const apiBaseUrl = "https://rafa-choosing.duckdns.org/api";
+        const eventApiUrl = `${apiBaseUrl}/Event`;
+        const listApiUrl = `${apiBaseUrl}/List`;
+        
+        // Variables globales para el PDF
+        let datosInvitadoGlobal = null;
+        let eventoSeleccionadoGlobal = null;
+
+        // Cargar eventos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarEventos();
+            
+            // Manejar envío del formulario
+            document.getElementById('registroForm').addEventListener('submit', registrarInvitado);
+        });
+
+        // 🔥 CARGAR EVENTOS DESDE TU API
+        async function cargarEventos() {
+            try {
+                console.log('🔄 Cargando eventos desde tu API...');
+                
+                const response = await fetch(`${eventApiUrl}/GetAll`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+
+                const eventos = await response.json();
+                console.log('✅ Eventos cargados:', eventos);
+
+                const select = document.getElementById('eventoSelect');
+                select.innerHTML = '<option value="">-- Seleccione un evento --</option>';
+
+                // Mostrar solo eventos activos
+                const eventosActivos = eventos.filter(evento => evento.activo);
+                
+                if (eventosActivos.length === 0) {
+                    select.innerHTML = '<option value="">No hay eventos activos</option>';
+                    return;
+                }
+
+                eventosActivos.forEach(evento => {
+                    const fechaInicio = new Date(evento.fechaInicio).toLocaleDateString('es-AR');
+                    select.innerHTML += `<option value="${evento.id}" data-evento='${JSON.stringify(evento)}'>${evento.nombre} - ${fechaInicio}</option>`;
+                });
+
+            } catch (error) {
+                console.error('❌ Error cargando eventos:', error);
+                document.getElementById('eventoSelect').innerHTML = '<option value="">Error al cargar eventos</option>';
+            }
+        }
+
+        // 🔥 REGISTRAR INVITADO USANDO TU API
+        async function registrarInvitado(e) {
+            e.preventDefault();
+            
+            const eventoId = document.getElementById('eventoSelect').value;
+            if (!eventoId) {
+                alert('Por favor seleccione un evento');
+                return;
+            }
+
+            // 🔥 GUARDAR DATOS DEL EVENTO SELECCIONADO
+            const selectEvento = document.getElementById('eventoSelect');
+            const selectedOption = selectEvento.options[selectEvento.selectedIndex];
+            eventoSeleccionadoGlobal = JSON.parse(selectedOption.getAttribute('data-evento'));
+
+            // Recopilar datos del formulario
+            datosInvitadoGlobal = {
+                eventoId: parseInt(eventoId),
+                nombre: document.getElementById('nombre').value.trim(),
+                apellido: document.getElementById('apellido').value.trim(),
+                mail: document.getElementById('email').value.trim(),
+                dni: document.getElementById('dni').value ? parseInt(document.getElementById('dni').value) : null,
+                telefono: document.getElementById('telefono').value.trim() || null,
+                empresa: document.getElementById('empresa').value.trim() || null,
+                profesion: document.getElementById('profesion').value.trim() || null,
+                cargo: document.getElementById('cargo').value.trim() || null,
+                dayOne: document.getElementById('dayOne').checked ? 'SI' : 'NO',
+                dayTwo: document.getElementById('dayTwo').checked ? 'SI' : 'NO',
+                dayThree: document.getElementById('dayThree').checked ? 'SI' : 'NO',
+                acreditado: 0,
+                esNuevo: true,
+                // 🆕 CAMPO NUEVO PARA STAND
+                idStand: document.getElementById('standSelect').value || null
+            };
+
+            console.log('📝 Datos a enviar:', datosInvitadoGlobal);
+
+            // Mostrar loading
+            mostrarLoading(true);
+
+            try {
+                // 🔥 USAR TU ENDPOINT DE CREATE
+                const response = await fetch(`${listApiUrl}/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(datosInvitadoGlobal)
+                });
+
+                console.log('📡 Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error ${response.status}: ${errorText}`);
+                }
+
+                const invitadoCreado = await response.json();
+                console.log('✅ Invitado creado:', invitadoCreado);
+
+                // 🔥 ACTUALIZAR DATOS GLOBALES CON ID GENERADO
+                datosInvitadoGlobal.id = invitadoCreado.id;
+                
+                console.log('📋 Datos globales actualizados:', datosInvitadoGlobal);
+                console.log('🎯 Evento seleccionado:', eventoSeleccionadoGlobal);
+                console.log('🚀 A punto de mostrar éxito...');
+
+                // Mostrar éxito
+                mostrarExito(invitadoCreado);
+                
+                console.log('✅ mostrarExito() ejecutado');
+
+            } catch (error) {
+                console.error('❌ Error:', error);
+                mostrarError(error.message);
+                mostrarLoading(false); // Solo ocultar loading si hay error
+            }
+            // 🔥 NO llamar mostrarLoading(false) aquí porque mata el mensaje de éxito
+        }
+
+        // 🔥 GENERAR Y DESCARGAR PDF CON QR
+        async function generarYDescargarPDF() {
+            console.log('🔥 BOTÓN CLICKEADO - Iniciando generación PDF');
+            console.log('📋 Datos invitado global:', datosInvitadoGlobal);
+            console.log('🎯 Evento global:', eventoSeleccionadoGlobal);
+            
+            if (!datosInvitadoGlobal || !eventoSeleccionadoGlobal) {
+                console.error('❌ Error: Faltan datos');
+                alert('Error: No hay datos del invitado');
+                return;
+            }
+
+            if (!datosInvitadoGlobal.id) {
+                console.error('❌ Error: No hay ID del invitado');
+                alert('Error: No se encontró el ID del invitado');
+                return;
+            }
+
+            try {
+                console.log('📄 Generando PDF para invitado ID:', datosInvitadoGlobal.id);
+
+                // Crear instancia de jsPDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                // 🔥 GENERAR QR CON EL ID DEL INVITADO (método más simple)
+                const qrData = `${datosInvitadoGlobal.id}`;
+                console.log('🔥 Generando QR con datos:', qrData);
+                
+                // Crear canvas temporal para QR
+                const qrCanvas = document.createElement('canvas');
+                const qr = new QRious({
+                    element: qrCanvas,
+                    value: qrData,
+                    size: 200,
+                    level: 'M'
+                });
+                
+                // Convertir canvas a imagen base64
+                const qrImageData = qrCanvas.toDataURL('image/png');
+                console.log('✅ QR generado como imagen base64');
+                
+                // 🎨 DISEÑAR LA INVITACIÓN
+                
+                // Header con título del evento
+                doc.setFontSize(22);
+                doc.setFont('helvetica', 'bold');
+                doc.text('INVITACIÓN AL EVENTO', 20, 30);
+                
+                // Nombre del evento
+                doc.setFontSize(18);
+                doc.setFont('helvetica', 'normal');
+                doc.text(eventoSeleccionadoGlobal.nombre, 20, 45);
+                
+                // Fecha del evento
+                const fechaEvento = new Date(eventoSeleccionadoGlobal.fechaInicio).toLocaleDateString('es-AR', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                doc.setFontSize(12);
+                doc.text(`Fecha: ${fechaEvento}`, 20, 55);
+                
+                // Ubicación si existe
+                if (eventoSeleccionadoGlobal.ubicacion) {
+                    doc.text(`Lugar: ${eventoSeleccionadoGlobal.ubicacion}`, 20, 65);
+                }
+                
+                // Línea separadora
+                doc.line(20, 75, 190, 75);
+                
+                // Datos del invitado
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text('DATOS DEL INVITADO', 20, 90);
+                
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'normal');
+                
+                let yPosition = 105;
+                
+                // Nombre completo
+                doc.setFont('helvetica', 'bold');
+                doc.text(`${datosInvitadoGlobal.nombre} ${datosInvitadoGlobal.apellido}`, 20, yPosition);
+                yPosition += 10;
+                
+                doc.setFont('helvetica', 'normal');
+                
+                // Email
+                if (datosInvitadoGlobal.mail) {
+                    doc.text(`Email: ${datosInvitadoGlobal.mail}`, 20, yPosition);
+                    yPosition += 8;
+                }
+                
+                // DNI
+                if (datosInvitadoGlobal.dni) {
+                    doc.text(`DNI: ${datosInvitadoGlobal.dni}`, 20, yPosition);
+                    yPosition += 8;
+                }
+                
+                // Empresa
+                if (datosInvitadoGlobal.empresa) {
+                    doc.text(`Empresa: ${datosInvitadoGlobal.empresa}`, 20, yPosition);
+                    yPosition += 8;
+                }
+                
+                // Cargo
+                if (datosInvitadoGlobal.cargo) {
+                    doc.text(`Cargo: ${datosInvitadoGlobal.cargo}`, 20, yPosition);
+                    yPosition += 8;
+                }
+                
+                // Días de asistencia
+                const dias = [];
+                if (datosInvitadoGlobal.dayOne === 'SI') dias.push('Día 1');
+                if (datosInvitadoGlobal.dayTwo === 'SI') dias.push('Día 2');
+                if (datosInvitadoGlobal.dayThree === 'SI') dias.push('Día 3');
+                
+                if (dias.length > 0) {
+                    doc.text(`Días autorizados: ${dias.join(', ')}`, 20, yPosition);
+                    yPosition += 8;
+                }
+                
+                // ID del invitado
+                doc.setFontSize(10);
+                doc.setTextColor(100);
+                doc.text(`ID de Invitado: ${datosInvitadoGlobal.id}`, 20, yPosition + 10);
+                
+                // 🔥 AGREGAR QR AL PDF (método simplificado)
+                console.log('📷 Agregando QR al PDF...');
+                doc.addImage(qrImageData, 'PNG', 140, 85, 40, 40);
+                console.log('✅ QR agregado al PDF');
+                
+                // Texto explicativo del QR
+                doc.setFontSize(10);
+                doc.setTextColor(0);
+                doc.text('Código QR:', 142, 135);
+                doc.text(`ID: ${datosInvitadoGlobal.id}`, 142, 142);
+                doc.setFontSize(8);
+                doc.text('Para acceso al evento', 142, 148);
+                
+                // Footer
+                doc.setFontSize(8);
+                doc.setTextColor(150);
+                doc.text('Presente esta invitación en el evento para su acreditación', 20, 280);
+                doc.text(`Generado el ${new Date().toLocaleDateString('es-AR')} a las ${new Date().toLocaleTimeString('es-AR')}`, 20, 285);
+                
+                // 🔥 DESCARGAR EL PDF
+                const nombreArchivo = `invitacion_${datosInvitadoGlobal.apellido}_${datosInvitadoGlobal.nombre}_${datosInvitadoGlobal.id}.pdf`;
+                doc.save(nombreArchivo);
+                
+                console.log('✅ PDF generado y descargado:', nombreArchivo);
+                
+            } catch (error) {
+                console.error('❌ Error generando PDF:', error);
+                alert('Error al generar el PDF. Por favor intente nuevamente.');
+            }
+        }
+
+        // Funciones de UI
+        function mostrarLoading(show) {
+            console.log('🔄 mostrarLoading:', show);
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('registroForm').style.display = show ? 'none' : 'block';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function mostrarExito(invitado) {
+            console.log('🎉 mostrarExito() iniciado con invitado:', invitado);
+            
+            // 🔥 OCULTAR LOADING Y FORM, MOSTRAR ÉXITO
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('registroForm').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            document.getElementById('invitadoId').textContent = invitado.id;
+            document.getElementById('successMessage').style.display = 'block';
+            
+            console.log('✅ Mensaje de éxito mostrado');
+            console.log('🔍 Buscando botón downloadPdfBtn...');
+            
+            // 🔥 AGREGAR EVENT LISTENER AL BOTÓN CUANDO SE MUESTRA
+            const downloadBtn = document.getElementById('downloadPdfBtn');
+            console.log('🎯 Botón encontrado:', downloadBtn);
+            
+            if (downloadBtn) {
+                // Remover listener anterior si existe
+                downloadBtn.removeEventListener('click', generarYDescargarPDF);
+                // Agregar nuevo listener
+                downloadBtn.addEventListener('click', generarYDescargarPDF);
+                console.log('✅ Event listener agregado al botón de descarga');
+            } else {
+                console.error('❌ No se encontró el botón downloadPdfBtn');
+            }
+        }
+
+        function mostrarError(mensaje) {
+            console.log('❌ mostrarError:', mensaje);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('registroForm').style.display = 'block';
+            document.getElementById('errorText').textContent = mensaje;
+            document.getElementById('errorMessage').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
