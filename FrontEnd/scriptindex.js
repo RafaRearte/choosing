@@ -1372,6 +1372,13 @@ const showGuestFound = (guest) => {
     
     document.getElementById('scanResult').innerHTML = resultHtml;
     document.getElementById('scanResult').style.display = 'block';
+setTimeout(() => {
+    const printBtn = document.querySelector('#scanResult button[onclick*="printLabel"]');
+    if (printBtn) {
+        printBtn.focus();
+        printBtn.style.outline = '2px solid #0d6efd';
+    }
+}, 200);
 };
 
 // Mostrar error de escaneo
