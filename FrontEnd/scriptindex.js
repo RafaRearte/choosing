@@ -178,9 +178,9 @@ const accionesColumn = {
         // Botón de información (siempre visible)
         actions += `<button type="button" class="btn btn-primary btn-sm" onclick="openEditModal(${data.id})">Info</button>`;
 
-        actions += `<button type="button" class="btn btn-info btn-sm" onclick="openGuestQr(${data.id}, '${data.nombre}', '${data.apellido}')">
-          <i class="bi bi-qr-code-scan"></i>
-        </button>`;
+    //    actions += `<button type="button" class="btn btn-info btn-sm" onclick="openGuestQr(${data.id}, '${data.nombre}', '${data.apellido}')">
+    //      <i class="bi bi-qr-code-scan"></i>
+    //    </button>`;
         
         // Botón de etiqueta (solo si puede acreditar)
         if (puedeHacerAccion('acreditar')) {
@@ -1014,15 +1014,18 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
                 <div style="font-weight: bold; font-size: 16pt; margin-bottom: 2px;">${nombreCompletoOriginal}</div>
                 ${empresa ? `<div style="font-size: 12pt; margin-bottom: 1px;">${empresa}</div>` : ''}
                 ${cargo ? `<div style="font-size: 12pt; margin-bottom: 1px;">${cargo}</div>` : ''}
-                ${telefono ? `<div style="font-size: 10pt;">Teléfono: ${telefono}</div>` : ''}
-                ${dni ? `<div style="font-size: 10pt;">DNI: ${dni}</div>` : ''}
-            </div>
-            <div style="margin-right: 5mm; width: 20mm; height: 20mm;">
-                ${qrSvg}
+
             </div>
         </div>
         `;
-        
+
+        //                ${telefono ? `<div style="font-size: 10pt;">Teléfono: ${telefono}</div>` : ''}
+        //                ${dni ? `<div style="font-size: 10pt;">DNI: ${dni}</div>` : ''}
+
+
+//            <div style="margin-right: 5mm; width: 20mm; height: 20mm;">
+//                ${qrSvg}
+//            </div>
         const printWindow = window.open('', '', 'width=600,height=400');
         printWindow.document.write(etiquetaHTML);
         printWindow.document.close();
@@ -1324,48 +1327,46 @@ const showGuestFound = (guest) => {
     const isAccredited = guest.acreditado > 0;
     const statusBadge = isAccredited ? 
         '<span class="badge bg-success">YA ACREDITADO</span>' : 
-        '<span class="badge bg-warning">PENDIENTE</span>';
+        '<span class="badge bg-danger">NO ACREDITADO</span>';
     
     // 🆕 MOSTRAR INFORMACIÓN DEL IdCode SI EXISTE
+
     const idCodeInfo = guest.idCode ? 
         `<small class="text-muted d-block">Código de invitación: ${guest.idCode}</small>` : '';
     
     const resultHtml = `
-        <div class="alert alert-success">
-            <h5><i class="bi bi-person-check me-2"></i>Invitado Encontrado</h5>
-            <div class="row">
-                <div class="col-md-6">
-                    <strong>${guest.nombre} ${guest.apellido}</strong><br>
-                    ${guest.dni ? `DNI: ${guest.dni}<br>` : ''}
-                    ${guest.empresa ? `Empresa: ${guest.empresa}<br>` : ''}
-                    ${guest.categoria ? `Categoría: ${guest.categoria}<br>` : ''}
+        <div class="">
+            <div class="row mb-3">
+                <h3 style="font-size: 2rem;"><i class="bi bi-person-check me-2"></i>Invitado Encontrado</h3>
+                <div class="">
+                    <strong style="font-size: 1.5rem;">${guest.nombre} ${guest.apellido}</strong><br>
+                    ${guest.dni ? `<span style="font-size: 1.1rem;">DNI: ${guest.dni}</span><br>` : ''}
+                    ${guest.empresa ? `<span style="font-size: 1.1rem;">Empresa: ${guest.empresa}</span><br>` : ''}
+                    ${guest.categoria ? `<span style="font-size: 1.1rem;">Categoría: ${guest.categoria}</span><br>` : ''}
                     ${idCodeInfo}
                 </div>
-                <div class="col-md-6 text-end">
+            </div>
+            <div class="row mt-4">
+                <div class="col-12 text-center mb-3">
                     <h4>${statusBadge}</h4>
                     ${isAccredited && guest.horaAcreditacion ? 
                         `<small class="text-muted">Acreditado: ${new Date(guest.horaAcreditacion).toLocaleString()}</small>` : 
                         ''}
                 </div>
+                <div class="col-12 text-center">
+                    <div class="d-flex justify-content-center gap-2 mt-2 flex-row">
+                        <button class="btn ${isAccredited ? 'btn-outline-danger' : 'btn-success'} btn-sm" style="min-width:110px;" onclick="toggleAccreditStatus(${guest.id}, ${isAccredited})">
+                            <i class="bi bi-check-lg me-1"></i>${isAccredited ? 'Desacreditar' : 'Acreditar'}
+                        </button>
+                        <button class="btn ${isAccredited ? 'btn-outline-primary' : 'btn-primary'} btn-sm" style="min-width:110px;" onclick="printLabel(${guest.id}, '${guest.nombre}', '${guest.apellido}','${guest.telefono || ''}', '${guest.email || ''}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}')">
+                            <i class="bi bi-printer me-1"></i>${isAccredited ? 'Etiqueta' : 'Acreditar+Imprimir'}
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" style="min-width:110px;" onclick="openEditModal(${guest.id}); closeScanModal();">
+                            <i class="bi bi-pencil me-1"></i>Editar
+                        </button>
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        <div class="d-grid gap-2">
-            ${!isAccredited ? `
-                <button class="btn btn-success btn-lg" onclick="quickAccredit(${guest.id})">
-                    <i class="bi bi-check-lg me-2"></i>Acreditar Ahora
-                </button>
-                <button class="btn btn-primary btn-lg" onclick="accreditAndPrint(${guest.id}, '${guest.nombre}', '${guest.apellido}','${guest.telefono || ''}', '${guest.email || ''}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}')">
-                    <i class="bi bi-printer me-2"></i>Acreditar e Imprimir
-                </button>
-            ` : `
-                <button class="btn btn-outline-primary btn-lg" onclick="printLabel(${guest.id}, '${guest.nombre}', '${guest.apellido}','${guest.telefono || ''}', '${guest.email || ''}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}')">
-                    <i class="bi bi-printer me-2"></i>Reimprimir Etiqueta
-                </button>
-            `}
-            <button class="btn btn-outline-secondary" onclick="openEditModal(${guest.id}); closeScanModal();">
-                <i class="bi bi-pencil me-2"></i>Ver/Editar Detalles
-            </button>
         </div>
     `;
     
@@ -1397,7 +1398,6 @@ const quickAccredit = async (guestId) => {
         });
         
         if (response && response.ok) {
-            alert('✅ Invitado acreditado exitosamente');
             closeScanModal();
             fetchGuests(); // Actualizar tabla
         } else {
