@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Acreditación Offline</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+    
+    <style>
+        .print-controls {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            margin-bottom: 20px;
+        }
+        
+        @media print {
+            .print-controls, .no-print {
+                display: none !important;
+            }
+            body {
+                padding: 0;
+                margin: 0;
+            }
+        }
+        
+        /* Estilos para las etiquetas */
+        .etiqueta {
+            width: 80mm;
+            height: 26mm;
+            font-family: Arial, sans-serif;
+            font-size: 14pt;
+            line-height: 1.2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0mm;
+            padding: 0mm;
+            box-sizing: border-box;
+            page-break-after: always;
+            border: 1px solid #000;
+        }
+        
+        .etiqueta div {
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .etiqueta div:first-child {
+            font-weight: bold;
+            font-size: 16pt;
+        }
+        
+        .etiqueta div:not(:first-child) {
+            font-size: 14pt;
+            margin-top: 2mm;
+        }
+        
+        @page {
+            size: 80mm 26mm;
+            margin: 0;
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            
+            #etiquetasContainer,
+            #etiquetasContainer * {
+                visibility: visible !important;
+            }
+            
+            #etiquetasContainer {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+            }
+            
+            .etiqueta {
+                border: none;
+                margin: 0;
+                padding: 0;
+            }
+        }
+        
+        #etiquetasContainer {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        
+        .drop-zone.dragover {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+        }
+        
+        .counter-badge {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .counter-badge:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+        
+        .counter-badge.active {
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+        }
+        
+        .table-container {
+            min-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Controles principales -->
+        <div class="print-controls no-print">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Sistema de Acreditación Offline</h2>
+                <div>
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-trash me-1"></i> Gestionar Datos
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><button class="dropdown-item text-warning" onclick="clearImportedData()">
+                                <i class="bi bi-file-x me-2"></i> Borrar solo importados
+                            </button></li>
+                            <li><button class="dropdown-item text-danger" onclick="clearAllData()">
+                                <i class="bi bi-trash3 me-2"></i> Borrar todos los datos
+                            </button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item" onclick="resetAccreditations()">
+                                <i class="bi bi-arrow-counterclockwise me-2"></i> Desacreditar todos
+                            </button></li>
+                        </ul>
+                    </div>
+                    <button id="printAllBtn" class="btn btn-primary me-2">
+                        <i class="bi bi-printer me-1"></i> Imprimir Filtradas
+                    </button>
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-download me-1"></i> Exportar
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><button class="dropdown-item" onclick="exportToCSV()">
+                                <i class="bi bi-filetype-csv me-2"></i> Descargar CSV
+                            </button></li>
+                            <li><button class="dropdown-item" onclick="exportToExcel()">
+                                <i class="bi bi-file-earmark-excel me-2"></i> Descargar Excel
+                            </button></li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addGuestModal">
+                        <i class="bi bi-person-plus me-1"></i> Nuevo Invitado
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Zona de carga de archivos (colapsable) -->
+            <div class="row mb-3" id="importSection">
+                <div class="col-12">
+                    <button class="btn btn-outline-secondary btn-sm mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#importArea" aria-expanded="false">
+                        <i class="bi bi-upload me-1"></i> Importar desde Excel/CSV
+                        <i class="bi bi-chevron-down ms-1"></i>
+                    </button>
+                    
+                    <div class="collapse" id="importArea">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="drop-zone" id="dropZone">
+                                    <i class="bi bi-file-earmark-excel fs-1 text-muted"></i>
+                                    <p class="mt-2">Arrastra un archivo Excel/CSV aquí o</p>
+                                    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display: none;">
+                                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                                        <i class="bi bi-upload me-1"></i> Seleccionar Archivo
+                                    </button>
+                                    <small class="text-muted d-block mt-2">Formatos soportados: .xlsx, .xls, .csv</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info h-100 d-flex align-items-center">
+                                    <div>
+                                        <h6><i class="bi bi-info-circle me-2"></i>Formato esperado del archivo:</h6>
+                                        <small>
+                                            • <strong>Nombre</strong> (obligatorio)<br>
+                                            • <strong>Apellido</strong> (obligatorio)<br>
+                                            • <strong>DNI</strong> (opcional)<br>
+                                            • <strong>Email</strong> (opcional)<br>
+                                            • <strong>Empresa</strong> (opcional)<br>
+                                            • <strong>Telefono</strong> (opcional)<br>
+                                            • <strong>Cargo</strong> (opcional)
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contadores y filtros -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <span id="totalGuests" class="badge bg-primary counter-badge" data-filter="all">Total: 0</span>
+                        <span id="accredited" class="badge bg-success counter-badge" data-filter="accredited">Acreditados: 0</span>
+                        <span id="notAccredited" class="badge bg-danger counter-badge" data-filter="not-accredited">No acreditados: 0</span>
+                        <span id="imported" class="badge bg-info counter-badge" data-filter="imported">Importados: 0</span>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="showDetailedStats()" title="Ver estadísticas detalladas">
+                            <i class="bi bi-info-circle"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nombre, apellido o DNI...">
+                        <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabla de invitados -->
+        <div class="table-container" id="guestsTableContainer">
+            <table id="guestsTable" class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>DNI</th>
+                        <th>Email</th>
+                        <th>Empresa</th>
+                        <th>Teléfono</th>
+                        <th>Cargo</th>
+                        <th>Estado</th>
+                        <th>Origen</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Los datos se cargarán dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Contenedor de etiquetas para impresión -->
+        <div id="etiquetasContainer" style="display: none;">
+            <!-- Las etiquetas se generarán aquí para impresión -->
+        </div>
+    </div>
+    
+    <!-- Modal para Nuevo Invitado -->
+    <div class="modal fade" id="addGuestModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar Nuevo Invitado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addGuestForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="guestNombre" class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="guestNombre" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="guestApellido" class="form-label">Apellido *</label>
+                                <input type="text" class="form-control" id="guestApellido" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="guestDni" class="form-label">DNI</label>
+                                <input type="number" class="form-control" id="guestDni">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="guestTelefono" class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="guestTelefono">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="guestEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="guestEmail">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="guestEmpresa" class="form-label">Empresa</label>
+                                <input type="text" class="form-control" id="guestEmpresa">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="guestCargo" class="form-label">Cargo</label>
+                                <input type="text" class="form-control" id="guestCargo">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveGuest()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Editar Invitado -->
+    <div class="modal fade" id="editGuestModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Invitado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editGuestForm">
+                        <input type="hidden" id="editGuestId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editGuestNombre" class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="editGuestNombre" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editGuestApellido" class="form-label">Apellido *</label>
+                                <input type="text" class="form-control" id="editGuestApellido" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editGuestDni" class="form-label">DNI</label>
+                                <input type="number" class="form-control" id="editGuestDni">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editGuestTelefono" class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="editGuestTelefono">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editGuestEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editGuestEmail">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editGuestEmpresa" class="form-label">Empresa</label>
+                                <input type="text" class="form-control" id="editGuestEmpresa">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editGuestCargo" class="form-label">Cargo</label>
+                                <input type="text" class="form-control" id="editGuestCargo">
+                            </div>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editGuestAccredited">
+                            <label class="form-check-label" for="editGuestAccredited">
+                                Acreditado
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger me-auto" onclick="deleteGuest()">Eliminar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="updateGuest()">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <!-- SheetJS para leer Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script>
+        // Variables globales
+        let guests = [];
+        let nextId = 1;
+        let dataTable;
+        let currentFilter = 'all';
+        
+        // Inicializar al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadGuests();
+            initializeDataTable();
+            setupEventListeners();
+            updateDisplay();
+        });
+        
+        // Inicializar DataTable
+        function initializeDataTable() {
+            dataTable = $('#guestsTable').DataTable({
+                language: {
+                    url: "//cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json"
+                },
+                pageLength: 25,
+                order: [[0, 'desc']],
+                columnDefs: [
+                    {
+                        targets: 8, // Columna Estado
+                        render: function(data, type, row) {
+                            return data ? 
+                                '<span class="badge bg-success">Acreditado</span>' : 
+                                '<span class="badge bg-danger">No acreditado</span>';
+                        }
+                    },
+                    {
+                        targets: 9, // Columna Origen
+                        render: function(data, type, row) {
+                            return data === 'imported' ? 
+                                '<span class="badge bg-info">Importado</span>' : 
+                                '<span class="badge bg-secondary">Manual</span>';
+                        }
+                    },
+                    {
+                        targets: 10, // Columna Acciones
+                        orderable: false,
+                        render: function(data, type, row) {
+                            const isAccredited = row[8]; // Estado de acreditación
+                            return `
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn ${isAccredited ? 'btn-success' : 'btn-outline-success'}" 
+                                            onclick="toggleAccreditation(${row[0]})" 
+                                            title="${isAccredited ? 'Acreditado' : 'Acreditar'}">
+                                        <i class="bi ${isAccredited ? 'bi-check-lg' : 'bi-plus-lg'}"></i>
+                                    </button>
+                                    <button class="btn btn-primary" 
+                                            onclick="printLabel(${row[0]})" 
+                                            title="Imprimir etiqueta">
+                                        <i class="bi bi-printer"></i>
+                                    </button>
+                                    <button class="btn btn-secondary" 
+                                            onclick="editGuest(${row[0]})" 
+                                            title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                ]
+            });
+        }
+        
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Drag & Drop
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            
+            dropZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            
+            dropZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            });
+            
+            dropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload(files[0]);
+                }
+            });
+            
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    handleFileUpload(e.target.files[0]);
+                }
+            });
+            
+            // Contadores como filtros
+            document.querySelectorAll('.counter-badge').forEach(badge => {
+                badge.addEventListener('click', function() {
+                    document.querySelectorAll('.counter-badge').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const filter = this.getAttribute('data-filter');
+                    applyFilter(filter);
+                });
+            });
+            
+            // Búsqueda en tiempo real
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                dataTable.search(e.target.value).draw();
+            });
+            
+            // Botón de imprimir todas
+            document.getElementById('printAllBtn').addEventListener('click', printAllLabels);
+        }
+        
+        // Manejar carga de archivos
+        function handleFileUpload(file) {
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            
+            if (!['xlsx', 'xls', 'csv'].includes(fileExtension)) {
+                alert('Formato de archivo no soportado. Use .xlsx, .xls o .csv');
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    if (fileExtension === 'csv') {
+                        parseCSV(e.target.result);
+                    } else {
+                        parseExcel(e.target.result);
+                    }
+                } catch (error) {
+                    console.error('Error procesando archivo:', error);
+                    alert('Error al procesar el archivo. Verifique el formato.');
+                }
+            };
+            
+            if (fileExtension === 'csv') {
+                reader.readAsText(file);
+            } else {
+                reader.readAsArrayBuffer(file);
+            }
+        }
+        
+        // Parsear CSV
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+            
+            const importedGuests = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+                const guest = parseGuestFromRow(headers, values);
+                
+                if (guest.nombre && guest.apellido) {
+                    importedGuests.push(guest);
+                }
+            }
+            
+            if (importedGuests.length > 0) {
+                addImportedGuests(importedGuests);
+                alert(`Se importaron ${importedGuests.length} invitados desde el archivo CSV.`);
+            } else {
+                alert('No se encontraron datos válidos en el archivo CSV.');
+            }
+        }
+        
+        // Parsear Excel
+        function parseExcel(arrayBuffer) {
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            if (jsonData.length < 2) {
+                alert('El archivo Excel no tiene suficientes datos.');
+                return;
+            }
+            
+            const headers = jsonData[0].map(h => (h || '').toString().trim().toLowerCase());
+            const importedGuests = [];
+            
+            for (let i = 1; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!row || row.length === 0) continue;
+                
+                const guest = parseGuestFromRow(headers, row);
+                
+                if (guest.nombre && guest.apellido) {
+                    importedGuests.push(guest);
+                }
+            }
+            
+            if (importedGuests.length > 0) {
+                addImportedGuests(importedGuests);
+                alert(`Se importaron ${importedGuests.length} invitados desde el archivo Excel.`);
+            } else {
+                alert('No se encontraron datos válidos en el archivo Excel.');
+            }
+        }
+        
+        // Parsear invitado desde fila
+        function parseGuestFromRow(headers, values) {
+            const guest = {
+                id: nextId++,
+                nombre: '',
+                apellido: '',
+                dni: '',
+                email: '',
+                empresa: '',
+                telefono: '',
+                cargo: '',
+                accredited: false,
+                origin: 'imported'
+            };
+            
+            // Mapear columnas comunes
+            const fieldMapping = {
+                'nombre': ['nombre', 'name', 'first_name', 'firstname'],
+                'apellido': ['apellido', 'surname', 'last_name', 'lastname'],
+                'dni': ['dni', 'id', 'document', 'cedula'],
+                'email': ['email', 'mail', 'correo', 'e-mail'],
+                'empresa': ['empresa', 'company', 'organization', 'organizacion'],
+                'telefono': ['telefono', 'phone', 'tel', 'mobile', 'celular'],
+                'cargo': ['cargo', 'position', 'job', 'puesto', 'title']
+            };
+            
+            // Buscar y asignar valores
+            for (const [field, possibleNames] of Object.entries(fieldMapping)) {
+                for (const possibleName of possibleNames) {
+                    const index = headers.findIndex(h => h.includes(possibleName));
+                    if (index !== -1 && values[index]) {
+                        guest[field] = values[index].toString().trim();
+                        break;
+                    }
+                }
+            }
+            
+            return guest;
+        }
+        
+        // Agregar invitados importados
+        function addImportedGuests(importedGuests) {
+            // Verificar duplicados por nombre+apellido o DNI
+            const existingKeys = new Set();
+            guests.forEach(g => {
+                if (g.dni) existingKeys.add(`dni_${g.dni}`);
+                existingKeys.add(`name_${g.nombre.toLowerCase()}_${g.apellido.toLowerCase()}`);
+            });
+            
+            let addedCount = 0;
+            
+            importedGuests.forEach(guest => {
+                const dniKey = guest.dni ? `dni_${guest.dni}` : null;
+                const nameKey = `name_${guest.nombre.toLowerCase()}_${guest.apellido.toLowerCase()}`;
+                
+                // Verificar si ya existe
+                if ((dniKey && existingKeys.has(dniKey)) || existingKeys.has(nameKey)) {
+                    console.log(`Invitado duplicado omitido: ${guest.nombre} ${guest.apellido}`);
+                    return;
+                }
+                
+                // Agregar al array
+                guests.push(guest);
+                
+                // Marcar como agregado
+                if (dniKey) existingKeys.add(dniKey);
+                existingKeys.add(nameKey);
+                addedCount++;
+            });
+            
+            console.log(`Se agregaron ${addedCount} invitados únicos de ${importedGuests.length} importados`);
+            
+            saveGuests();
+            updateDisplay();
+        }
+        
+        // Guardar nuevo invitado manual
+        function saveGuest() {
+            const nombre = document.getElementById('guestNombre').value.trim();
+            const apellido = document.getElementById('guestApellido').value.trim();
+            const dni = document.getElementById('guestDni').value.trim();
+            const email = document.getElementById('guestEmail').value.trim();
+            const empresa = document.getElementById('guestEmpresa').value.trim();
+            const telefono = document.getElementById('guestTelefono').value.trim();
+            const cargo = document.getElementById('guestCargo').value.trim();
+            
+            if (!nombre || !apellido) {
+                alert('Por favor complete los campos obligatorios: Nombre y Apellido');
+                return;
+            }
+            
+            const newGuest = {
+                id: nextId++,
+                nombre,
+                apellido,
+                dni,
+                email,
+                empresa,
+                telefono,
+                cargo,
+                accredited: false,
+                origin: 'manual'
+            };
+            
+            guests.push(newGuest);
+            saveGuests();
+            updateDisplay();
+            
+            bootstrap.Modal.getInstance(document.getElementById('addGuestModal')).hide();
+            document.getElementById('addGuestForm').reset();
+        }
+        
+        // Editar invitado
+        function editGuest(id) {
+            const guest = guests.find(g => g.id === id);
+            if (!guest) return;
+            
+            document.getElementById('editGuestId').value = guest.id;
+            document.getElementById('editGuestNombre').value = guest.nombre;
+            document.getElementById('editGuestApellido').value = guest.apellido;
+            document.getElementById('editGuestDni').value = guest.dni || '';
+            document.getElementById('editGuestEmail').value = guest.email || '';
+            document.getElementById('editGuestEmpresa').value = guest.empresa || '';
+            document.getElementById('editGuestTelefono').value = guest.telefono || '';
+            document.getElementById('editGuestCargo').value = guest.cargo || '';
+            document.getElementById('editGuestAccredited').checked = guest.accredited;
+            
+            new bootstrap.Modal(document.getElementById('editGuestModal')).show();
+        }
+        
+        // Actualizar invitado
+        function updateGuest() {
+            const id = parseInt(document.getElementById('editGuestId').value);
+            const guestIndex = guests.findIndex(g => g.id === id);
+            
+            if (guestIndex === -1) return;
+            
+            guests[guestIndex] = {
+                ...guests[guestIndex],
+                nombre: document.getElementById('editGuestNombre').value.trim(),
+                apellido: document.getElementById('editGuestApellido').value.trim(),
+                dni: document.getElementById('editGuestDni').value.trim(),
+                email: document.getElementById('editGuestEmail').value.trim(),
+                empresa: document.getElementById('editGuestEmpresa').value.trim(),
+                telefono: document.getElementById('editGuestTelefono').value.trim(),
+                cargo: document.getElementById('editGuestCargo').value.trim(),
+                accredited: document.getElementById('editGuestAccredited').checked
+            };
+            
+            saveGuests();
+            updateDisplay();
+            
+            bootstrap.Modal.getInstance(document.getElementById('editGuestModal')).hide();
+        }
+        
+        // Eliminar invitado
+        function deleteGuest() {
+            const id = parseInt(document.getElementById('editGuestId').value);
+            
+            if (confirm('¿Está seguro que desea eliminar este invitado?')) {
+                guests = guests.filter(g => g.id !== id);
+                saveGuests();
+                updateDisplay();
+                
+                bootstrap.Modal.getInstance(document.getElementById('editGuestModal')).hide();
+            }
+        }
+        
+        // Toggle acreditación
+        function toggleAccreditation(id) {
+            const guest = guests.find(g => g.id === id);
+            if (guest) {
+                guest.accredited = !guest.accredited;
+                if (guest.accredited) {
+                    guest.accreditedTime = new Date().toISOString();
+                }
+                saveGuests();
+                updateDisplay();
+            }
+        }
+        
+        // Aplicar filtros
+        function applyFilter(filter) {
+            currentFilter = filter;
+            let filteredData;
+            
+            switch (filter) {
+                case 'accredited':
+                    filteredData = guests.filter(g => g.accredited);
+                    break;
+                case 'not-accredited':
+                    filteredData = guests.filter(g => !g.accredited);
+                    break;
+                case 'imported':
+                    filteredData = guests.filter(g => g.origin === 'imported');
+                    break;
+                default:
+                    filteredData = guests;
+            }
+            
+            updateDataTable(filteredData);
+        }
+        
+        // Actualizar DataTable
+        function updateDataTable(data = guests) {
+            const tableData = data.map(guest => [
+                guest.id,
+                guest.nombre,
+                guest.apellido,
+                guest.dni || '',
+                guest.email || '',
+                guest.empresa || '',
+                guest.telefono || '',
+                guest.cargo || '',
+                guest.accredited,
+                guest.origin || 'manual',
+                '' // Columna de acciones se renderiza en columnDefs
+            ]);
+            
+            dataTable.clear();
+            dataTable.rows.add(tableData);
+            dataTable.draw();
+        }
+        
+        // Actualizar contadores y display
+        function updateDisplay() {
+            const total = guests.length;
+            const accredited = guests.filter(g => g.accredited).length;
+            const notAccredited = total - accredited;
+            const imported = guests.filter(g => g.origin === 'imported').length;
+            
+            document.getElementById('totalGuests').textContent = `Total: ${total}`;
+            document.getElementById('accredited').textContent = `Acreditados: ${accredited}`;
+            document.getElementById('notAccredited').textContent = `No acreditados: ${notAccredited}`;
+            document.getElementById('imported').textContent = `Importados: ${imported}`;
+            
+            updateDataTable();
+        }
+        
+        // Imprimir etiqueta individual
+        function printLabel(id) {
+            const guest = guests.find(g => g.id === id);
+            if (!guest) return;
+            
+            // Acreditar automáticamente si no está acreditado
+            if (!guest.accredited) {
+                guest.accredited = true;
+                guest.accreditedTime = new Date().toISOString();
+                saveGuests();
+                updateDisplay();
+            }
+            
+            generateLabels([guest]);
+            
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => {
+                    document.getElementById('etiquetasContainer').style.display = 'none';
+                }, 1000);
+            }, 100);
+        }
+        
+        // Imprimir todas las etiquetas
+        function printAllLabels() {
+            if (guests.length === 0) {
+                alert('No hay invitados para imprimir');
+                return;
+            }
+            
+            // Filtrar según el filtro actual
+            let guestsToPrint;
+            switch (currentFilter) {
+                case 'accredited':
+                    guestsToPrint = guests.filter(g => g.accredited);
+                    break;
+                case 'not-accredited':
+                    guestsToPrint = guests.filter(g => !g.accredited);
+                    break;
+                case 'imported':
+                    guestsToPrint = guests.filter(g => g.origin === 'imported');
+                    break;
+                default:
+                    guestsToPrint = guests;
+            }
+            
+            if (guestsToPrint.length === 0) {
+                alert('No hay invitados para imprimir con el filtro actual');
+                return;
+            }
+            
+            if (confirm(`¿Está seguro que desea imprimir ${guestsToPrint.length} etiquetas?`)) {
+                // Acreditar todos los que se van a imprimir
+                guestsToPrint.forEach(guest => {
+                    if (!guest.accredited) {
+                        guest.accredited = true;
+                        guest.accreditedTime = new Date().toISOString();
+                    }
+                });
+                
+                saveGuests();
+                generateLabels(guestsToPrint);
+                
+                setTimeout(() => {
+                    window.print();
+                    setTimeout(() => {
+                        document.getElementById('etiquetasContainer').style.display = 'none';
+                        updateDisplay();
+                    }, 1000);
+                }, 100);
+            }
+        }
+        
+        // Generar etiquetas para impresión
+        function generateLabels(guestList) {
+            const container = document.getElementById('etiquetasContainer');
+            container.innerHTML = '';
+            
+            guestList.forEach(guest => {
+                const etiqueta = document.createElement('div');
+                etiqueta.className = 'etiqueta';
+                
+                let content = `<div>${guest.nombre} ${guest.apellido}</div>`;
+                if (guest.empresa && guest.empresa.trim()) {
+                    content += `<div>${guest.empresa}</div>`;
+                }
+                if (guest.cargo && guest.cargo.trim()) {
+                    content += `<div>${guest.cargo}</div>`;
+                }
+                
+                etiqueta.innerHTML = content;
+                container.appendChild(etiqueta);
+            });
+            
+            container.style.display = 'block';
+        }
+        
+        // Limpiar búsqueda
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            dataTable.search('').draw();
+        }
+        
+        // Exportar a CSV
+        function exportToCSV() {
+            if (guests.length === 0) {
+                alert('No hay invitados para exportar');
+                return;
+            }
+            
+            let csvContent = "ID,Nombre,Apellido,DNI,Email,Empresa,Telefono,Cargo,Acreditado,Origen,Fecha_Acreditacion\n";
+            
+            guests.forEach(guest => {
+                const row = [
+                    guest.id,
+                    `"${guest.nombre || ''}"`,
+                    `"${guest.apellido || ''}"`,
+                    `"${guest.dni || ''}"`,
+                    `"${guest.email || ''}"`,
+                    `"${guest.empresa || ''}"`,
+                    `"${guest.telefono || ''}"`,
+                    `"${guest.cargo || ''}"`,
+                    guest.accredited ? 'Si' : 'No',
+                    guest.origin || 'manual',
+                    guest.accreditedTime ? new Date(guest.accreditedTime).toLocaleString() : ''
+                ].join(',');
+                
+                csvContent += row + '\n';
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `acreditacion_${getCurrentDateString()}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Exportar a Excel
+        function exportToExcel() {
+            if (guests.length === 0) {
+                alert('No hay invitados para exportar');
+                return;
+            }
+            
+            const wsData = [
+                ['ID', 'Nombre', 'Apellido', 'DNI', 'Email', 'Empresa', 'Teléfono', 'Cargo', 'Acreditado', 'Origen', 'Fecha Acreditación']
+            ];
+            
+            guests.forEach(guest => {
+                wsData.push([
+                    guest.id,
+                    guest.nombre || '',
+                    guest.apellido || '',
+                    guest.dni || '',
+                    guest.email || '',
+                    guest.empresa || '',
+                    guest.telefono || '',
+                    guest.cargo || '',
+                    guest.accredited ? 'Si' : 'No',
+                    guest.origin || 'manual',
+                    guest.accreditedTime ? new Date(guest.accreditedTime).toLocaleString() : ''
+                ]);
+            });
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            
+            XLSX.utils.book_append_sheet(wb, ws, 'Acreditacion');
+            XLSX.writeFile(wb, `acreditacion_${getCurrentDateString()}.xlsx`);
+        }
+        
+        // Guardar en localStorage
+        function saveGuests() {
+            try {
+                localStorage.setItem('offlineGuests', JSON.stringify(guests));
+                localStorage.setItem('nextId', nextId.toString());
+            } catch (error) {
+                console.error('Error guardando datos:', error);
+                alert('Error al guardar los datos. El navegador puede estar sin espacio.');
+            }
+        }
+        
+        // Cargar desde localStorage
+        function loadGuests() {
+            try {
+                const savedGuests = localStorage.getItem('offlineGuests');
+                const savedNextId = localStorage.getItem('nextId');
+                
+                if (savedGuests) {
+                    guests = JSON.parse(savedGuests);
+                }
+                
+                if (savedNextId) {
+                    nextId = parseInt(savedNextId);
+                } else if (guests.length > 0) {
+                    nextId = Math.max(...guests.map(g => g.id)) + 1;
+                }
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                guests = [];
+                nextId = 1;
+            }
+        }
+        
+        // Obtener fecha actual como string
+        function getCurrentDateString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            return `${year}${month}${day}_${hours}${minutes}`;
+        }
+        
+        // Funciones para manejo de formularios
+        document.getElementById('addGuestForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveGuest();
+        });
+        
+        document.getElementById('editGuestForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            updateGuest();
+        });
+        
+        // Función para limpiar todos los datos (útil para testing)
+        function clearAllData() {
+            if (confirm('¿Está seguro que desea eliminar TODOS los datos? Esta acción no se puede deshacer.')) {
+                localStorage.removeItem('offlineGuests');
+                localStorage.removeItem('nextId');
+                guests = [];
+                nextId = 1;
+                updateDisplay();
+                alert('Todos los datos han sido eliminados.');
+            }
+        }
+        
+        // Agregar botón de limpiar datos en consola (para desarrollo/testing)
+        console.log(`
+🎯 SISTEMA DE ACREDITACIÓN OFFLINE CARGADO
+========================================
+Funciones disponibles en consola:
+• clearAllData() - Eliminar todos los datos
+• clearImportedData() - Eliminar solo importados  
+• resetAccreditations() - Desacreditar todos
+• showDetailedStats() - Ver estadísticas
+
+Total de invitados cargados: ${guests.length}
+        `);
+    </script>
+</body>
+</html>
