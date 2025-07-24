@@ -32,19 +32,15 @@
             }
         }
         
-        /* Estilos para las etiquetas */
+        /* 🔥 ESTILOS PARA LAS ETIQUETAS EXACTOS DEL SCRIPTINDEX */
         .etiqueta {
-            width: 80mm;
+            width: 90mm;
             height: 26mm;
             font-family: Arial, sans-serif;
-            font-size: 14pt;
-            line-height: 1.2;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
-            margin: 0mm;
-            padding: 0mm;
+            margin: 0;
+            padding: 2mm;
             box-sizing: border-box;
             page-break-after: always;
             border: 1px solid #000;
@@ -68,11 +64,12 @@
         }
         
         @page {
-            size: 80mm 26mm;
+            size: 90mm 26mm;
             margin: 0;
         }
         
         @media print {
+            /* OCULTAR TODO excepto las etiquetas */
             body * {
                 visibility: hidden !important;
             }
@@ -214,7 +211,8 @@
                                             • <strong>Email</strong> (opcional)<br>
                                             • <strong>Empresa</strong> (opcional)<br>
                                             • <strong>Telefono</strong> (opcional)<br>
-                                            • <strong>Cargo</strong> (opcional)
+                                            • <strong>Cargo</strong> (opcional)<br>
+                                            • <strong>Red Social</strong> (opcional) 🆕
                                         </small>
                                     </div>
                                 </div>
@@ -261,6 +259,7 @@
                         <th>Empresa</th>
                         <th>Teléfono</th>
                         <th>Cargo</th>
+                        <th>Red Social</th> <!-- 🆕 NUEVA COLUMNA -->
                         <th>Estado</th>
                         <th>Origen</th>
                         <th>Acciones</th>
@@ -322,6 +321,11 @@
                                 <input type="text" class="form-control" id="guestCargo">
                             </div>
                         </div>
+                        <!-- 🆕 NUEVO CAMPO RED SOCIAL -->
+                        <div class="mb-3">
+                            <label for="guestRedSocial" class="form-label">Red Social</label>
+                            <input type="text" class="form-control" id="guestRedSocial" placeholder="@usuario o enlace">
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -377,6 +381,11 @@
                                 <input type="text" class="form-control" id="editGuestCargo">
                             </div>
                         </div>
+                        <!-- 🆕 NUEVO CAMPO RED SOCIAL -->
+                        <div class="mb-3">
+                            <label for="editGuestRedSocial" class="form-label">Red Social</label>
+                            <input type="text" class="form-control" id="editGuestRedSocial" placeholder="@usuario o enlace">
+                        </div>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="editGuestAccredited">
                             <label class="form-check-label" for="editGuestAccredited">
@@ -402,6 +411,8 @@
     <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
     <!-- SheetJS para leer Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- 🆕 QR CODE LIBRARY -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     
     <script>
         // Variables globales
@@ -428,7 +439,7 @@
                 order: [[0, 'desc']],
                 columnDefs: [
                     {
-                        targets: 8, // Columna Estado
+                        targets: 9, // Columna Estado (actualizada porque agregamos Red Social)
                         render: function(data, type, row) {
                             return data ? 
                                 '<span class="badge bg-success">Acreditado</span>' : 
@@ -436,7 +447,7 @@
                         }
                     },
                     {
-                        targets: 9, // Columna Origen
+                        targets: 10, // Columna Origen
                         render: function(data, type, row) {
                             return data === 'imported' ? 
                                 '<span class="badge bg-info">Importado</span>' : 
@@ -444,10 +455,10 @@
                         }
                     },
                     {
-                        targets: 10, // Columna Acciones
+                        targets: 11, // Columna Acciones
                         orderable: false,
                         render: function(data, type, row) {
-                            const isAccredited = row[8]; // Estado de acreditación
+                            const isAccredited = row[9]; // Estado de acreditación (actualizado)
                             return `
                                 <div class="btn-group btn-group-sm">
                                     <button class="btn ${isAccredited ? 'btn-success' : 'btn-outline-success'}" 
@@ -617,7 +628,7 @@
             }
         }
         
-        // Parsear invitado desde fila
+        // 🆕 PARSEAR INVITADO DESDE FILA CON RED SOCIAL
         function parseGuestFromRow(headers, values) {
             const guest = {
                 id: nextId++,
@@ -628,11 +639,12 @@
                 empresa: '',
                 telefono: '',
                 cargo: '',
+                redSocial: '', // 🆕 NUEVO CAMPO
                 accredited: false,
                 origin: 'imported'
             };
             
-            // Mapear columnas comunes
+            // 🆕 MAPEAR COLUMNAS COMUNES CON RED SOCIAL
             const fieldMapping = {
                 'nombre': ['nombre', 'name', 'first_name', 'firstname'],
                 'apellido': ['apellido', 'surname', 'last_name', 'lastname'],
@@ -640,7 +652,8 @@
                 'email': ['email', 'mail', 'correo', 'e-mail'],
                 'empresa': ['empresa', 'company', 'organization', 'organizacion'],
                 'telefono': ['telefono', 'phone', 'tel', 'mobile', 'celular'],
-                'cargo': ['cargo', 'position', 'job', 'puesto', 'title']
+                'cargo': ['cargo', 'position', 'job', 'puesto', 'title'],
+                'redSocial': ['red_social', 'redsocial', 'social', 'linkedin', 'instagram', 'twitter', 'facebook'] // 🆕
             };
             
             // Buscar y asignar valores
@@ -693,7 +706,7 @@
             updateDisplay();
         }
         
-        // Guardar nuevo invitado manual
+        // 🆕 GUARDAR NUEVO INVITADO MANUAL CON RED SOCIAL
         function saveGuest() {
             const nombre = document.getElementById('guestNombre').value.trim();
             const apellido = document.getElementById('guestApellido').value.trim();
@@ -702,6 +715,7 @@
             const empresa = document.getElementById('guestEmpresa').value.trim();
             const telefono = document.getElementById('guestTelefono').value.trim();
             const cargo = document.getElementById('guestCargo').value.trim();
+            const redSocial = document.getElementById('guestRedSocial').value.trim(); // 🆕
             
             if (!nombre || !apellido) {
                 alert('Por favor complete los campos obligatorios: Nombre y Apellido');
@@ -717,6 +731,7 @@
                 empresa,
                 telefono,
                 cargo,
+                redSocial, // 🆕
                 accredited: false,
                 origin: 'manual'
             };
@@ -729,7 +744,7 @@
             document.getElementById('addGuestForm').reset();
         }
         
-        // Editar invitado
+        // 🆕 EDITAR INVITADO CON RED SOCIAL
         function editGuest(id) {
             const guest = guests.find(g => g.id === id);
             if (!guest) return;
@@ -742,12 +757,13 @@
             document.getElementById('editGuestEmpresa').value = guest.empresa || '';
             document.getElementById('editGuestTelefono').value = guest.telefono || '';
             document.getElementById('editGuestCargo').value = guest.cargo || '';
+            document.getElementById('editGuestRedSocial').value = guest.redSocial || ''; // 🆕
             document.getElementById('editGuestAccredited').checked = guest.accredited;
             
             new bootstrap.Modal(document.getElementById('editGuestModal')).show();
         }
         
-        // Actualizar invitado
+        // 🆕 ACTUALIZAR INVITADO CON RED SOCIAL
         function updateGuest() {
             const id = parseInt(document.getElementById('editGuestId').value);
             const guestIndex = guests.findIndex(g => g.id === id);
@@ -763,6 +779,7 @@
                 empresa: document.getElementById('editGuestEmpresa').value.trim(),
                 telefono: document.getElementById('editGuestTelefono').value.trim(),
                 cargo: document.getElementById('editGuestCargo').value.trim(),
+                redSocial: document.getElementById('editGuestRedSocial').value.trim(), // 🆕
                 accredited: document.getElementById('editGuestAccredited').checked
             };
             
@@ -820,7 +837,7 @@
             updateDataTable(filteredData);
         }
         
-        // Actualizar DataTable
+        // 🆕 ACTUALIZAR DATATABLE CON RED SOCIAL
         function updateDataTable(data = guests) {
             const tableData = data.map(guest => [
                 guest.id,
@@ -831,6 +848,7 @@
                 guest.empresa || '',
                 guest.telefono || '',
                 guest.cargo || '',
+                guest.redSocial || '', // 🆕 NUEVA COLUMNA
                 guest.accredited,
                 guest.origin || 'manual',
                 '' // Columna de acciones se renderiza en columnDefs
@@ -856,7 +874,7 @@
             updateDataTable();
         }
         
-        // Imprimir etiqueta individual
+        // 🔥 FUNCIÓN PRINTLABEL COPIADA DEL SCRIPTINDEX.JS Y ADAPTADA
         function printLabel(id) {
             const guest = guests.find(g => g.id === id);
             if (!guest) return;
@@ -869,17 +887,148 @@
                 updateDisplay();
             }
             
-            generateLabels([guest]);
-            
-            setTimeout(() => {
-                window.print();
+            try {
+                console.log('=== 📏 GENERANDO ETIQUETA OFFLINE ===');
+                console.log('Datos del invitado:', guest);
+                
+                // Normalizar datos
+                const nombreCompleto = `${guest.nombre || ''} ${guest.apellido || ''}`.trim();
+                const emailLimpio = (guest.email || '').trim().substring(0, 50);
+                const telefonoLimpio = (guest.telefono || '').toString().replace(/[^\d\+\-\s]/g, '').trim();
+                const empresaLimpia = (guest.empresa || '').trim();
+                const redSocialLimpia = (guest.redSocial || '').trim();
+                
+                // 🎯 CREAR vCard OPTIMIZADO (usando la misma lógica del scriptindex)
+                const { vcard, version } = createOptimizedVCard(nombreCompleto, empresaLimpia, emailLimpio, telefonoLimpio, redSocialLimpia);
+                
+                console.log(`📱 QR generado versión: ${version}`);
+                console.log('📄 vCard final:', vcard);
+                
+                // Generar QR con nivel de corrección alto
+                const qr = qrcode(0, 'H');
+                qr.addData(vcard);
+                qr.make();
+                
+                // Crear imagen del QR con tamaño fijo
+                const qrSvg = qr.createSvgTag(2, 0);
+                
+                // 🏷️ ETIQUETA CON QR DE TAMAÑO CONTROLADO
+                const etiquetaHTML = `
+                <div style="
+                    width: 90mm;
+                    height: 26mm;
+                    font-family: Arial, sans-serif;
+                    display: flex;
+                    align-items: center;
+                    margin: 0;
+                    padding: 2mm;
+                    box-sizing: border-box;
+                ">
+                    <div style="flex: 1; text-align: center;">
+                        <div style="font-weight: bold; font-size: 16pt; margin-bottom: 2px;">${nombreCompleto}</div>
+                        ${guest.empresa ? `<div style="font-size: 12pt; margin-bottom: 1px;">${guest.empresa.substring(0, 40)}${guest.empresa.length > 40 ? '...' : ''}</div>` : ''}
+                        ${guest.cargo ? `<div style="font-size: 12pt; margin-bottom: 1px;">${guest.cargo}</div>` : ''}
+                        ${guest.redSocial && version === 'mínimo' ? `<div style="font-size: 10pt; color: #666;">${guest.redSocial.substring(0, 30)}${guest.redSocial.length > 30 ? '...' : ''}</div>` : ''}
+                        <div style="font-size: 8pt; color: #999; margin-top: 2px;">QR: ${version}</div>
+                    </div>
+                    <div style="margin-left: 5mm; width: 20mm; height: 20mm; display: flex; align-items: center; justify-content: center;">
+                        ${qrSvg}
+                    </div>
+                </div>
+                `;
+
+                // Generar y mostrar etiqueta
+                generateLabels([guest], etiquetaHTML);
+                
                 setTimeout(() => {
-                    document.getElementById('etiquetasContainer').style.display = 'none';
-                }, 1000);
-            }, 100);
+                    window.print();
+                    setTimeout(() => {
+                        document.getElementById('etiquetasContainer').style.display = 'none';
+                    }, 1000);
+                }, 100);
+                
+                console.log('✅ Etiqueta offline generada exitosamente');
+                
+            } catch (error) {
+                console.error('❌ Error generando etiqueta offline:', error);
+                alert('Error al generar la etiqueta: ' + error.message);
+            }
         }
         
-        // Imprimir todas las etiquetas
+        // 🔥 FUNCIÓN PARA CREAR VCARD OPTIMIZADO (COPIADA DEL SCRIPTINDEX)
+        const createOptimizedVCard = (nombreCompleto, empresa, email, telefono, redSocial) => {
+            
+            // 📏 FUNCIÓN PARA ESTIMAR TAMAÑO DEL QR
+            const estimateQRSize = (content) => {
+                const chars = content.length;
+                if (chars < 50) return 'small';
+                if (chars < 150) return 'medium';
+                if (chars < 300) return 'large';
+                return 'xlarge';
+            };
+
+            // VERSIÓN 1: vCard completo
+            let vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${nombreCompleto}
+${empresa ? `ORG:${empresa.substring(0, 30)}` : ''}
+${email ? `EMAIL:${email}` : ''}
+${telefono ? `TEL:${telefono}` : ''}
+${redSocial ? `URL:${redSocial.substring(0, 50)}` : ''}
+END:VCARD`.replace(/\n\n/g, '\n');
+
+            console.log('🧪 Probando vCard completo:', vcard.length, 'caracteres');
+            
+            if (estimateQRSize(vcard) !== 'xlarge') {
+                console.log('✅ vCard completo OK');
+                return { vcard, version: 'completo' };
+            }
+
+            // VERSIÓN 2: Sin empresa
+            vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${nombreCompleto}
+${email ? `EMAIL:${email}` : ''}
+${telefono ? `TEL:${telefono}` : ''}
+${redSocial ? `URL:${redSocial.includes('linkedin') ? 'linkedin.com/in/' + redSocial.split('/in/')[1]?.split('?')[0] : redSocial.substring(0, 30)}` : ''}
+END:VCARD`.replace(/\n\n/g, '\n');
+
+            console.log('🧪 Probando sin empresa:', vcard.length, 'caracteres');
+            
+            if (estimateQRSize(vcard) !== 'xlarge') {
+                console.log('✅ vCard sin empresa OK');
+                return { vcard, version: 'sin empresa' };
+            }
+
+            // VERSIÓN 3: Solo contacto básico
+            vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${nombreCompleto}
+${email ? `EMAIL:${email}` : ''}
+${telefono ? `TEL:${telefono}` : ''}
+END:VCARD`;
+
+            console.log('🧪 Probando contacto básico:', vcard.length, 'caracteres');
+            
+            if (estimateQRSize(vcard) !== 'xlarge') {
+                console.log('✅ vCard básico OK');
+                return { vcard, version: 'básico' };
+            }
+
+            // VERSIÓN 4: Solo nombre y teléfono
+            vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${nombreCompleto}
+TEL:${telefono}
+END:VCARD`;
+
+            console.log('🧪 Probando mínimo:', vcard.length, 'caracteres');
+            console.log('✅ vCard mínimo (siempre funciona)');
+            
+            return { vcard, version: 'mínimo' };
+        };
+        
+        // Imprimir todas las etiquetas (SIN QR - como el scriptindex original)
         function printAllLabels() {
             if (guests.length === 0) {
                 alert('No hay invitados para imprimir');
@@ -917,7 +1066,9 @@
                 });
                 
                 saveGuests();
-                generateLabels(guestsToPrint);
+                
+                // 🔥 USAR FUNCIÓN SIMPLE SIN QR (como el scriptindex original)
+                generateLabels(guestsToPrint); // ← SIN el segundo parámetro
                 
                 setTimeout(() => {
                     window.print();
@@ -929,26 +1080,32 @@
             }
         }
         
-        // Generar etiquetas para impresión
-        function generateLabels(guestList) {
+        // 🔥 GENERAR ETIQUETAS EXACTO COMO EL SCRIPTINDEX
+        function generateLabels(guestList, singleEtiquetaHTML = null) {
             const container = document.getElementById('etiquetasContainer');
             container.innerHTML = '';
             
-            guestList.forEach(guest => {
-                const etiqueta = document.createElement('div');
-                etiqueta.className = 'etiqueta';
-                
-                let content = `<div>${guest.nombre} ${guest.apellido}</div>`;
-                if (guest.empresa && guest.empresa.trim()) {
-                    content += `<div>${guest.empresa}</div>`;
-                }
-                if (guest.cargo && guest.cargo.trim()) {
-                    content += `<div>${guest.cargo}</div>`;
-                }
-                
-                etiqueta.innerHTML = content;
-                container.appendChild(etiqueta);
-            });
+            if (singleEtiquetaHTML) {
+                // Para etiqueta individual ya procesada
+                container.innerHTML = singleEtiquetaHTML;
+            } else {
+                // Para múltiples etiquetas - FORMATO EXACTO DEL SCRIPTINDEX
+                guestList.forEach(guest => {
+                    const etiqueta = document.createElement('div');
+                    etiqueta.className = 'etiqueta';
+                    
+                    let content = `<div>${guest.nombre} ${guest.apellido}</div>`;
+                    if (guest.empresa && guest.empresa.trim()) {
+                        content += `<div>${guest.empresa}</div>`;
+                    }
+                    if (guest.cargo && guest.cargo.trim()) {
+                        content += `<div>${guest.cargo}</div>`;
+                    }
+                    
+                    etiqueta.innerHTML = content;
+                    container.appendChild(etiqueta);
+                });
+            }
             
             container.style.display = 'block';
         }
@@ -959,14 +1116,14 @@
             dataTable.search('').draw();
         }
         
-        // Exportar a CSV
+        // 🆕 EXPORTAR A CSV CON RED SOCIAL
         function exportToCSV() {
             if (guests.length === 0) {
                 alert('No hay invitados para exportar');
                 return;
             }
             
-            let csvContent = "ID,Nombre,Apellido,DNI,Email,Empresa,Telefono,Cargo,Acreditado,Origen,Fecha_Acreditacion\n";
+            let csvContent = "ID,Nombre,Apellido,DNI,Email,Empresa,Telefono,Cargo,Red_Social,Acreditado,Origen,Fecha_Acreditacion\n";
             
             guests.forEach(guest => {
                 const row = [
@@ -978,6 +1135,7 @@
                     `"${guest.empresa || ''}"`,
                     `"${guest.telefono || ''}"`,
                     `"${guest.cargo || ''}"`,
+                    `"${guest.redSocial || ''}"`, // 🆕
                     guest.accredited ? 'Si' : 'No',
                     guest.origin || 'manual',
                     guest.accreditedTime ? new Date(guest.accreditedTime).toLocaleString() : ''
@@ -991,7 +1149,7 @@
             const url = URL.createObjectURL(blob);
             
             link.setAttribute('href', url);
-            link.setAttribute('download', `acreditacion_${getCurrentDateString()}.csv`);
+            link.setAttribute('download', `acreditacion_offline_${getCurrentDateString()}.csv`);
             link.style.visibility = 'hidden';
             
             document.body.appendChild(link);
@@ -999,7 +1157,7 @@
             document.body.removeChild(link);
         }
         
-        // Exportar a Excel
+        // 🆕 EXPORTAR A EXCEL CON RED SOCIAL
         function exportToExcel() {
             if (guests.length === 0) {
                 alert('No hay invitados para exportar');
@@ -1007,7 +1165,7 @@
             }
             
             const wsData = [
-                ['ID', 'Nombre', 'Apellido', 'DNI', 'Email', 'Empresa', 'Teléfono', 'Cargo', 'Acreditado', 'Origen', 'Fecha Acreditación']
+                ['ID', 'Nombre', 'Apellido', 'DNI', 'Email', 'Empresa', 'Teléfono', 'Cargo', 'Red Social', 'Acreditado', 'Origen', 'Fecha Acreditación'] // 🆕
             ];
             
             guests.forEach(guest => {
@@ -1020,6 +1178,7 @@
                     guest.empresa || '',
                     guest.telefono || '',
                     guest.cargo || '',
+                    guest.redSocial || '', // 🆕
                     guest.accredited ? 'Si' : 'No',
                     guest.origin || 'manual',
                     guest.accreditedTime ? new Date(guest.accreditedTime).toLocaleString() : ''
@@ -1030,7 +1189,7 @@
             const ws = XLSX.utils.aoa_to_sheet(wsData);
             
             XLSX.utils.book_append_sheet(wb, ws, 'Acreditacion');
-            XLSX.writeFile(wb, `acreditacion_${getCurrentDateString()}.xlsx`);
+            XLSX.writeFile(wb, `acreditacion_offline_${getCurrentDateString()}.xlsx`);
         }
         
         // Guardar en localStorage
@@ -1089,7 +1248,7 @@
             updateGuest();
         });
         
-        // Función para limpiar todos los datos (útil para testing)
+        // 🔥 FUNCIONES ADICIONALES PARA GESTIÓN DE DATOS
         function clearAllData() {
             if (confirm('¿Está seguro que desea eliminar TODOS los datos? Esta acción no se puede deshacer.')) {
                 localStorage.removeItem('offlineGuests');
@@ -1101,10 +1260,52 @@
             }
         }
         
-        // Agregar botón de limpiar datos en consola (para desarrollo/testing)
+        function clearImportedData() {
+            if (confirm('¿Está seguro que desea eliminar solo los datos IMPORTADOS?')) {
+                guests = guests.filter(g => g.origin !== 'imported');
+                saveGuests();
+                updateDisplay();
+                alert('Datos importados eliminados.');
+            }
+        }
+        
+        function resetAccreditations() {
+            if (confirm('¿Está seguro que desea DESACREDITAR a todos los invitados?')) {
+                guests.forEach(g => {
+                    g.accredited = false;
+                    delete g.accreditedTime;
+                });
+                saveGuests();
+                updateDisplay();
+                alert('Todas las acreditaciones han sido eliminadas.');
+            }
+        }
+        
+        function showDetailedStats() {
+            const total = guests.length;
+            const accredited = guests.filter(g => g.accredited).length;
+            const imported = guests.filter(g => g.origin === 'imported').length;
+            const manual = guests.filter(g => g.origin === 'manual').length;
+            
+            alert(`📊 ESTADÍSTICAS DETALLADAS
+            
+Total de invitados: ${total}
+├─ Acreditados: ${accredited}
+├─ No acreditados: ${total - accredited}
+├─ Importados: ${imported}
+└─ Creados manualmente: ${manual}
+
+💾 Almacenado localmente en el navegador`);
+        }
+        
+        // Log inicial
         console.log(`
-🎯 SISTEMA DE ACREDITACIÓN OFFLINE CARGADO
-========================================
+🎯 SISTEMA DE ACREDITACIÓN OFFLINE MEJORADO
+===========================================
+✅ Red Social agregada
+✅ Etiquetas con QR optimizado
+✅ Importación mejorada
+
 Funciones disponibles en consola:
 • clearAllData() - Eliminar todos los datos
 • clearImportedData() - Eliminar solo importados  
