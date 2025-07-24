@@ -970,7 +970,9 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
         // Solo los datos MÁS importantes y cortos
 let vcard = 'BEGIN:VCARD\n';
 vcard += 'VERSION:3.0\n';
-vcard += `FN:${nombreCompletoNormalizado}\n`;
+
+// Usar N y FN correctamente para nombre y apellido
+vcard += `N:${apellidoNormalizado};${nombreNormalizado};;;\n`;
 
 // Solo empresa si es corta
 if (empresaLimpia && empresaLimpia.length < 30) {
@@ -989,7 +991,6 @@ if (telefonoLimpio) {
 
 // Red social SOLO si es corta o acortada
 if (redSocialLimpia && redSocialLimpia.length < 40) {
-    // Solo agregar el dato tal cual, sin armar la URL de Instagram
     vcard += `URL:${redSocialLimpia}\n`;
 }
 
