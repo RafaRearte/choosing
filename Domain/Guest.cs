@@ -48,6 +48,8 @@ namespace choosing.Domain
         public string? Telefono { get; set; }
 
         public string? IdCode { get; set; }
+
+        public string? RedSocial { get; set; }
     }
 }
 

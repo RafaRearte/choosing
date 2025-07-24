@@ -145,6 +145,10 @@ const initializeDataTable = () => {
     if (config.mostrarTelefono !== false) {
         optionalColumns.push({ data: 'telefono', title: 'Teléfono' });
     }
+    // 🆕 NUEVA COLUMNA RED SOCIAL
+    if (config.mostrarRedSocial !== false) {
+        optionalColumns.push({ data: 'redSocial', title: 'Red Social' });
+    }
     // Si el evento tiene días específicos configurados, mostramos las columnas
     if (config.mostrarDias !== false) {
         optionalColumns.push(
@@ -341,7 +345,8 @@ function guardarConfiguracion(eventoId) {
         mostrarLugar: document.getElementById('configLugar').checked,
         mostrarDias: document.getElementById('configDias').checked,
         mostrarInfoAdicional: document.getElementById('configInfoAdicional').checked,
-        mostrarTelefono: document.getElementById('configTelefono').checked
+        mostrarTelefono: document.getElementById('configTelefono').checked,
+        mostrarRedSocial: document.getElementById('configRedSocial').checked
     };
     
     // Guardar configuración directamente usando endpoint específico
@@ -416,6 +421,7 @@ const openEditModal = async (id) => {
         document.getElementById('editGuestCargo').value = guest.cargo || '';
         document.getElementById('editGuestLugar').value = guest.lugar || '';
         document.getElementById('editGuestTelefono').value = guest.telefono || '';
+        document.getElementById('editGuestRedSocial').value = guest.redSocial || ''; // 🆕 NUEVO CAMPO
         
         // Configurar los checkboxes de días según los valores
         document.getElementById('editGuestDayOne').checked = guest.dayOne === 'SI';
@@ -479,6 +485,10 @@ const configurarCamposModal = (modalType, config) => {
     // Teléfono
     document.getElementById(`${prefix}GuestTelefonoGroup`).style.display = 
         config?.mostrarTelefono !== false ? 'block' : 'none';
+
+    // 🆕 RED SOCIAL
+    document.getElementById(`${prefix}GuestRedSocialGroup`).style.display = 
+        config?.mostrarRedSocial !== false ? 'block' : 'none';
     
     // Días de asistencia
     document.getElementById(`${prefix}GuestDiasGroup`).style.display = 
@@ -509,6 +519,7 @@ const saveEditedGuest = async () => {
     const cargo = document.getElementById('editGuestCargo').value;
     const lugar = document.getElementById('editGuestLugar').value;
     const telefono = document.getElementById('editGuestTelefono').value;
+    const redSocial = document.getElementById('editGuestRedSocial').value; // 🆕 NUEVO CAMPO
     const dayOne = document.getElementById('editGuestDayOne').checked ? 'SI' : 'NO';
     const dayTwo = document.getElementById('editGuestDayTwo').checked ? 'SI' : 'NO';
     const dayThree = document.getElementById('editGuestDayThree').checked ? 'SI' : 'NO';
@@ -534,6 +545,7 @@ const saveEditedGuest = async () => {
         cargo: cargo,
         lugar: lugar,
         telefono: telefono,
+        redSocial: redSocial,
         dayOne: dayOne,
         dayTwo: dayTwo,
         dayThree: dayThree,
@@ -711,6 +723,7 @@ const saveNewGuest = async () => {
     const cargo = document.getElementById("newGuestCargo").value;
     const lugar = document.getElementById("newGuestLugar").value;
     const telefono = document.getElementById("newGuestTelefono").value;
+    const redSocial = document.getElementById("newGuestRedSocial").value; // 🆕 NUEVO CAMPO
     const dayOne = document.getElementById("newGuestDayOne").checked ? "SI" : "NO";
     const dayTwo = document.getElementById("newGuestDayTwo").checked ? "SI" : "NO";
     const dayThree = document.getElementById("newGuestDayThree").checked ? "SI" : "NO";
@@ -734,6 +747,7 @@ const saveNewGuest = async () => {
         cargo,
         lugar,
         telefono,
+        redSocial,
         dayOne,
         dayTwo,
         dayThree,
@@ -898,6 +912,7 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
         console.log('Cargo:', cargo);
         console.log('Empresa:', empresa);
         console.log('Telefono:', telefono);
+        console.log('RedSocial:', redSocial);
 
         // Si hay id, acreditar al invitado
         if (id) {
@@ -936,6 +951,7 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
         const profesionLimpia = normalizeNameForVCard(profesion).substring(0, 30);
         const cargoLimpio = normalizeNameForVCard(cargo).substring(0, 30);
         const empresaLimpia = normalizeNameForVCard(empresa).substring(0, 40);
+        const redSocialLimpia = normalizeNameForVCard(redSocial || '').substring(0, 40);
         
         // Nombre completo para mostrar
         const nombreCompletoOriginal = `${nombre || ''} ${apellido || ''}`.trim();
@@ -943,6 +959,7 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
         
         console.log('Nombre completo ORIGINAL:', nombreCompletoOriginal);
         console.log('Nombre completo NORMALIZADO:', nombreCompletoNormalizado);
+        console.log('Red Social LIMPIA:', redSocialLimpia); // 🆕 NUEVO LOG
         
         // Verificar que tenemos al menos un nombre
         if (!nombreCompletoNormalizado) {
@@ -973,6 +990,10 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
         
         if (telefonoLimpio) {
             vcard += `TEL:${telefonoLimpio}\n`;
+        }
+
+        if (redSocialLimpia) {
+            vcard += `URL:${redSocialLimpia}\n`;
         }
         
         //// Notas con información adicional
@@ -1016,6 +1037,9 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
                 ${cargo ? `<div style="font-size: 12pt; margin-bottom: 1px;">${cargo}</div>` : ''}
 
             </div>
+            <div style="margin-right: 5mm; width: 20mm; height: 20mm;">
+                ${qrSvg}
+           </div>
         </div>
         `;
 
@@ -1023,9 +1047,7 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
         //                ${dni ? `<div style="font-size: 10pt;">DNI: ${dni}</div>` : ''}
 
 
-//            <div style="margin-right: 5mm; width: 20mm; height: 20mm;">
-//                ${qrSvg}
-//            </div>
+
         const printWindow = window.open('', '', 'width=600,height=400');
         printWindow.document.write(etiquetaHTML);
         printWindow.document.close();

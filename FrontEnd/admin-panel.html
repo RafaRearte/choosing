@@ -550,6 +550,10 @@
                             <label class="form-check-label" for="configTelefono">Telefono</label>
                         </div>
                         <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="configRedSocial" checked>
+                            <label class="form-check-label" for="configRedSocial">Red Social</label>
+                        </div>
+                        <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" id="configDias" checked>
                             <label class="form-check-label" for="configDias">Días (Día 1/Día 2/Día 3)</label>
                         </div>
@@ -1212,6 +1216,8 @@ function mostrarModalConfiguracion(evento) {
     document.getElementById('configInfoAdicional').checked = configuracion.mostrarInfoAdicional !== false;
     document.getElementById('configLugar').checked = configuracion.mostrarLugar !== false;
     document.getElementById('configTelefono').checked = configuracion.mostrarTelefono !== false;
+    document.getElementById('configRedSocial').checked = configuracion.mostrarRedSocial !== false;
+
     
     // Guardar el eventoId en el botón para usarlo después
     document.getElementById('saveConfigBtn').setAttribute('data-event-id', evento.id);
@@ -1234,7 +1240,8 @@ function guardarConfiguracion(eventoId) {
         mostrarLugar: document.getElementById('configLugar').checked,
         mostrarDias: document.getElementById('configDias').checked,
         mostrarInfoAdicional: document.getElementById('configInfoAdicional').checked,
-        mostrarTelefono: document.getElementById('configTelefono').checked
+        mostrarTelefono: document.getElementById('configTelefono').checked,
+        mostrarRedSocial: document.getElementById('configRedSocial').checked
     };
     
     // Guardar configuración directamente usando endpoint específico

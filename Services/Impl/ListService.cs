@@ -85,6 +85,8 @@ namespace choosing.Services.Impl
                 invitado.Lugar = updatedGuest.Lugar;
                 invitado.Telefono = updatedGuest.Telefono;
                 invitado.DayThree = updatedGuest.DayThree;
+                invitado.RedSocial = updatedGuest.RedSocial;
+
 
                 await _listRepository.UpdateAsync(invitado);
             }
@@ -169,6 +171,7 @@ namespace choosing.Services.Impl
             invitado.EventoId = updatedGuest.EventoId;
             invitado.Lugar = updatedGuest.Lugar;
             invitado.Telefono = updatedGuest.Telefono;
+            invitado.RedSocial = updatedGuest.RedSocial;
 
             await _listRepository.UpdateAsync(invitado);
         }

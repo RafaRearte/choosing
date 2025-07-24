@@ -77,6 +77,9 @@ public partial class DbHotelContext : DbContext
             entity.Property(e => e.IdCode)
             .HasMaxLength(100)
             .HasColumnName("id_code");
+            entity.Property(e => e.RedSocial)
+            .HasMaxLength(255)
+            .HasColumnName("red_social");
         });
 
         modelBuilder.Entity<EventModel>(entity =>
