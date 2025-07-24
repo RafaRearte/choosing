@@ -900,7 +900,7 @@ const splitLongName = (fullName) => {
 };
 
 // Función printLabel corregida con normalización
-const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa) => {
+const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial) => {
     try {
         console.log('=== DEBUG PRINT LABEL ===');
         console.log('ID:', id);
@@ -967,45 +967,33 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
             return;
         }
         
-        // Generar vCard con datos normalizados pero mostrando originales en la etiqueta
-        let vcard = 'BEGIN:VCARD\n';
-        vcard += 'VERSION:3.0\n';
-        
-        // Usar nombres normalizados para el vCard
-        vcard += `N:${apellidoNormalizado};${nombreNormalizado};;;\n`;
-        vcard += `FN:${nombreCompletoNormalizado}\n`;
-        
-        // Solo agregar campos si tienen contenido
-        if (empresaLimpia) {
-            vcard += `ORG:${empresaLimpia}\n`;
-        }
-        
-        //if (cargoLimpio) {
-        //    vcard += `TITLE:${cargoLimpio}\n`;
-        //}
-        
-        if (emailLimpio) {
-            vcard += `EMAIL:${emailLimpio}\n`;
-        }
-        
-        if (telefonoLimpio) {
-            vcard += `TEL:${telefonoLimpio}\n`;
-        }
+        // Solo los datos MÁS importantes y cortos
+let vcard = 'BEGIN:VCARD\n';
+vcard += 'VERSION:3.0\n';
+vcard += `FN:${nombreCompletoNormalizado}\n`;
 
-        if (redSocialLimpia) {
-            vcard += `URL:${redSocialLimpia}\n`;
-        }
-        
-        //// Notas con información adicional
-        //let notas = [];
-        //if (dniLimpio) notas.push(`DNI: ${dniLimpio}`);
-        //if (profesionLimpia) notas.push(`Profesion: ${profesionLimpia}`);
-        //
-        //if (notas.length > 0) {
-        //    vcard += `NOTE:${notas.join(' - ')}\n`;
-        //}
-        
-        vcard += 'END:VCARD';
+// Solo empresa si es corta
+if (empresaLimpia && empresaLimpia.length < 30) {
+    vcard += `ORG:${empresaLimpia}\n`;
+}
+
+// Email siempre (es corto)
+if (emailLimpio) {
+    vcard += `EMAIL:${emailLimpio}\n`;
+}
+
+// Teléfono siempre (es corto)  
+if (telefonoLimpio) {
+    vcard += `TEL:${telefonoLimpio}\n`;
+}
+
+// Red social SOLO si es corta o acortada
+if (redSocialLimpia && redSocialLimpia.length < 40) {
+    // Solo agregar el dato tal cual, sin armar la URL de Instagram
+    vcard += `URL:${redSocialLimpia}\n`;
+}
+
+vcard += 'END:VCARD';
         
         console.log('VCARD GENERADO:');
         console.log(vcard);
