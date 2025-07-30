@@ -899,20 +899,12 @@ const splitLongName = (fullName) => {
     }
 };
 
-// Función printLabel corregida con normalización
+// 🔥 FUNCIÓN PRINTLABEL MEJORADA CON VALIDACIÓN DE TAMAÑO QR
 const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial) => {
     try {
-        console.log('=== DEBUG PRINT LABEL ===');
+        console.log('=== DEBUG PRINT LABEL OPTIMIZADO ===');
         console.log('ID:', id);
-        console.log('Nombre ORIGINAL:', nombre);
-        console.log('Apellido ORIGINAL:', apellido);
-        console.log('Email:', email);
-        console.log('DNI:', dni);
-        console.log('Profesion:', profesion);
-        console.log('Cargo:', cargo);
-        console.log('Empresa:', empresa);
-        console.log('Telefono:', telefono);
-        console.log('RedSocial:', redSocial);
+        console.log('Datos originales:', { nombre, apellido, email, telefono, empresa, cargo, redSocial });
 
         // Si hay id, acreditar al invitado
         if (id) {
@@ -929,86 +921,167 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
             }
         }
         
-        // Normalizar nombres
-        let nombreNormalizado = normalizeNameForVCard(nombre);
-        let apellidoNormalizado = normalizeNameForVCard(apellido);
-        
-        // Si el apellido es muy largo o problemático, dividir el nombre completo
-        if (apellidoNormalizado.length > 25 || apellidoNormalizado.includes('rapidos') || apellidoNormalizado.includes('furioso')) {
-            const fullName = `${nombreNormalizado} ${apellidoNormalizado}`.trim();
-            const split = splitLongName(fullName);
-            nombreNormalizado = split.nombre;
-            apellidoNormalizado = split.apellido;
-        }
-        
-        console.log('Nombre NORMALIZADO:', nombreNormalizado);
-        console.log('Apellido NORMALIZADO:', apellidoNormalizado);
-        
-        // Otros campos normalizados
+        // Normalizar y limpiar datos
+        const nombreCompleto = `${nombre || ''} ${apellido || ''}`.trim();
         const emailLimpio = (email || '').trim().substring(0, 50);
         const telefonoLimpio = (telefono || '').toString().replace(/[^\d\+\-\s]/g, '').trim();
-        const dniLimpio = (dni || '').toString().replace(/[^\d]/g, '').trim();
-        const profesionLimpia = normalizeNameForVCard(profesion).substring(0, 30);
-        const cargoLimpio = normalizeNameForVCard(cargo).substring(0, 30);
-        const empresaLimpia = normalizeNameForVCard(empresa).substring(0, 40);
-        const redSocialLimpia = normalizeNameForVCard(redSocial || '').substring(0, 40);
+        const empresaLimpia = (empresa || '').trim();
+        const cargoLimpio = (cargo || '').trim();
+        const redSocialLimpia = (redSocial || '').trim();
         
-        // Nombre completo para mostrar
-        const nombreCompletoOriginal = `${nombre || ''} ${apellido || ''}`.trim();
-        const nombreCompletoNormalizado = `${nombreNormalizado} ${apellidoNormalizado}`.trim();
-        
-        console.log('Nombre completo ORIGINAL:', nombreCompletoOriginal);
-        console.log('Nombre completo NORMALIZADO:', nombreCompletoNormalizado);
-        console.log('Red Social LIMPIA:', redSocialLimpia); // 🆕 NUEVO LOG
+        console.log('Datos normalizados:', { nombreCompleto, emailLimpio, telefonoLimpio, empresaLimpia, cargoLimpio, redSocialLimpia });
         
         // Verificar que tenemos al menos un nombre
-        if (!nombreCompletoNormalizado) {
+        if (!nombreCompleto) {
             alert('Error: No se puede generar el código QR sin nombre');
             return;
         }
         
-        // Solo los datos MÁS importantes y cortos
-let vcard = 'BEGIN:VCARD\n';
-vcard += 'VERSION:3.0\n';
-
-// Usar N y FN correctamente para nombre y apellido
-vcard += `N:${apellidoNormalizado};${nombreNormalizado};;;\n`;
-
-// Solo empresa si es corta
-if (empresaLimpia && empresaLimpia.length < 30) {
-    vcard += `ORG:${empresaLimpia}\n`;
-}
-
-// Email siempre (es corto)
-if (emailLimpio) {
-    vcard += `EMAIL:${emailLimpio}\n`;
-}
-
-// Teléfono siempre (es corto)  
-if (telefonoLimpio) {
-    vcard += `TEL:${telefonoLimpio}\n`;
-}
-
-// Red social SOLO si es corta o acortada
-if (redSocialLimpia && redSocialLimpia.length < 40) {
-    vcard += `URL:${redSocialLimpia}\n`;
-}
-
-vcard += 'END:VCARD';
+        // 🎯 CREAR vCard OPTIMIZADO CON VALIDACIÓN DE TAMAÑO
+        const { vcard, version, estimatedSize } = createOptimizedVCard(nombreCompleto, empresaLimpia, emailLimpio, telefonoLimpio, redSocialLimpia, cargoLimpio);
         
-        console.log('VCARD GENERADO:');
-        console.log(vcard);
-        console.log('========================');
+        console.log(`📱 QR generado - Versión: ${version}, Tamaño estimado: ${estimatedSize}`);
+        console.log('📄 vCard final (', vcard.length, 'caracteres):', vcard);
         
-        // Generar QR usando la biblioteca
-        const qr = qrcode(0, 'L');
+        // 🚨 VALIDACIÓN CRÍTICA: Si el QR sigue siendo muy grande, usar versión mínima
+        if (vcard.length > 300) {
+            console.warn('⚠️ QR aún muy grande, forzando versión mínima');
+            const minimalVCard = createMinimalVCard(nombreCompleto, telefonoLimpio);
+            console.log('📱 QR mínimo:', minimalVCard);
+            
+            return generateAndPrintLabel(minimalVCard.vcard, nombreCompleto, empresa, cargo, 'mínimo-forzado');
+        }
+        
+        // Generar etiqueta con el vCard optimizado
+        generateAndPrintLabel(vcard, nombreCompleto, empresa, cargo, version);
+        
+        // Actualizar la tabla después de acreditar
+        fetchGuests();
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        alert('Ocurrió un error al generar la etiqueta: ' + error.message);
+    }
+};
+
+// 🎯 FUNCIÓN PARA CREAR vCard OPTIMIZADO CON MÚLTIPLES NIVELES
+const createOptimizedVCard = (nombreCompleto, empresa, email, telefono, redSocial, cargo) => {
+    
+    // 📏 FUNCIÓN MEJORADA PARA ESTIMAR TAMAÑO DEL QR
+    const estimateQRComplexity = (content) => {
+        const chars = content.length;
+        const complexity = chars + (content.match(/[^\w\s]/g) || []).length * 2; // Caracteres especiales pesan más
+        
+        if (complexity < 80) return { size: 'pequeño', level: 'L' };
+        if (complexity < 150) return { size: 'mediano', level: 'M' };
+        if (complexity < 250) return { size: 'grande', level: 'H' };
+        return { size: 'xlarge', level: 'H' };
+    };
+
+    // NIVEL 1: vCard completo pero optimizado
+    let vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${nombreCompleto}`;
+
+    if (empresa && empresa.length < 35) {
+        vcard += `\nORG:${empresa}`;
+    }
+    if (email && email.length < 40) {
+        vcard += `\nEMAIL:${email}`;
+    }
+    if (telefono) {
+        vcard += `\nTEL:${telefono}`;
+    }
+    if (cargo && cargo.length < 25) {
+        vcard += `\nTITLE:${cargo}`;
+    }
+    if (redSocial && redSocial.length < 30) {
+        vcard += `\nURL:${redSocial}`;
+    }
+    
+    vcard += `\nEND:VCARD`;
+
+    console.log('🧪 Nivel 1 - Completo optimizado:', vcard.length, 'caracteres');
+    
+    let complexity = estimateQRComplexity(vcard);
+    if (complexity.size !== 'xlarge') {
+        console.log('✅ vCard completo optimizado OK');
+        return { vcard, version: 'completo-opt', estimatedSize: complexity.size };
+    }
+
+    // NIVEL 2: Solo datos esenciales de contacto
+    vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${nombreCompleto}`;
+
+    if (email && email.length < 40) {
+        vcard += `\nEMAIL:${email}`;
+    }
+    if (telefono) {
+        vcard += `\nTEL:${telefono}`;
+    }
+    if (empresa && empresa.length < 20) {
+        vcard += `\nORG:${empresa.substring(0, 20)}`;
+    }
+    
+    vcard += `\nEND:VCARD`;
+
+    console.log('🧪 Nivel 2 - Esencial:', vcard.length, 'caracteres');
+    
+    complexity = estimateQRComplexity(vcard);
+    if (complexity.size !== 'xlarge') {
+        console.log('✅ vCard esencial OK');
+        return { vcard, version: 'esencial', estimatedSize: complexity.size };
+    }
+
+    // NIVEL 3: Solo nombre y contacto principal
+    const contactoPrincipal = telefono || email;
+    vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${nombreCompleto}`;
+
+    if (contactoPrincipal) {
+        if (telefono) {
+            vcard += `\nTEL:${telefono}`;
+        } else if (email) {
+            vcard += `\nEMAIL:${email}`;
+        }
+    }
+    
+    vcard += `\nEND:VCARD`;
+
+    console.log('🧪 Nivel 3 - Básico:', vcard.length, 'caracteres');
+    
+    complexity = estimateQRComplexity(vcard);
+    console.log('✅ vCard básico (siempre funciona)');
+    
+    return { vcard, version: 'básico', estimatedSize: complexity.size };
+};
+
+// 🆘 FUNCIÓN DE EMERGENCIA PARA QRs MÍNIMOS
+const createMinimalVCard = (nombreCompleto, telefono) => {
+    // Solo nombre y teléfono (lo más básico posible)
+    const vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${nombreCompleto}${telefono ? `\nTEL:${telefono}` : ''}
+END:VCARD`;
+
+    console.log('🆘 vCard mínimo de emergencia:', vcard.length, 'caracteres');
+    return { vcard, version: 'mínimo' };
+};
+
+// 🏷️ FUNCIÓN CON MÁRGENES VERTICALES ARREGLADOS
+const generateAndPrintLabel = (vcard, nombreCompleto, empresa, cargo, version) => {
+    try {
+        // Generar QR con nivel de corrección apropiado
+        const qr = qrcode(0, version === 'mínimo-forzado' ? 'L' : 'M');
         qr.addData(vcard);
         qr.make();
         
-        // Crear imagen del QR
-        const qrSvg = qr.createSvgTag(2, 0);
+        // QR de tamaño normal
+        const qrSvg = qr.createSvgTag(2.0, 0); // Un poquito más chico para dar más margen
         
-        // Etiqueta con nombres ORIGINALES para mostrar (más legibles)
+        // 🏷️ ETIQUETA CON MÁRGENES VERTICALES SEGUROS
         const etiquetaHTML = `
         <div style="
             width: 90mm;
@@ -1017,40 +1090,182 @@ vcard += 'END:VCARD';
             display: flex;
             align-items: center;
             margin: 0;
-            padding: 2mm;
+            padding: 3mm 2mm; 
             box-sizing: border-box;
         ">
-            <div style="flex: 1; text-align: center;">
-                <div style="font-weight: bold; font-size: 16pt; margin-bottom: 2px;">${nombreCompletoOriginal}</div>
-                ${empresa ? `<div style="font-size: 12pt; margin-bottom: 1px;">${empresa}</div>` : ''}
-                ${cargo ? `<div style="font-size: 12pt; margin-bottom: 1px;">${cargo}</div>` : ''}
-
+            <!-- Contenedor del texto -->
+            <div style="
+                flex: 1; 
+                text-align: left;
+                padding-right: 4mm;
+            ">
+                <div style="
+                    font-weight: bold; 
+                    font-size: 16pt; 
+                    margin-bottom: 1mm; 
+                    line-height: 1.1;
+                ">
+                    ${nombreCompleto}
+                </div>
+                
+                ${empresa ? `<div style="
+                    font-size: 12pt; 
+                    margin-bottom: 0.5mm; 
+                    line-height: 1.1;
+                    color: #333;
+                ">
+                    ${empresa.length > 40 ? empresa.substring(0, 40) + '...' : empresa}
+                </div>` : ''}
+                
+                ${cargo ? `<div style="
+                    font-size: 11pt; 
+                    line-height: 1.1;
+                    color: #555;
+                ">
+                    ${cargo.length > 30 ? cargo.substring(0, 30) + '...' : cargo}
+                </div>` : ''}
             </div>
-            <div style="margin-right: 5mm; width: 20mm; height: 20mm;">
+            
+            <!-- Contenedor del QR con márgenes verticales -->
+            <div style="
+                width: 18mm; 
+                height: 18mm; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                flex-shrink: 0;
+                margin: 2mm 2mm 2mm 0mm;
+            ">
                 ${qrSvg}
-           </div>
+            </div>
         </div>
         `;
 
-        //                ${telefono ? `<div style="font-size: 10pt;">Teléfono: ${telefono}</div>` : ''}
-        //                ${dni ? `<div style="font-size: 10pt;">DNI: ${dni}</div>` : ''}
-
-
-
+        // Mostrar etiqueta
         const printWindow = window.open('', '', 'width=600,height=400');
-        printWindow.document.write(etiquetaHTML);
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Etiqueta</title>
+                <style>
+                    @page {
+                        size: 90mm 26mm;
+                        margin: 0;
+                    }
+                    @media print {
+                        body { margin: 0; padding: 0; }
+                    }
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        font-family: Arial, sans-serif;
+                    }
+                </style>
+            </head>
+            <body>
+                ${etiquetaHTML}
+            </body>
+            </html>
+        `);
         printWindow.document.close();
         printWindow.print();
         
-        // Actualizar la tabla después de acreditar
-        fetchGuests();
+        console.log('✅ Etiqueta con márgenes verticales arreglados');
         
     } catch (error) {
-        console.error('Error:', error);
-        alert('Ocurrió un error al generar la etiqueta: ' + error.message);
+        console.error('❌ Error generando etiqueta:', error);
+        
+        // FALLBACK: Etiqueta sin QR
+        const etiquetaSinQR = `
+        <div style="
+            width: 90mm;
+            height: 26mm;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 4mm 3mm;
+            box-sizing: border-box;
+        ">
+            <div style="font-weight: bold; font-size: 18pt; margin-bottom: 2mm; text-align: center;">
+                ${nombreCompleto}
+            </div>
+            ${empresa ? `<div style="font-size: 14pt; margin-bottom: 1mm; text-align: center;">
+                ${empresa.length > 45 ? empresa.substring(0, 45) + '...' : empresa}
+            </div>` : ''}
+            ${cargo ? `<div style="font-size: 12pt; text-align: center;">
+                ${cargo.length > 35 ? cargo.substring(0, 35) + '...' : cargo}
+            </div>` : ''}
+        </div>
+        `;
+        
+        const printWindow = window.open('', '', 'width=600,height=400');
+        printWindow.document.write(`<!DOCTYPE html><html><head><title>Etiqueta</title><style>@page{size:90mm 26mm;margin:0;}body{margin:0;padding:0;font-family:Arial,sans-serif;}</style></head><body>${etiquetaSinQR}</body></html>`);
+        printWindow.document.close();
+        printWindow.print();
     }
 };
 
+// 🆘 FALLBACK: Etiqueta sin QR con layout optimizado
+const generateLabelWithoutQROptimized = (nombreCompleto, empresa, cargo) => {
+    return `
+    <div style="
+        width: 90mm;
+        height: 26mm;
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        margin: 0;
+        padding: 3mm 4mm;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+    ">
+        <div style="
+            font-weight: bold; 
+            font-size: 20pt; 
+            margin-bottom: 2mm; 
+            line-height: 1.0;
+            color: #000;
+            width: 100%;
+        ">
+            ${nombreCompleto}
+        </div>
+        
+        ${empresa ? `<div style="
+            font-size: 14pt; 
+            margin-bottom: 1mm; 
+            line-height: 1.1;
+            color: #333;
+            width: 100%;
+        ">
+            ${empresa.length > 50 ? empresa.substring(0, 50) + '...' : empresa}
+        </div>` : ''}
+        
+        ${cargo ? `<div style="
+            font-size: 13pt; 
+            line-height: 1.1;
+            color: #555;
+            width: 100%;
+        ">
+            ${cargo.length > 40 ? cargo.substring(0, 40) + '...' : cargo}
+        </div>` : ''}
+        
+        <div style="
+            font-size: 8pt; 
+            color: #999; 
+            margin-top: auto;
+            width: 100%;
+        ">
+            Sin QR - Layout optimizado
+        </div>
+    </div>
+    `;
+};
 const openGuestQr = (id, nombre, apellido) => {
     const qrContent = `${id}`; // solo el ID para escanear
 
