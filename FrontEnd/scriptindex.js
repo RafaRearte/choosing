@@ -1055,7 +1055,6 @@ const saveNewGuestAndPrint = async () => {
             // 4. RECARGAR LISTA
             fetchGuests();
             
-            alert("Invitado creado e impreso exitosamente.");
             
         } else {
             const errorText = await response.text();
