@@ -899,11 +899,6 @@ const splitLongName = (fullName) => {
     }
 };
 
-const accreditAndPrintDirect = async (id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial) => {
-    // Simplemente llamar a printLabel - que ya acredita automáticamente
-    printLabel(id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial);
-};
-
 // 🔥 FUNCIÓN PRINTLABEL MEJORADA CON VALIDACIÓN DE TAMAÑO QR
 const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial) => {
     try {
@@ -967,6 +962,31 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
         console.error('❌ Error:', error);
         alert('Ocurrió un error al generar la etiqueta: ' + error.message);
     }
+};
+
+
+// Guardar nuevo invitado Y imprimir
+const saveNewGuestAndPrint = async () => {
+    // 1. Primero guardar (usar la función que ya existe)
+    await saveNewGuest();
+    
+    // 2. Después imprimir - necesitamos los datos del form
+    const nombre = document.getElementById("newGuestNombre").value;
+    const apellido = document.getElementById("newGuestApellido").value;
+    const telefono = document.getElementById("newGuestTelefono").value;
+    const email = document.getElementById("newGuestEmail").value;
+    const dni = document.getElementById("newGuestDni").value;
+    const profesion = document.getElementById("newGuestProfesion").value;
+    const cargo = document.getElementById("newGuestCargo").value;
+    const empresa = document.getElementById("newGuestEmpresa").value;
+    const redSocial = document.getElementById("newGuestRedSocial").value;
+    
+    // 3. Esperar un toque y imprimir
+    setTimeout(() => {
+        if (nombre && apellido) {
+            printLabel(null, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial);
+        }
+    }, 1000);
 };
 
 // 🎯 FUNCIÓN PARA CREAR vCard OPTIMIZADO CON MÚLTIPLES NIVELES
