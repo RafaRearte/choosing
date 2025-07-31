@@ -965,28 +965,106 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
 };
 
 
-// Guardar nuevo invitado Y imprimir
+// Guardar nuevo invitado Y imprimir - VERSIÓN CORREGIDA
 const saveNewGuestAndPrint = async () => {
-    // 1. Primero guardar (usar la función que ya existe)
-    await saveNewGuest();
+    if (!puedeHacerAccion('editar')) {
+        alert('No tiene permisos para crear invitados');
+        return;
+    }
     
-    // 2. Después imprimir - necesitamos los datos del form
+    // Obtener los valores del formulario (IGUAL que saveNewGuest)
+    const dni = document.getElementById("newGuestDni").value;
     const nombre = document.getElementById("newGuestNombre").value;
     const apellido = document.getElementById("newGuestApellido").value;
-    const telefono = document.getElementById("newGuestTelefono").value;
     const email = document.getElementById("newGuestEmail").value;
-    const dni = document.getElementById("newGuestDni").value;
+    const empresa = document.getElementById("newGuestEmpresa").value;
+    const categoria = document.getElementById("newGuestCategoria").value;
     const profesion = document.getElementById("newGuestProfesion").value;
     const cargo = document.getElementById("newGuestCargo").value;
-    const empresa = document.getElementById("newGuestEmpresa").value;
+    const lugar = document.getElementById("newGuestLugar").value;
+    const telefono = document.getElementById("newGuestTelefono").value;
     const redSocial = document.getElementById("newGuestRedSocial").value;
-    
-    // 3. Esperar un toque y imprimir
-    setTimeout(() => {
-        if (nombre && apellido) {
-            printLabel(null, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial);
+    const dayOne = document.getElementById("newGuestDayOne").checked ? "SI" : "NO";
+    const dayTwo = document.getElementById("newGuestDayTwo").checked ? "SI" : "NO";
+    const dayThree = document.getElementById("newGuestDayThree").checked ? "SI" : "NO";
+    const infoAdicional = document.getElementById("newGuestInfoAdicional").value;
+
+    // Validación básica
+    if (!nombre || !apellido) {
+        alert("Por favor, complete los campos obligatorios: Nombre y Apellido.");
+        return;
+    }
+
+    // Crear objeto con los datos del nuevo invitado
+    const newGuest = {
+        dni: dni ? parseInt(dni) : null,
+        nombre,
+        apellido,
+        mail: email,
+        empresa,
+        categoria,
+        profesion,
+        cargo,
+        lugar,
+        telefono,
+        redSocial,
+        dayOne,
+        dayTwo,
+        dayThree,
+        infoAdicional,
+        acreditado: 0, // Crear sin acreditar
+        eventoId: parseInt(currentEventId),
+        esNuevo: true
+    };
+
+    try {
+        // 1. CREAR EL INVITADO
+        const response = await authenticatedFetch(`${apiUrl}/create`, {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(newGuest)
+        });
+
+        if (!response) return;
+
+        if (response.ok) {
+            const createdGuest = await response.json();
+            
+            // 2. CERRAR MODAL Y LIMPIAR FORMULARIO
+            $("#addGuestModal").modal("hide");
+            document.getElementById("addGuestForm").reset();
+            
+            // 3. IMPRIMIR ETIQUETA (que también va a acreditar)
+            setTimeout(() => {
+                printLabel(
+                    createdGuest.id, 
+                    nombre, 
+                    apellido, 
+                    telefono, 
+                    email, 
+                    dni, 
+                    profesion, 
+                    cargo, 
+                    empresa, 
+                    redSocial
+                );
+            }, 500);
+            
+            // 4. RECARGAR LISTA
+            fetchGuests();
+            
+            alert("Invitado creado e impreso exitosamente.");
+            
+        } else {
+            const errorText = await response.text();
+            alert(`Error al crear invitado: ${errorText}`);
         }
-    }, 1000);
+    } catch (error) {
+        console.error("Error al crear invitado:", error);
+        alert("Hubo un error al intentar crear el invitado.");
+    }
 };
 
 // 🎯 FUNCIÓN PARA CREAR vCard OPTIMIZADO CON MÚLTIPLES NIVELES
