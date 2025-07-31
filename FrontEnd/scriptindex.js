@@ -899,6 +899,11 @@ const splitLongName = (fullName) => {
     }
 };
 
+const accreditAndPrintDirect = async (id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial) => {
+    // Simplemente llamar a printLabel - que ya acredita automáticamente
+    printLabel(id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial);
+};
+
 // 🔥 FUNCIÓN PRINTLABEL MEJORADA CON VALIDACIÓN DE TAMAÑO QR
 const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial) => {
     try {
