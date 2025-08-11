@@ -656,8 +656,8 @@ const toggleAccreditStatus = async (id, currentStatus) => {
 };
 
 // URLs para las APIs
-const apiUrl = "https://rafa-choosing.duckdns.org/api/List";
-const eventApiUrl = "https://rafa-choosing.duckdns.org/api/Event";
+const apiUrl = "https://api.rafarearte.com/api/List";
+const eventApiUrl = "https://api.rafarearte.com/api/Event";
 
 // Actualizar Contadores
 const updateCounters = (guests, newCount = null) => {

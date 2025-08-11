@@ -12,10 +12,10 @@ using choosing.Domain;
 
 var builder = WebApplication.CreateBuilder(args);
 
-////// Configuración para escuchar en puerto interno 80 (estándar para contenedores)
+////// Configuraciï¿½n para escuchar en puerto interno 80 (estï¿½ndar para contenedores)
 //builder.WebHost.UseUrls("http://0.0.0.0:80", "https://0.0.0.0:443");
 
-//// Añadimos detección de HTTPS
+//// Aï¿½adimos detecciï¿½n de HTTPS
 //builder.Services.AddHttpsRedirection(options =>
 //{
 //    options.HttpsPort = 443;  // Puerto interno para HTTPS
@@ -32,7 +32,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false; // Cambiar a true en producción
+    options.RequireHttpsMetadata = false; // Cambiar a true en producciï¿½n
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -96,7 +96,7 @@ app.UseCors("AllowAll"); // <- Agrega esto antes de UseAuthorization()
 //app.UseCors("AllowNetlify");
 
 
-
+app.MapGet("/", () => "API funcionando");
 //app.UseHttpsRedirection();
 
 app.UseAuthentication();
