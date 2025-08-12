@@ -251,6 +251,107 @@ namespace choosing.Repository.Impl
                 throw new Exception($"Error retrieving guest with IdCode {idCode} for event {eventId}", ex);
             }
         }
+        
+
+        public async Task<(List<Guest> guests, int totalCount, int filteredCount)> GetPaginatedByEventIdAsync(
+            int eventId, 
+            int start, 
+            int length, 
+            string search = "", 
+            string orderColumn = "Id", 
+            string orderDirection = "asc")
+        {
+            try
+            {
+                // Query base: SOLO invitados de este evento
+                var query = _context.Guests.Where(g => g.EventoId == eventId);
+                
+                // Total sin filtros para este evento
+                var totalCount = await _context.Guests.CountAsync(g => g.EventoId == eventId);
+                
+                // BÚSQUEDA GLOBAL en todos los campos (SOLO de este evento)
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query = query.Where(g => 
+                        g.Nombre.Contains(search) ||
+                        (g.Apellido != null && g.Apellido.Contains(search)) ||
+                        g.Dni.ToString().Contains(search) ||
+                        (g.Mail != null && g.Mail.Contains(search)) ||  // Tu campo se llama Mail, no Email
+                        (g.Telefono != null && g.Telefono.Contains(search)) ||
+                        (g.Empresa != null && g.Empresa.Contains(search)) ||
+                        (g.cargo != null && g.cargo.Contains(search)) ||
+                        (g.IdCode != null && g.IdCode.Contains(search)) ||
+                        (g.Categoria != null && g.Categoria.Contains(search)) ||
+                        (g.profesion != null && g.profesion.Contains(search)) ||
+                        (g.RedSocial != null && g.RedSocial.Contains(search))
+                    );
+                }
+                
+                var filteredCount = await query.CountAsync();
+                
+                // ORDENAMIENTO DINÁMICO
+                switch (orderColumn.ToLower())
+                {
+                    case "nombre":
+                        query = orderDirection == "asc" ? 
+                            query.OrderBy(g => g.Nombre) : 
+                            query.OrderByDescending(g => g.Nombre);
+                        break;
+                    case "dni":
+                        query = orderDirection == "asc" ? 
+                            query.OrderBy(g => g.Dni) : 
+                            query.OrderByDescending(g => g.Dni);
+                        break;
+                    case "apellido":
+                        query = orderDirection == "asc" ? 
+                            query.OrderBy(g => g.Apellido) : 
+                            query.OrderByDescending(g => g.Apellido);
+                        break;
+                    default:
+                        query = orderDirection == "asc" ? 
+                            query.OrderBy(g => g.Id) : 
+                            query.OrderByDescending(g => g.Id);
+                        break;
+                }
+                
+                // PAGINACIÓN EFICIENTE
+                var guests = await query
+                    .Skip(start)
+                    .Take(length)
+                    .AsNoTracking() // IMPORTANTE para performance
+                    .ToListAsync();
+                
+                return (guests, totalCount, filteredCount);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error getting paginated guests for event {eventId}", ex);
+            }
+        }
+
+        public async Task<(int total, int acreditados, int nuevos)> GetCountersByEventIdAsync(int eventId)
+        {
+            try
+            {
+                // Total de invitados para este evento
+                var total = await _context.Guests
+                    .CountAsync(g => g.EventoId == eventId);
+                    
+                // Acreditados para este evento
+                var acreditados = await _context.Guests
+                    .CountAsync(g => g.EventoId == eventId && g.Acreditado > 0);
+                    
+                // Nuevos (usando tu campo EsNuevo)
+                var nuevos = await _context.Guests
+                    .CountAsync(g => g.EventoId == eventId && g.EsNuevo == true);
+                
+                return (total, acreditados, nuevos);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error getting counters for event {eventId}", ex);
+            }
+        }
 
     }
 }

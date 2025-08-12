@@ -24,5 +24,13 @@ namespace choosing.Repository.Interfaces
         Task DeleteByIdAsync(int id);
         Task<Guest?> GetByIdCodeAsync(string idCode);
         Task<Guest?> GetByIdCodeAndEventIdAsync(string idCode, int eventId);
+        Task<(List<Guest> guests, int totalCount, int filteredCount)> GetPaginatedByEventIdAsync(
+            int eventId, 
+            int start, 
+            int length, 
+            string search = "", 
+            string orderColumn = "Id", 
+            string orderDirection = "asc");
+        Task<(int total, int acreditados, int nuevos)> GetCountersByEventIdAsync(int eventId);
     }
 }

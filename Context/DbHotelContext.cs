@@ -23,7 +23,7 @@ public partial class DbHotelContext : DbContext
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Name=ConnectionStrings:DefaultConnection");
+        => optionsBuilder.UseSqlServer("Name=ConnectionStrings:DefaultConnectionMacToVps");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

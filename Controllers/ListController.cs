@@ -395,5 +395,86 @@ namespace choosing.Controllers
                 return StatusCode(500, $"Error interno al actualizar estado de acreditación: {ex.Message}");
             }
         }
+        
+        [HttpGet("GetPaginated")]
+        public async Task<IActionResult> GetPaginatedGuests(
+            int eventId, 
+            int draw = 1,
+            int start = 0, 
+            int length = 100,
+            string search = "")
+        {
+            try 
+            {
+                // Obtener parámetros de ordenamiento de DataTables
+                string orderColumn = "Id";
+                string orderDirection = "asc";
+                
+                if (Request.Query.ContainsKey("order[0][column]"))
+                {
+                    var columnIndex = Request.Query["order[0][column]"].ToString();
+                    orderDirection = Request.Query["order[0][dir]"].ToString();
+                    
+                    // Mapear índice de columna a nombre
+                    switch (columnIndex)
+                    {
+                        case "0": orderColumn = "Nombre"; break;
+                        case "1": orderColumn = "Dni"; break;
+                        default: orderColumn = "Id"; break;
+                    }
+                }
+                
+                var result = await _listService.GetPaginatedGuestsAsync(eventId, start, length, search, orderColumn, orderDirection);
+                
+                // RESPUESTA EN FORMATO DATATABLES
+                var response = new
+                {
+                    draw = draw,
+                    recordsTotal = result.totalCount,
+                    recordsFiltered = result.filteredCount,
+                    data = result.guests.Select(g => new {
+                        id = g.Id,
+                        nombre = g.Nombre,
+                        apellido = g.Apellido,
+                        dni = g.Dni,
+                        mail = g.Mail,
+                        telefono = g.Telefono,
+                        empresa = g.Empresa,
+                        cargo = g.cargo,
+                        categoria = g.Categoria,
+                        profesion = g.profesion,
+                        acreditado = g.Acreditado > 0,
+                        horaAcreditacion = g.horaAcreditacion?.ToString("HH:mm"),
+                        idCode = g.IdCode
+                    })
+                };
+                
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
+        
+        [HttpGet("GetCounters")]
+        public async Task<IActionResult> GetEventCounters(int eventId)
+        {
+            try
+            {
+                var counters = await _listService.GetEventCountersAsync(eventId);
+                
+                return Ok(new {
+                    total = counters.total,
+                    acreditados = counters.acreditados,
+                    ausentes = counters.total - counters.acreditados,
+                    nuevos = counters.nuevos
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
     }
 }

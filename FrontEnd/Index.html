@@ -502,6 +502,39 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 
 <script src="scriptindex.js"></script>
+
+<!-- LOADING SIMPLE - UN SOLO CARTEL AL MEDIO -->
+<div id="loadingOverlay" style="
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8); display: none; flex-direction: column;
+    align-items: center; justify-content: center; z-index: 9999;
+">
+    <div style="
+        background: white; padding: 40px; border-radius: 15px; text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 400px; width: 90%;
+    ">
+        <div style="
+            width: 50px; height: 50px; border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff; border-radius: 50%;
+            animation: spin 1s linear infinite; margin: 0 auto 20px;
+        "></div>
+        <h4 id="loadingMessage" style="margin: 0 0 10px; color: #333;">Cargando...</h4>
+        <p id="loadingSubmessage" style="margin: 0; color: #666; font-size: 14px;">Esto puede tomar unos segundos</p>
+    </div>
+</div>
+
+<!-- ERROR SIMPLE - ALERT ARRIBA -->
+<div id="errorAlert" style="
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 10000; max-width: 500px; width: 90%; display: none;
+"></div>
+
+<style>
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
 </body>
 <footer class="bg-dark text-white text-center py-3">
     <p>&copy; 2025 - Acreditación de Eventos</p>

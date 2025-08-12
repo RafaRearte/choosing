@@ -21,12 +21,20 @@ namespace choosing.Services.Interfaces
         Task UpdateInvitadoAsync(int originalDni, Guest updatedGuest); // Nuevo método
         Task UpdateAccreditStatusAsync(Guest invitado); // Nuevo método
         Task DeleteInvitadoAsync(int dni); // Nuevo método
-
         Task<Guest?> GetInvitadoByIdAsync(int id);
         Task<Guest?> GetInvitadoByIdAndEventIdAsync(int id, int eventId);
         Task DeleteInvitadoByIdAsync(int id);
         Task UpdateInvitadoByIdAsync(int id, Guest updatedGuest);
         Task<Guest?> GetInvitadoByIdCodeAsync(string idCode);
         Task<Guest?> GetInvitadoByIdCodeAndEventIdAsync(string idCode, int eventId);
+        Task<(List<Guest> guests, int totalCount, int filteredCount)> GetPaginatedGuestsAsync(
+            int eventId, 
+            int start, 
+            int length, 
+            string search = "", 
+            string orderColumn = "Id", 
+            string orderDirection = "asc");
+
+        Task<(int total, int acreditados, int nuevos)> GetEventCountersAsync(int eventId);
     }
 }

@@ -185,5 +185,21 @@ namespace choosing.Services.Impl
         {
             return await _listRepository.GetByIdCodeAndEventIdAsync(idCode, eventId);
         }
+
+        public async Task<(List<Guest> guests, int totalCount, int filteredCount)> GetPaginatedGuestsAsync(
+            int eventId, 
+            int start, 
+            int length, 
+            string search = "", 
+            string orderColumn = "Id", 
+            string orderDirection = "asc")
+        {
+            return await _listRepository.GetPaginatedByEventIdAsync(eventId, start, length, search, orderColumn, orderDirection);
+        }
+
+        public async Task<(int total, int acreditados, int nuevos)> GetEventCountersAsync(int eventId)
+        {
+            return await _listRepository.GetCountersByEventIdAsync(eventId);
+        }
     }
 }
