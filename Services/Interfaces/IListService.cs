@@ -31,9 +31,8 @@ namespace choosing.Services.Interfaces
             int eventId, 
             int start, 
             int length, 
-            string search = "", 
-            string orderColumn = "Id", 
-            string orderDirection = "asc");
+            string search = "",
+            string filter = "");
 
         Task<(int total, int acreditados, int nuevos)> GetEventCountersAsync(int eventId);
     }

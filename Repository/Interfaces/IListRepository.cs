@@ -29,8 +29,7 @@ namespace choosing.Repository.Interfaces
             int start, 
             int length, 
             string search = "", 
-            string orderColumn = "Id", 
-            string orderDirection = "asc");
+            string filter = "");
         Task<(int total, int acreditados, int nuevos)> GetCountersByEventIdAsync(int eventId);
     }
 }

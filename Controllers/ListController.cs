@@ -402,29 +402,12 @@ namespace choosing.Controllers
             int draw = 1,
             int start = 0, 
             int length = 100,
-            string search = "")
+            string search = "",
+            string filter = "")
         {
             try 
             {
-                // Obtener parámetros de ordenamiento de DataTables
-                string orderColumn = "Id";
-                string orderDirection = "asc";
-                
-                if (Request.Query.ContainsKey("order[0][column]"))
-                {
-                    var columnIndex = Request.Query["order[0][column]"].ToString();
-                    orderDirection = Request.Query["order[0][dir]"].ToString();
-                    
-                    // Mapear índice de columna a nombre
-                    switch (columnIndex)
-                    {
-                        case "0": orderColumn = "Nombre"; break;
-                        case "1": orderColumn = "Dni"; break;
-                        default: orderColumn = "Id"; break;
-                    }
-                }
-                
-                var result = await _listService.GetPaginatedGuestsAsync(eventId, start, length, search, orderColumn, orderDirection);
+                var result = await _listService.GetPaginatedGuestsAsync(eventId, start, length, search, filter);
                 
                 // RESPUESTA EN FORMATO DATATABLES
                 var response = new

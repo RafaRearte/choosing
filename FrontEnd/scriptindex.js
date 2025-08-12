@@ -1,4 +1,5 @@
 let eventoActivo = false;
+let currentFilter = ""; // "" = todos
 
 
 const puedeHacerAccion = (accion) => {
@@ -215,16 +216,15 @@ const accionesColumn = {
     serverSide: true,
     ajax: {
         url: `${apiUrl}/GetPaginated`,
-        type: 'POST',
+        type: 'GET',
         data: function(d) {
             return {
                 draw: d.draw,
                 start: d.start,
                 length: d.length,
                 search: d.search.value,
-                orderColumn: d.order && d.order.length > 0 ? (d.columns[d.order[0].column].data || 'nombre') : 'nombre',
-                orderDirection: d.order && d.order.length > 0 ? d.order[0].dir : 'asc',
-                eventId: currentEventId
+                eventId: currentEventId,
+                filter: currentFilter || '', // Permitir filtros adicionales
             };
         },
         beforeSend: function(xhr) {
@@ -244,20 +244,32 @@ const accionesColumn = {
             }
         }
     },
+        pageLength: 50,  // 🔥 DEFAULT 50 EN LUGAR DE 100
+        scrollY: "60vh",  // 🔥 ALTURA FIJA PARA SCROLL
+        scrollCollapse: true,  // 🔥 PERMITIR COLAPSAR SCROLL
+        lengthMenu: [25, 50, 100, 200],  // 🔥 OPCIONES DE PAGINACIÓN 
+        paging: true,  // 🔥 HABILITAR PAGINACIÓN
+        pagingType: "full_numbers",  // 🔥 NAVEGACIÓN COMPLETA
         language: {
             url: "//cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json",
             lengthMenu: "Mostrar _MENU_",
-            info: "_TOTAL_ invitados",
+            info: "Mostrando _START_ a _END_ de _TOTAL_ invitados",
+            infoEmpty: "Mostrando 0 a 0 de 0 invitados",
+            infoFiltered: "(filtrado de _MAX_ total)",
             paginate: {
-                previous: "←",
-                next: "→"
+                first: "Primero",
+                last: "Último", 
+                next: "Siguiente",
+                previous: "Anterior"
             },
-            search: "Buscar: " // Elimina el label "Search"
+            search: "Buscar: "
         },
-        dom: "<'row'<'col-sm-6 d-flex justify-content-start'f>>" + // Solo buscador arriba
+        dom: "<'row'<'col-sm-6 d-flex justify-content-start'l><'col-sm-6 d-flex justify-content-end'f>>" + // Length y search arriba
             "<'row'<'col-sm-12'tr>>" + // Tabla
-            "<'row mt-2'<'col-sm-4'l><'col-sm-4'i>>", // 3 controles abajo
+            "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>", // Info y paginación abajo
+        responsive: true,
         lengthChange: true,
+        autoWidth: true,
         searching: true,
         columns: allColumns,
         // Configuración personalizada del search externo:
@@ -283,20 +295,32 @@ $(document).ready(function () {
     // Iniciar polling con la configuración adecuada
     startPolling();
     
-    // Agregar manejo de eventos para los contadores como botones
+    // Reemplaza el manejo de contadores por este:
     $('.counter-badge').on('click', function() {
-        // Remove active class from all counters
+        // Visualmente marcar el contador activo
         $('.counter-badge').removeClass('active');
-        // Add active class to current counter
         $(this).addClass('active');
-        
-        // Get the endpoint from the counter
+
+        // Según el endpoint del data-attribute, setear el filtro
         const endpoint = $(this).data('endpoint');
-        // Construct the full URL
-        const fullUrl = `${apiUrl}/${endpoint}?eventId=${currentEventId}`;
-        // Load filtered data
-        loadFilteredData(fullUrl);
+        switch (endpoint) {
+            case "GetAcreditados":
+                currentFilter = "acreditados";
+                break;
+            case "GetNoAcreditados":
+                currentFilter = "no-acreditados";
+                break;
+            case "GetNuevos":
+                currentFilter = "nuevos";
+                break;
+            default:
+                currentFilter = "";
+        }
+
+        // Recargar DataTable para que mande el filtro al backend
+        dataTable.ajax.reload();
     });
+
     
     // Configurar el botón de guardar configuración
     $(document).on('click', '#saveConfigBtn', function() {

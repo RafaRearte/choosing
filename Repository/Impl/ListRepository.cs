@@ -257,9 +257,8 @@ namespace choosing.Repository.Impl
             int eventId, 
             int start, 
             int length, 
-            string search = "", 
-            string orderColumn = "Id", 
-            string orderDirection = "asc")
+            string search = "",
+            string filter = "")
         {
             try
             {
@@ -268,6 +267,24 @@ namespace choosing.Repository.Impl
                 
                 // Total sin filtros para este evento
                 var totalCount = await _context.Guests.CountAsync(g => g.EventoId == eventId);
+                
+                //Filtro acreditados/noacreditados/nuevos o todos
+                if (!string.IsNullOrEmpty(filter))
+                {
+                    switch (filter)
+                    {
+                        case "acreditados":
+                            query = query.Where(x => x.Acreditado > 0);
+                            break;
+                        case "no-acreditados":
+                            query = query.Where(x => x.Acreditado == 0);
+                            break;
+                        case "nuevos":
+                            query = query.Where(x => x.EsNuevo == true);
+                            break;
+                        // case null o "": mostrar todos (no filtrar)
+                    }
+                }
                 
                 // BÚSQUEDA GLOBAL en todos los campos (SOLO de este evento)
                 if (!string.IsNullOrEmpty(search))
@@ -288,31 +305,6 @@ namespace choosing.Repository.Impl
                 }
                 
                 var filteredCount = await query.CountAsync();
-                
-                // ORDENAMIENTO DINÁMICO
-                switch (orderColumn.ToLower())
-                {
-                    case "nombre":
-                        query = orderDirection == "asc" ? 
-                            query.OrderBy(g => g.Nombre) : 
-                            query.OrderByDescending(g => g.Nombre);
-                        break;
-                    case "dni":
-                        query = orderDirection == "asc" ? 
-                            query.OrderBy(g => g.Dni) : 
-                            query.OrderByDescending(g => g.Dni);
-                        break;
-                    case "apellido":
-                        query = orderDirection == "asc" ? 
-                            query.OrderBy(g => g.Apellido) : 
-                            query.OrderByDescending(g => g.Apellido);
-                        break;
-                    default:
-                        query = orderDirection == "asc" ? 
-                            query.OrderBy(g => g.Id) : 
-                            query.OrderByDescending(g => g.Id);
-                        break;
-                }
                 
                 // PAGINACIÓN EFICIENTE
                 var guests = await query
