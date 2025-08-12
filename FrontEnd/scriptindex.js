@@ -65,9 +65,9 @@ const startPolling = () => {
     fetchEventData()
         .then(() => {
             initializeDataTable();
-            fetchGuests();
+            loadCounters();
         });
-    setInterval(fetchGuests, fetchInterval);
+    setInterval(loadCounters, fetchInterval);
 }
 
 // Función para obtener los datos del evento
@@ -211,6 +211,39 @@ const accionesColumn = {
     
     // Inicializar DataTable con las columnas definidas
     dataTable = $('#invitadosTable').DataTable({
+            processing: true,
+    serverSide: true,
+    ajax: {
+        url: `${apiUrl}/GetPaginated`,
+        type: 'POST',
+        data: function(d) {
+            return {
+                draw: d.draw,
+                start: d.start,
+                length: d.length,
+                search: d.search.value,
+                orderColumn: d.order && d.order.length > 0 ? (d.columns[d.order[0].column].data || 'nombre') : 'nombre',
+                orderDirection: d.order && d.order.length > 0 ? d.order[0].dir : 'asc',
+                eventId: currentEventId
+            };
+        },
+        beforeSend: function(xhr) {
+            const token = localStorage.getItem('authToken');
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        },
+        dataSrc: function(json) {
+            if (json.counters) {
+                updateCountersFromResponse(json.counters);
+            }
+            return json.data || [];
+        },
+        error: function(xhr, error, code) {
+            console.error('Error en DataTable AJAX:', error);
+            if (xhr.status === 401) {
+                logout();
+            }
+        }
+    },
         language: {
             url: "//cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json",
             lengthMenu: "Mostrar _MENU_",
@@ -370,7 +403,7 @@ function guardarConfiguracion(eventoId) {
         // Recargar datos para aplicar la nueva configuración
         fetchEventData().then(() => {
             initializeDataTable();
-            fetchGuests();
+            loadCounters();
         });
         
         alert('Configuración guardada correctamente');
@@ -568,7 +601,7 @@ const saveEditedGuest = async () => {
         if (response.ok) {
             alert('Invitado actualizado con éxito');
             $('#editGuestModal').modal('hide');
-            fetchGuests(); // Recargar lista de invitados
+            dataTable.ajax.reload(null, false); // Recargar lista de invitados
         } else {
             const errorText = await response.text();
             alert(`Error al actualizar invitado: ${errorText}`);
@@ -602,7 +635,7 @@ const deleteGuest = async () => {
         if (response.ok) {
             alert('Invitado eliminado con éxito');
             $('#editGuestModal').modal('hide');
-            fetchGuests(); // Recargar lista de invitados
+            dataTable.ajax.reload(null, false); // Recargar lista de invitados
         } else {
             const errorText = await response.text();
             alert(`Error al eliminar invitado: ${errorText}`);
@@ -644,7 +677,7 @@ const toggleAccreditStatus = async (id, currentStatus) => {
         
         if (response.ok) {
             // No mostrar alert para una mejor experiencia de usuario
-            fetchGuests(); // Recargar lista de invitados
+            dataTable.ajax.reload(null, false); // Recargar lista de invitados
         } else {
             const errorText = await response.text();
             alert(`Error al cambiar estado de acreditación: ${errorText}`);
@@ -672,6 +705,34 @@ const updateCounters = (guests, newCount = null) => {
         document.getElementById("new").innerText = `Nuevos: ${newCount}`;
     } else {
         fetchNewCount();
+    }
+};
+
+// Función para actualizar contadores desde la respuesta del servidor
+const updateCountersFromResponse = (counters) => {
+    document.getElementById("totalGuests").textContent = `Invitados: ${counters.total}`;
+    document.getElementById("accredited").textContent = `Acreditados: ${counters.acreditados}`;
+    document.getElementById("notAccredited").textContent = `No acreditados: ${counters.ausentes}`;
+    document.getElementById("new").textContent = `Nuevos: ${counters.nuevos}`;
+};
+
+// Función para cargar contadores optimizada
+const loadCounters = async () => {
+    try {
+        const response = await authenticatedFetch(`${apiUrl}/GetCounters?eventId=${currentEventId}`);
+        if (!response?.ok) {
+            // Fallback: usar fetchGuests
+            await fetchGuests();
+            return;
+        }
+        
+        const counters = await response.json();
+        updateCountersFromResponse(counters);
+        
+    } catch (error) {
+        console.error('Error loading counters:', error);
+        // Fallback silencioso
+        await fetchGuests();
     }
 };
 
@@ -772,7 +833,7 @@ const saveNewGuest = async () => {
             alert("Invitado agregado con éxito.");
             $("#addGuestModal").modal("hide");
             document.getElementById("addGuestForm").reset();
-            fetchGuests(); // Recargar lista de invitados
+            dataTable.ajax.reload(null, false); // Recargar lista de invitados
         } else {
             const errorText = await response.text();
             alert(`Error al crear invitado: ${errorText}`);
@@ -956,8 +1017,8 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
         generateAndPrintLabel(vcard, nombreCompleto, empresa, cargo, version);
         
         // Actualizar la tabla después de acreditar
-        fetchGuests();
-        
+        loadCounters();
+
     } catch (error) {
         console.error('❌ Error:', error);
         alert('Ocurrió un error al generar la etiqueta: ' + error.message);
@@ -1053,7 +1114,7 @@ const saveNewGuestAndPrint = async () => {
             }, 500);
             
             // 4. RECARGAR LISTA
-            fetchGuests();
+            loadCounters();
             
             
         } else {
@@ -1603,7 +1664,7 @@ const quickAccreditByIdCode = async (idCode) => {
         if (response && response.ok) {
             alert('✅ Invitado acreditado exitosamente');
             closeScanModal();
-            fetchGuests(); // Actualizar tabla
+            dataTable.ajax.reload(null, false); // Actualizar tabla
         } else {
             alert('Error al acreditar invitado');
         }
@@ -1734,7 +1795,7 @@ const quickAccredit = async (guestId) => {
         
         if (response && response.ok) {
             closeScanModal();
-            fetchGuests(); // Actualizar tabla
+            dataTable.ajax.reload(null, false); // Actualizar tabla
         } else {
             alert('Error al acreditar invitado');
         }
