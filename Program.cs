@@ -40,7 +40,7 @@ builder.Services.AddAuthorization();
 
 
 builder.Services.AddDbContext<DbHotelContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectionLocalVps")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
 builder.Services.AddControllers();
