@@ -111,51 +111,99 @@ const initializeDataTable = () => {
     
     // Si el evento tiene DNI configurado, mostramos la columna
     if (config.mostrarDni !== false) {
-        optionalColumns.push({ data: 'dni', title: 'DNI' });
+        optionalColumns.push({ data: 'dni', title: 'DNI' ,
+        defaultContent: '', // 🔥 AGREGAR ESTO
+        render: function(data, type, row) {
+            return data || ''; // 🔥 MANEJAR NULLS
+        }});
     }
     
     // Si el evento tiene email configurado, mostramos la columna
     if (config.mostrarEmail !== false) {
-        optionalColumns.push({ data: 'mail', title: 'Email' });
+        optionalColumns.push({ data: 'mail', title: 'Email' ,
+        defaultContent: '', // 🔥 AGREGAR ESTO
+        render: function(data, type, row) {
+            return data || ''; // 🔥 MANEJAR NULLS
+        }});
     }
     
     // Si el evento tiene empresa configurada, mostramos la columna
     if (config.mostrarEmpresa !== false) {
-        optionalColumns.push({ data: 'empresa', title: 'Empresa' });
+        optionalColumns.push({ data: 'empresa', title: 'Empresa' ,
+        defaultContent: '', // 🔥 AGREGAR ESTO
+        render: function(data, type, row) {
+            return data || ''; // 🔥 MANEJAR NULLS
+        }});
     }
     
     // Si el evento tiene categoría configurada, mostramos la columna
     if (config.mostrarCategoria !== false) {
-        optionalColumns.push({ data: 'categoria', title: 'Categoría' });
+        optionalColumns.push({ data: 'categoria', title: 'Categoría' ,
+        defaultContent: '', // 🔥 AGREGAR ESTO
+        render: function(data, type, row) {
+            return data || ''; // 🔥 MANEJAR NULLS
+        }});
     }
     
     // Si el evento tiene profesión configurada, mostramos la columna
     if (config.mostrarProfesion !== false) {
-        optionalColumns.push({ data: 'profesion', title: 'Profesión' });
+        optionalColumns.push({ data: 'profesion', title: 'Profesión' ,
+        defaultContent: '', // 🔥 AGREGAR ESTO
+        render: function(data, type, row) {
+            return data || ''; // 🔥 MANEJAR NULLS
+        }});
     }
     
     // Si el evento tiene cargo configurado, mostramos la columna
     if (config.mostrarCargo !== false) {
-        optionalColumns.push({ data: 'cargo', title: 'Cargo' });
+        optionalColumns.push({ data: 'cargo', title: 'Cargo' ,
+        defaultContent: '', // 🔥 AGREGAR ESTO
+        render: function(data, type, row) {
+            return data || ''; // 🔥 MANEJAR NULLS
+        }});
     }
     // Si el evento tiene lugar configurado, mostramos la columna
     if (config.mostrarLugar !== false) {
-        optionalColumns.push({ data: 'lugar', title: 'Lugar' });
+        optionalColumns.push({ data: 'lugar', title: 'Lugar' ,
+        defaultContent: '', // 🔥 AGREGAR ESTO
+        render: function(data, type, row) {
+            return data || ''; // 🔥 MANEJAR NULLS
+        }});
     }
     // Después de mostrarLugar
     if (config.mostrarTelefono !== false) {
-        optionalColumns.push({ data: 'telefono', title: 'Teléfono' });
+        optionalColumns.push({ data: 'telefono', title: 'Teléfono' ,
+        defaultContent: '', // 🔥 AGREGAR ESTO
+        render: function(data, type, row) {
+            return data || ''; // 🔥 MANEJAR NULLS
+        }});
     }
     // 🆕 NUEVA COLUMNA RED SOCIAL
     if (config.mostrarRedSocial !== false) {
-        optionalColumns.push({ data: 'redSocial', title: 'Red Social' });
+        optionalColumns.push({ data: 'redSocial', title: 'Red Social' ,
+        defaultContent: '', // 🔥 AGREGAR ESTO
+        render: function(data, type, row) {
+            return data || ''; // 🔥 MANEJAR NULLS
+        }});
     }
     // Si el evento tiene días específicos configurados, mostramos las columnas
     if (config.mostrarDias !== false) {
         optionalColumns.push(
-            { data: 'dayOne', title: 'Día 1' },
-            { data: 'dayTwo', title: 'Día 2' },
-            { data: 'dayThree', title: 'Día 3' }
+            { data: 'dayOne', title: 'Día 1' ,
+        defaultContent: '', // 🔥 AGREGAR ESTO
+        render: function(data, type, row) {
+            return data || ''; // 🔥 MANEJAR NULLS
+        }},
+            { data: 'dayTwo', title: 'Día 2' ,
+        defaultContent: '', // 🔥 AGREGAR ESTO
+        render: function(data, type, row) {
+            return data || ''; // 🔥 MANEJAR NULLS
+        }},
+            { data: 'dayThree', title: 'Día 3' ,
+        defaultContent: '', // 🔥 AGREGAR ESTO
+        render: function(data, type, row) {
+            return data || ''; // 🔥 MANEJAR NULLS
+        }}
         );
     }
     
@@ -223,6 +271,8 @@ const accionesColumn = {
                 start: d.start,
                 length: d.length,
                 search: d.search.value,
+                orderColumn: d.order && d.order.length > 0 ? d.columns[d.order[0].column].data : 'nombre',
+                orderDirection: d.order && d.order.length > 0 ? d.order[0].dir : 'asc',
                 eventId: currentEventId,
                 filter: currentFilter || '', // Permitir filtros adicionales
             };
@@ -633,6 +683,95 @@ const saveEditedGuest = async () => {
     } catch (error) {
         console.error('Error al actualizar invitado:', error);
         alert('Ha ocurrido un error al intentar actualizar el invitado');
+    }
+};
+// Nueva función: Guardar invitado editado Y imprimir
+const saveEditedGuestAndPrint = async () => {
+    if (!puedeHacerAccion('editar')) {
+        alert('No tiene permisos para editar invitados');
+        return;
+    }
+    
+    // Usar la misma lógica que saveEditedGuest pero sin cerrar modal aún
+    const id = document.getElementById('editGuestId').value;
+    // ... resto del código igual que saveEditedGuest ...
+        // Obtener los valores del formulario
+    const dni = document.getElementById('editGuestDni').value;
+    const nombre = document.getElementById('editGuestNombre').value;
+    const apellido = document.getElementById('editGuestApellido').value;
+    const email = document.getElementById('editGuestEmail').value;
+    const empresa = document.getElementById('editGuestEmpresa').value;
+    const categoria = document.getElementById('editGuestCategoria').value;
+    const profesion = document.getElementById('editGuestProfesion').value;
+    const cargo = document.getElementById('editGuestCargo').value;
+    const lugar = document.getElementById('editGuestLugar').value;
+    const telefono = document.getElementById('editGuestTelefono').value;
+    const redSocial = document.getElementById('editGuestRedSocial').value; // 🆕 NUEVO CAMPO
+    const dayOne = document.getElementById('editGuestDayOne').checked ? 'SI' : 'NO';
+    const dayTwo = document.getElementById('editGuestDayTwo').checked ? 'SI' : 'NO';
+    const dayThree = document.getElementById('editGuestDayThree').checked ? 'SI' : 'NO';
+    const infoAdicional = document.getElementById('editGuestInfoAdicional').value;
+    const acreditado = document.getElementById('editGuestAcreditado').checked ? 1 : 0;
+    
+    // Validación básica
+    if (!nombre || !apellido) {
+        alert('Por favor complete los campos obligatorios: Nombre y Apellido');
+        return;
+    }
+    
+    // Crear objeto con los datos actualizados
+    const updatedGuest = {
+        id: parseInt(id),
+        dni: dni ? parseInt(dni) : null,
+        nombre: nombre,
+        apellido: apellido,
+        mail: email,
+        empresa: empresa,
+        categoria: categoria,
+        profesion: profesion,
+        cargo: cargo,
+        lugar: lugar,
+        telefono: telefono,
+        redSocial: redSocial,
+        dayOne: dayOne,
+        dayTwo: dayTwo,
+        dayThree: dayThree,
+        infoAdicional: infoAdicional,
+        acreditado: acreditado,
+        eventoId: parseInt(currentEventId)
+    };
+    
+    try {
+        const response = await authenticatedFetch(`${apiUrl}/updateById/${id}?eventId=${currentEventId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedGuest)
+        });
+        
+        if (response?.ok) {
+            $('#editGuestModal').modal('hide');
+            
+            // 🔥 IMPRIMIR DESPUÉS DE GUARDAR
+            setTimeout(() => {
+                printLabel(
+                    id, 
+                    nombre, 
+                    apellido, 
+                    telefono, 
+                    email, 
+                    dni, 
+                    profesion, 
+                    cargo, 
+                    empresa, 
+                    redSocial
+                );
+            }, 500);
+            
+            dataTable.ajax.reload(null, false);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al actualizar invitado');
     }
 };
 

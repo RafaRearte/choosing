@@ -291,6 +291,7 @@ namespace choosing.Repository.Impl
                 {
                     query = query.Where(g => 
                         g.Nombre.Contains(search) ||
+                        (g.Nombre + " " + g.Apellido).ToLower().Contains(search) ||
                         (g.Apellido != null && g.Apellido.Contains(search)) ||
                         g.Dni.ToString().Contains(search) ||
                         (g.Mail != null && g.Mail.Contains(search)) ||  // Tu campo se llama Mail, no Email
