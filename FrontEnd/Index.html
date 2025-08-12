@@ -43,7 +43,7 @@
     /* Columnas de estados de asistencia */
     #invitadosTable th[data-day="true"], 
     #invitadosTable td[data-day="true"] {
-        width: 80px;
+        width: 100%;
         text-align: center;
         padding: 8px 5px !important;
     }
@@ -100,6 +100,73 @@
         color: #495057;
         text-decoration: underline;
     }
+.dataTables_filter input {
+    width: 300px !important; /* más ancho */
+    max-width: 100%; /* responsive */
+}
+
+.dataTables_paginate {
+    flex-wrap: wrap; /* si hay muchas páginas, baja de línea */
+    justify-content: center !important; /* centrado */
+}
+.dataTables_wrapper {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+table.dataTable {
+    border: none !important;
+    width: 100% !important;
+}
+
+table.dataTable thead th {
+    border-bottom: 1px solid #ddd;
+}
+
+table.dataTable.no-footer {
+    border-bottom: none;
+}
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#invitadosList {
+    height: calc(100vh - 120px); /* Ajustar según altura navbar y contadores */
+    overflow: hidden;
+}
+
+#invitadosTable_wrapper {
+    height: 100%;
+}
+
+.dataTables_paginate {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+}
+
+.dataTables_paginate .paginate_button {
+    padding: 4px 8px !important;
+    border-radius: 4px;
+}
+
+.dataTables_length {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.container-fluid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 0 auto;
+}
+
+
+
 </style>
 
 <head>
@@ -182,6 +249,11 @@
                         </button>
                     </li>
                     <li class="nav-item mt-3">
+                        <button id="exportCsvBtn" class="btn btn-success btn-sm">
+                            Exportar CSV
+                        </button>
+                    </li>
+                    <li class="nav-item mt-3">
                         <!-- Agregar en la barra de navegación o en el menú lateral -->
                             <a href="print-labels.html" class="btn btn-outline-primary me-2">
                                <i class="bi bi-printer me-2"></i> Impresión Masiva
@@ -198,14 +270,14 @@
     </nav>
     <div id="loadingIndicator">Cargando...</div>
     <div>
-    <a href="admin-panel.html" class="btn btn-primary mt-3" id="adminSection" style="display: none;">
+    <a href="admin-panel.html" class="btn btn-primary" id="adminSection" style="display: none;">
         <i class="bi bi-shield-check me-2"></i>Panel de Administración
     </a>
     </div>
-    <div class="container my-5">
+    <div class="container my-2">
     <!-- Lista de Invitados -->
-    <div class="container-fluid my-5">
-        <div id="invitadosList" class="my-4">
+    <div class="container-fluid my-1">
+        <div id="invitadosList" class="my-1">
             <table id="invitadosTable" class="display">
                 <thead>
                     <!-- La cabecera se genera dinámicamente desde JavaScript -->
@@ -537,8 +609,6 @@
 }
 </style>
 </body>
-<footer class="bg-dark text-white text-center py-3">
-    <p>&copy; 2025 - Acreditación de Eventos</p>
-</footer>
+
 
 </html>

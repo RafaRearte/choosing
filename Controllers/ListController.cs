@@ -1,4 +1,5 @@
-﻿using choosing.Domain;
+﻿using System.Text;
+using choosing.Domain;
 using choosing.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -468,5 +469,64 @@ namespace choosing.Controllers
                 return StatusCode(500, $"Error: {ex.Message}");
             }
         }
+
+[HttpGet("ExportCsv")]
+public async Task<IActionResult> ExportCsv(int eventId)
+{
+    // ¡FALTABA EL AWAIT! Esta era la línea con el error
+    var guests = await _listService.ExportCsvAsync(eventId);
+    
+    // Armar el CSV con todos los campos relevantes
+    var sb = new StringBuilder();
+    
+    // Header del CSV con todos los campos - USANDO PUNTO Y COMA para Excel en español
+    sb.AppendLine("ID;Nombre;Apellido;DNI;Mail;Telefono;Empresa;Cargo;Profesion;Categoria;Lugar;Red Social;Info Adicional;Cant Entradas;Day One;Day Two;Day Three;Estado;Hora Acreditacion;Tipo de Registro");
+
+    foreach (var g in guests)
+    {
+        // Estado basado en acreditado
+        string estado = g.Acreditado > 0 ? "Asistio" : "No asistio";
+        
+        // Formatear hora de acreditación
+        string horaAcreditacion = "";
+        if (g.HoraAcreditacion.HasValue)
+        {
+            var fecha = g.HoraAcreditacion.Value;
+            string diaSemana = fecha.ToString("dddd", new System.Globalization.CultureInfo("es-ES"));
+            horaAcreditacion = $"{diaSemana} {fecha:dd/MM/yyyy HH:mm}";
+        }
+        
+        // Tipo de registro
+        string tipoRegistro = g.EsNuevo ? "Invitado Nuevo" : "Invitado Pre-registrado";
+        
+        // Escapar comillas dobles en los strings y manejar nulls - SIN comillas externas porque usamos ;
+        string EscapeForCsv(string? value) => value == null ? "" : value.Replace("\"", "\"\"").Replace(";", ",");
+        
+        sb.AppendLine($"{g.Id};" +
+                     $"{EscapeForCsv(g.Nombre)};" +
+                     $"{EscapeForCsv(g.Apellido)};" +
+                     $"{g.Dni};" +
+                     $"{EscapeForCsv(g.Mail)};" +
+                     $"{EscapeForCsv(g.Telefono)};" +
+                     $"{EscapeForCsv(g.Empresa)};" +
+                     $"{EscapeForCsv(g.Cargo)};" +
+                     $"{EscapeForCsv(g.Profesion)};" +
+                     $"{EscapeForCsv(g.Categoria)};" +
+                     $"{EscapeForCsv(g.Lugar)};" +
+                     $"{EscapeForCsv(g.RedSocial)};" +
+                     $"{EscapeForCsv(g.InfoAdicional)};" +
+                     $"{g.CantEntradas};" +
+                     $"{EscapeForCsv(g.DayOne)};" +
+                     $"{EscapeForCsv(g.DayTwo)};" +
+                     $"{EscapeForCsv(g.DayThree)};" +
+                     $"{EscapeForCsv(estado)};" +
+                     $"{EscapeForCsv(horaAcreditacion)};" +
+                     $"{EscapeForCsv(tipoRegistro)}");
+    }
+
+    // Devolver como archivo CSV con BOM para que Excel lo abra bien con tildes
+    var csvBytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
+    return File(csvBytes, "text/csv", $"invitados_evento_{eventId}.csv");
+}
     }
 }

@@ -37,5 +37,7 @@ namespace choosing.Services.Interfaces
             string orderDirection = "asc");
 
         Task<(int total, int acreditados, int nuevos)> GetEventCountersAsync(int eventId);
+        Task<List<Guest>> ExportCsvAsync(int eventId);
+        
     }
 }

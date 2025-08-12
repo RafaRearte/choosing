@@ -33,5 +33,6 @@ namespace choosing.Repository.Interfaces
             string orderColumn = "id",
             string orderDirection = "asc");
         Task<(int total, int acreditados, int nuevos)> GetCountersByEventIdAsync(int eventId);
+        Task<List<Guest>> ExportCsvAsync(int eventId);
     }
 }

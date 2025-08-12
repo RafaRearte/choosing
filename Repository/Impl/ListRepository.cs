@@ -1,4 +1,5 @@
-﻿using choosing.Context;
+﻿using System.Text;
+using choosing.Context;
 using choosing.Domain;
 using choosing.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -372,5 +373,19 @@ namespace choosing.Repository.Impl
             }
         }
 
+        public async Task<List<Guest>> ExportCsvAsync(int eventId)
+        {
+            var query = _context.Guests.Where(g => g.EventoId == eventId);
+            
+            var guests = await query
+                .OrderBy(g => g.HoraAcreditacion == null ? 1 : 0)  // NULL al final (los que no se acreditaron)
+                .ThenByDescending(g => g.Acreditado)                // Acreditados primero dentro de cada grupo
+                .ThenBy(g => g.HoraAcreditacion)                    // Por orden de acreditación (los que llegaron primero)
+                .ThenBy(g => g.Apellido)                            // Y después por apellido
+                .ThenBy(g => g.Nombre)                              // Y por nombre
+                .ToListAsync();
+            
+            return guests;
+        }
     }
 }

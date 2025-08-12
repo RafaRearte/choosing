@@ -2,6 +2,12 @@ let eventoActivo = false;
 let currentFilter = ""; // "" = todos
 
 
+$('#exportCsvBtn').on('click', function() {
+    const url = `${apiUrl}/ExportCsv?eventId=${currentEventId}`;
+    window.open(url, '_blank');
+});
+
+
 const puedeHacerAccion = (accion) => {
     const eventAccess = JSON.parse(localStorage.getItem('currentEventAccess') || '{}');
     
@@ -294,29 +300,27 @@ const accionesColumn = {
             }
         }
     },
-        pageLength: 50,  // 🔥 DEFAULT 50 EN LUGAR DE 100
+        pageLength: 25,  // 🔥 DEFAULT 50 EN LUGAR DE 100
         scrollY: "60vh",  // 🔥 ALTURA FIJA PARA SCROLL
         scrollCollapse: true,  // 🔥 PERMITIR COLAPSAR SCROLL
-        lengthMenu: [25, 50, 100, 200],  // 🔥 OPCIONES DE PAGINACIÓN 
+        scrollX: true,  // 🔥 PERMITIR SCROLL HORIZONTAL
+        lengthMenu: [25, 50, 100, 200],  // 🔥 OPCIONES DE PAGINACIÓN
         paging: true,  // 🔥 HABILITAR PAGINACIÓN
-        pagingType: "full_numbers",  // 🔥 NAVEGACIÓN COMPLETA
+        pagingType: "simple_numbers",  // 🔥 NAVEGACIÓN COMPLETA
         language: {
-            url: "//cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json",
-            lengthMenu: "Mostrar _MENU_",
-            info: "Mostrando _START_ a _END_ de _TOTAL_ invitados",
-            infoEmpty: "Mostrando 0 a 0 de 0 invitados",
-            infoFiltered: "(filtrado de _MAX_ total)",
             paginate: {
-                first: "Primero",
-                last: "Último", 
-                next: "Siguiente",
-                previous: "Anterior"
-            },
-            search: "Buscar: "
-        },
-        dom: "<'row'<'col-sm-6 d-flex justify-content-start'l><'col-sm-6 d-flex justify-content-end'f>>" + // Length y search arriba
-            "<'row'<'col-sm-12'tr>>" + // Tabla
-            "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>", // Info y paginación abajo
+                    previous: "<",
+                    next: ">"
+                },
+                infoFiltered: "(filtrado de _MAX_)",
+                lengthMenu: "Mostrar _MENU_",
+                search: "Buscar: ",
+                info: "Mostrando _START_ a _END_ de _TOTAL_"
+                    },
+        dom: 
+"<'row mb-3'<'col-12 d-flex justify-content-center'f>>" + // búsqueda centrada y arriba
+"<'row'<'col-12'tr>>" + // tabla
+"<'row mt-3'<'col-md-4'l><'col-md-4 text-center'i><'col-md-4 d-flex justify-content-center flex-wrap'p>>",
         responsive: true,
         lengthChange: true,
         autoWidth: true,

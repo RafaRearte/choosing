@@ -202,5 +202,10 @@ namespace choosing.Services.Impl
         {
             return await _listRepository.GetCountersByEventIdAsync(eventId);
         }
+
+        public async Task<List<Guest>> ExportCsvAsync(int eventId)
+        {
+            return await _listRepository.ExportCsvAsync(eventId);
+        }
     }
 }
