@@ -428,9 +428,16 @@ namespace choosing.Controllers
                         cargo = g.Cargo,
                         categoria = g.Categoria,
                         profesion = g.Profesion,
-                        acreditado = g.Acreditado > 0,
-                        horaAcreditacion = g.HoraAcreditacion?.ToString("HH:mm"),
-                        idCode = g.IdCode
+                        lugar = g.Lugar,
+                        redSocial = g.RedSocial,
+                        dayOne = g.DayOne,
+                        dayTwo = g.DayTwo,
+                        dayThree = g.DayThree,
+                        infoAdicional = g.InfoAdicional,
+                        acreditado = g.Acreditado,
+                        horaAcreditacion = g.HoraAcreditacion,
+                        idCode = g.IdCode,
+                        esNuevo = g.EsNuevo 
                     })
                 };
                 

@@ -195,7 +195,7 @@ namespace choosing.Services.Impl
             string orderColumn = "id", 
             string orderDirection = "asc")
         {
-            return await _listRepository.GetPaginatedByEventIdAsync(eventId, start, length, search, filter);
+            return await _listRepository.GetPaginatedByEventIdAsync(eventId, start, length, search, filter, orderColumn, orderDirection);
         }
 
         public async Task<(int total, int acreditados, int nuevos)> GetEventCountersAsync(int eventId)
