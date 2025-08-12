@@ -12,16 +12,6 @@ using choosing.Domain;
 
 var builder = WebApplication.CreateBuilder(args);
 
-////// Configuraci�n para escuchar en puerto interno 80 (est�ndar para contenedores)
-//builder.WebHost.UseUrls("http://0.0.0.0:80", "https://0.0.0.0:443");
-
-//// A�adimos detecci�n de HTTPS
-//builder.Services.AddHttpsRedirection(options =>
-//{
-//    options.HttpsPort = 443;  // Puerto interno para HTTPS
-//});
-
-// Configurar JWT desde appsettings.json
 var jwtConfig = builder.Configuration.GetSection("JwtConfig").Get<JwtConfig>();
 var key = Encoding.ASCII.GetBytes(jwtConfig.Secret);
 
@@ -50,7 +40,7 @@ builder.Services.AddAuthorization();
 
 
 builder.Services.AddDbContext<DbHotelContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectionLocalVps")));
 
 
 builder.Services.AddControllers();
@@ -73,15 +63,6 @@ builder.Services.AddCors(options =>
                         .AllowAnyMethod()
                         .AllowAnyHeader());
 });
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("AllowNetlify", policy =>
-//    {
-//        policy.WithOrigins("https://choosing-app.netlify.app/")
-//              .AllowAnyMethod()
-//              .AllowAnyHeader();
-//    });
-//});
 
 var app = builder.Build();
 
@@ -92,12 +73,10 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction()) // Habili
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll"); // <- Agrega esto antes de UseAuthorization()
-//app.UseCors("AllowNetlify");
+app.UseCors("AllowAll");
 
 
-app.MapGet("/", () => "API funcionando");
-//app.UseHttpsRedirection();
+app.MapGet("/", () => "API funcionando o");
 
 app.UseAuthentication();
 app.UseAuthorization();
