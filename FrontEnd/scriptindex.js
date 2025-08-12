@@ -4,7 +4,7 @@ let eventoActivo = false;
 const puedeHacerAccion = (accion) => {
     const eventAccess = JSON.parse(localStorage.getItem('currentEventAccess') || '{}');
     
-    // 🔥 SI NO ES ADMIN Y EVENTO NO ESTÁ ACTIVO, NO PUEDE NADA
+    //SI NO ES ADMIN Y EVENTO NO ESTÁ ACTIVO, NO PUEDE NADA
     if (!eventoActivo && eventAccess.tipoAcceso !== 'Admin') return false;
     
     switch(accion) {
@@ -65,9 +65,9 @@ const startPolling = () => {
     fetchEventData()
         .then(() => {
             initializeDataTable();
-            loadCounters(); // ⭐ LLAMAR A LOS CONTADORES NUEVOS();
+            fetchGuests();
         });
-    setInterval(loadCounters, fetchInterval);
+    setInterval(fetchGuests, fetchInterval);
 }
 
 // Función para obtener los datos del evento
@@ -95,73 +95,153 @@ const fetchEventData = async () => {
 
 // Función para inicializar la tabla con las columnas adecuadas según el evento
 const initializeDataTable = () => {
-    if (dataTable) dataTable.destroy();
+    // Definir columnas base que siempre estarán presentes
+    const baseColumns = [
+        { data: 'id', title: 'ID' },
+        { data: 'nombre', title: 'Nombre' },
+        { data: 'apellido', title: 'Apellido' }
+    ];
     
-    showLoading("Inicializando tabla...", "Configurando vista de datos");
-    const eventAccess = localStorage.getItem('currentEventAccess');
-if (currentEventId && !eventAccess) {
-    showError('Acceso al evento requerido');
-    setTimeout(() => window.location.href = 'event-selection.html', 2000);
-    return;
-}
+    // Columnas opcionales basadas en la configuración del evento
+    const optionalColumns = [];
     
-    try {
-        dataTable = $('#invitadosTable').DataTable({
-            "processing": true,
-            "serverSide": true,  // ⭐ ESTO ES LO NUEVO
-            
-            "ajax": {
-                "url": `${apiUrl}/GetPaginated`,  // ⭐ NUEVO ENDPOINT
-                "type": "GET",
-                "data": function(d) {
-                    d.eventId = currentEventId;  // ⭐ SOLO ESTE EVENTO
-                    return d;
-                },
-                "beforeSend": function(xhr) {
-                    const token = localStorage.getItem('authToken');
-                    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-                },
-                "error": function(xhr, error, thrown) {
-                    console.error('DataTable Error:', error);
-                    let errorMessage = "Error al cargar datos";
-                    if (xhr.status === 0) errorMessage = "Sin conexión a internet";
-                    else if (xhr.status === 401) {
-                        errorMessage = "Sesión expirada";
-                        setTimeout(() => window.location.href = 'login.html', 2000);
-                    } else if (xhr.status >= 500) errorMessage = "Error del servidor";
-                    showError(errorMessage);
-                },
-                "complete": function() {
-                    hideLoading();
-                }
-            },
-            
-            "pageLength": 100,
-            "lengthMenu": [50, 100, 200, 500],
-            "scrollY": "60vh",
-            "scrollCollapse": true,
-            
-            // ⭐ USAR TUS COLUMNAS EXISTENTES (las que ya tenés configuradas)
-            "columns": buildTableColumns(),  // Tu función existente
-            
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
-                "processing": "Procesando...",
-                "search": "Buscar:",
-                "searchPlaceholder": "Nombre, DNI, email, empresa..."
-            },
-            
-            "responsive": true
-        });
+    // Obtener la configuración del evento o usar valores predeterminados
+    const config = eventData.configuracionJson ? JSON.parse(eventData.configuracionJson) : {};
+    
+    // Si el evento tiene DNI configurado, mostramos la columna
+    if (config.mostrarDni !== false) {
+        optionalColumns.push({ data: 'dni', title: 'DNI' });
+    }
+    
+    // Si el evento tiene email configurado, mostramos la columna
+    if (config.mostrarEmail !== false) {
+        optionalColumns.push({ data: 'mail', title: 'Email' });
+    }
+    
+    // Si el evento tiene empresa configurada, mostramos la columna
+    if (config.mostrarEmpresa !== false) {
+        optionalColumns.push({ data: 'empresa', title: 'Empresa' });
+    }
+    
+    // Si el evento tiene categoría configurada, mostramos la columna
+    if (config.mostrarCategoria !== false) {
+        optionalColumns.push({ data: 'categoria', title: 'Categoría' });
+    }
+    
+    // Si el evento tiene profesión configurada, mostramos la columna
+    if (config.mostrarProfesion !== false) {
+        optionalColumns.push({ data: 'profesion', title: 'Profesión' });
+    }
+    
+    // Si el evento tiene cargo configurado, mostramos la columna
+    if (config.mostrarCargo !== false) {
+        optionalColumns.push({ data: 'cargo', title: 'Cargo' });
+    }
+    // Si el evento tiene lugar configurado, mostramos la columna
+    if (config.mostrarLugar !== false) {
+        optionalColumns.push({ data: 'lugar', title: 'Lugar' });
+    }
+    // Después de mostrarLugar
+    if (config.mostrarTelefono !== false) {
+        optionalColumns.push({ data: 'telefono', title: 'Teléfono' });
+    }
+    // 🆕 NUEVA COLUMNA RED SOCIAL
+    if (config.mostrarRedSocial !== false) {
+        optionalColumns.push({ data: 'redSocial', title: 'Red Social' });
+    }
+    // Si el evento tiene días específicos configurados, mostramos las columnas
+    if (config.mostrarDias !== false) {
+        optionalColumns.push(
+            { data: 'dayOne', title: 'Día 1' },
+            { data: 'dayTwo', title: 'Día 2' },
+            { data: 'dayThree', title: 'Día 3' }
+        );
+    }
+    
+    // Columna de estado de acreditación (siempre presente)
+    const acreditadoColumn = {
+        data: 'acreditado',
+        title: 'Estado',
+        render: function (data) {
+            // Verificar si el valor es mayor que 0 para considerarlo acreditado
+            const isAccredited = data > 0;
+            return isAccredited ? 
+                '<span class="badge bg-success">Ingreso</span>' : 
+                '<span class="badge bg-danger">No ingreso</span>';
+        }
+    };
+    
+    // Columna de acciones (siempre presente)
+const accionesColumn = {
+    data: null,
+    title: 'Acción',
+    render: function (data) {
+        const isAccredited = data.acreditado > 0;
+        let actions = '<div class="d-flex gap-1">';
         
-        hideLoading();
+        // Botón de información (siempre visible)
+        actions += `<button type="button" class="btn btn-primary btn-sm" onclick="openEditModal(${data.id})">Info</button>`;
+
+    //    actions += `<button type="button" class="btn btn-info btn-sm" onclick="openGuestQr(${data.id}, '${data.nombre}', '${data.apellido}')">
+    //      <i class="bi bi-qr-code-scan"></i>
+    //    </button>`;
         
-    } catch (error) {
-        hideLoading();
-        console.error('Error initializing DataTable:', error);
-        showError("Error al inicializar la tabla");
+        // Botón de etiqueta (solo si puede acreditar)
+        if (puedeHacerAccion('acreditar')) {
+            actions += `<button type="button" class="btn btn-secondary btn-sm" onclick="printLabel(${data.id}, '${data.nombre}', '${data.apellido}','${data.telefono || ''}','${data.mail || ''}', '${data.dni || ''}', '${data.profesion || ''}', '${data.cargo || ''}', '${data.empresa || ''}', '${data.redSocial || ''}')">Etiqueta</button>`;
+        }
+        
+        // Botón de acreditar (solo si puede acreditar)
+        if (puedeHacerAccion('acreditar')) {
+            actions += `<button type="button" class="btn btn-sm ${isAccredited ? 'btn-success' : 'btn-outline-success'} rounded-circle toggle-accredit p-0 d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;" data-id="${data.id}" data-status="${isAccredited}" title="${isAccredited ? 'Acreditado' : 'Acreditar'}"><i class="bi ${isAccredited ? 'bi-check-lg' : 'bi-plus-lg'}" style="font-size: 0.8rem;"></i></button>`;
+        }
+        
+        actions += '</div>';
+        return actions;
     }
 };
+    
+    // Combinar todas las columnas en el orden correcto
+    const allColumns = [...baseColumns, ...optionalColumns, acreditadoColumn, accionesColumn];
+    
+    // Si ya existe una instancia de DataTable, destruirla
+    if (dataTable) {
+        dataTable.destroy();
+    }
+    
+    // Inicializar DataTable con las columnas definidas
+    dataTable = $('#invitadosTable').DataTable({
+        language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json",
+            lengthMenu: "Mostrar _MENU_",
+            info: "_TOTAL_ invitados",
+            paginate: {
+                previous: "←",
+                next: "→"
+            },
+            search: "Buscar: " // Elimina el label "Search"
+        },
+        dom: "<'row'<'col-sm-6 d-flex justify-content-start'f>>" + // Solo buscador arriba
+            "<'row'<'col-sm-12'tr>>" + // Tabla
+            "<'row mt-2'<'col-sm-4'l><'col-sm-4'i>>", // 3 controles abajo
+        lengthChange: true,
+        searching: true,
+        columns: allColumns,
+        // Configuración personalizada del search externo:
+        initComplete: function() {
+            $('#customSearch').on('keyup', function() {
+                $('#invitadosTable').DataTable().search(this.value).draw();
+            });
+        }
+    });
+    
+    // Agregar evento para los botones de toggle acreditación
+    $('#invitadosTable').on('click', '.toggle-accredit', function() {
+        const id = $(this).data('id');
+        const currentStatus = $(this).data('status');
+        toggleAccreditStatus(id, currentStatus);
+    });
+}
 
 $(document).ready(function () {
     // Cargar user info
@@ -290,7 +370,7 @@ function guardarConfiguracion(eventoId) {
         // Recargar datos para aplicar la nueva configuración
         fetchEventData().then(() => {
             initializeDataTable();
-            loadCounters(); // ⭐ LLAMAR A LOS CONTADORES NUEVOS();
+            fetchGuests();
         });
         
         alert('Configuración guardada correctamente');
@@ -488,7 +568,7 @@ const saveEditedGuest = async () => {
         if (response.ok) {
             alert('Invitado actualizado con éxito');
             $('#editGuestModal').modal('hide');
-            loadCounters(); // ⭐ LLAMAR A LOS CONTADORES NUEVOS(); // Recargar lista de invitados
+            fetchGuests(); // Recargar lista de invitados
         } else {
             const errorText = await response.text();
             alert(`Error al actualizar invitado: ${errorText}`);
@@ -522,7 +602,7 @@ const deleteGuest = async () => {
         if (response.ok) {
             alert('Invitado eliminado con éxito');
             $('#editGuestModal').modal('hide');
-            loadCounters(); // ⭐ LLAMAR A LOS CONTADORES NUEVOS(); // Recargar lista de invitados
+            fetchGuests(); // Recargar lista de invitados
         } else {
             const errorText = await response.text();
             alert(`Error al eliminar invitado: ${errorText}`);
@@ -534,41 +614,44 @@ const deleteGuest = async () => {
 };
 
 // Función para cambiar el estado de acreditación (toggle)
-const toggleAccreditStatusOriginal = toggleAccreditStatus; // Backup
 const toggleAccreditStatus = async (id, currentStatus) => {
     if (!puedeHacerAccion('acreditar')) {
         alert('No tiene permisos para acreditar invitados');
         return;
     }
-    
+        // Verificar fechas del evento
     const eventAccess = JSON.parse(localStorage.getItem('currentEventAccess') || '{}');
     if (!eventAccess.eventoEnFechas && eventAccess.tipoAcceso !== 'Admin') {
         alert('El evento no está en fechas válidas para acreditación');
         return;
     }
-    
     try {
-        showLoading("Actualizando...", "Cambiando estado de acreditación");
-        
+        // Convertir el estado actual a un valor booleano
         const isCurrentlyAccredited = currentStatus === 'true' || currentStatus === true;
+        
+        // Llamar al endpoint con el nuevo estado (opuesto al actual)
         const newStatus = isCurrentlyAccredited ? 0 : 1;
         
         const response = await authenticatedFetch(`${apiUrl}/updateAccreditStatusById/${id}?eventId=${currentEventId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ acreditado: newStatus })
         });
         
-        if (!response?.ok) throw new Error('Error al actualizar estado');
+        if (!response) return; // Si hay redirección por token inválido
         
-        // ⭐ RECARGAR SOLO LA PÁGINA ACTUAL (más rápido)
-        dataTable.ajax.reload(null, false);
-        loadCounters();
-        hideLoading();
-        
+        if (response.ok) {
+            // No mostrar alert para una mejor experiencia de usuario
+            fetchGuests(); // Recargar lista de invitados
+        } else {
+            const errorText = await response.text();
+            alert(`Error al cambiar estado de acreditación: ${errorText}`);
+        }
     } catch (error) {
-        console.error('Error toggling status:', error);
-        showError("No se pudo cambiar el estado de acreditación");
+        console.error('Error al cambiar estado de acreditación:', error);
+        alert('Ha ocurrido un error al intentar cambiar el estado de acreditación');
     }
 };
 
@@ -689,7 +772,7 @@ const saveNewGuest = async () => {
             alert("Invitado agregado con éxito.");
             $("#addGuestModal").modal("hide");
             document.getElementById("addGuestForm").reset();
-            loadCounters(); // ⭐ LLAMAR A LOS CONTADORES NUEVOS(); // Recargar lista de invitados
+            fetchGuests(); // Recargar lista de invitados
         } else {
             const errorText = await response.text();
             alert(`Error al crear invitado: ${errorText}`);
@@ -816,7 +899,7 @@ const splitLongName = (fullName) => {
     }
 };
 
-// 🔥 FUNCIÓN PRINTLABEL MEJORADA CON VALIDACIÓN DE TAMAÑO QR
+//FUNCIÓN PRINTLABEL MEJORADA CON VALIDACIÓN DE TAMAÑO QR
 const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial) => {
     try {
         console.log('=== DEBUG PRINT LABEL OPTIMIZADO ===');
@@ -873,7 +956,7 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
         generateAndPrintLabel(vcard, nombreCompleto, empresa, cargo, version);
         
         // Actualizar la tabla después de acreditar
-        loadCounters(); // ⭐ LLAMAR A LOS CONTADORES NUEVOS();
+        fetchGuests();
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -970,7 +1053,7 @@ const saveNewGuestAndPrint = async () => {
             }, 500);
             
             // 4. RECARGAR LISTA
-            loadCounters(); // ⭐ LLAMAR A LOS CONTADORES NUEVOS();
+            fetchGuests();
             
             
         } else {
@@ -1387,14 +1470,6 @@ document.addEventListener("DOMContentLoaded", function() {
         // Opcional: mostrar en la UI el tipo de acceso
         // document.querySelector('.navbar-brand').innerHTML += ` <small class="badge bg-secondary">${accessInfo.tipoAcceso}</small>`;
     }
-
-    // Auto-refresh cada 5 minutos
-setInterval(() => {
-    if (navigator.onLine && dataTable) {
-        dataTable.ajax.reload(null, false);
-        loadCounters();
-    }
-}, 300000);
     });
 
     // Variables para el modo escaneo
@@ -1528,7 +1603,7 @@ const quickAccreditByIdCode = async (idCode) => {
         if (response && response.ok) {
             alert('✅ Invitado acreditado exitosamente');
             closeScanModal();
-            loadCounters(); // ⭐ LLAMAR A LOS CONTADORES NUEVOS(); // Actualizar tabla
+            fetchGuests(); // Actualizar tabla
         } else {
             alert('Error al acreditar invitado');
         }
@@ -1659,7 +1734,7 @@ const quickAccredit = async (guestId) => {
         
         if (response && response.ok) {
             closeScanModal();
-            loadCounters(); // ⭐ LLAMAR A LOS CONTADORES NUEVOS(); // Actualizar tabla
+            fetchGuests(); // Actualizar tabla
         } else {
             alert('Error al acreditar invitado');
         }
@@ -1715,69 +1790,4 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('scanModal').addEventListener('shown.bs.modal', function() {
         document.getElementById('scanInput').focus();
     });
-});
-
-// 🎯 FUNCIONES DE LOADING Y ERRORES SIMPLES
-const showLoading = (message = "Cargando...", submessage = "Esto puede tomar unos segundos") => {
-    document.getElementById('loadingMessage').textContent = message;
-    document.getElementById('loadingSubmessage').textContent = submessage;
-    document.getElementById('loadingOverlay').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-};
-
-const hideLoading = () => {
-    document.getElementById('loadingOverlay').style.display = 'none';
-    document.body.style.overflow = 'auto';
-};
-
-const showError = (message) => {
-    hideLoading();
-    const errorAlert = document.getElementById('errorAlert');
-    errorAlert.innerHTML = `
-        <div class="alert alert-danger alert-dismissible">
-            <strong>Error:</strong> ${message}
-            <button onclick="retryLoad()" class="btn btn-sm btn-outline-danger ms-2">Reintentar</button>
-            <button type="button" class="btn-close" onclick="hideError()"></button>
-        </div>
-    `;
-    errorAlert.style.display = 'block';
-    setTimeout(() => hideError(), 15000);
-};
-
-const hideError = () => {
-    document.getElementById('errorAlert').style.display = 'none';
-};
-
-const retryLoad = () => {
-    hideError();
-    if (dataTable) dataTable.ajax.reload();
-    loadCounters();
-};
-
-// 🔄 NUEVA FUNCIÓN PARA CONTADORES CON SERVER-SIDE
-const loadCounters = async () => {
-    try {
-        const response = await authenticatedFetch(`${apiUrl}/GetCounters?eventId=${currentEventId}`);
-        if (!response?.ok) throw new Error('Error al cargar contadores');
-        
-        const counters = await response.json();
-        
-        document.getElementById("total").textContent = `Total: ${counters.total}`;
-        document.getElementById("accredited").textContent = `Presentes: ${counters.acreditados}`;
-        document.getElementById("absent").textContent = `Ausentes: ${counters.ausentes}`;
-        document.getElementById("new").textContent = `Nuevos: ${counters.nuevos}`;
-        
-    } catch (error) {
-        console.error('Error loading counters:', error);
-        // No mostrar error crítico para contadores
-    }
-};
-
-window.addEventListener('online', () => {
-    hideError();
-    if (dataTable) dataTable.ajax.reload();
-});
-
-window.addEventListener('offline', () => {
-    showError("Sin conexión a internet");
 });
