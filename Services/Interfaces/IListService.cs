@@ -32,7 +32,9 @@ namespace choosing.Services.Interfaces
             int start, 
             int length, 
             string search = "",
-            string filter = "");
+            string filter = "", 
+            string orderColumn = "id",
+            string orderDirection = "asc");
 
         Task<(int total, int acreditados, int nuevos)> GetEventCountersAsync(int eventId);
     }

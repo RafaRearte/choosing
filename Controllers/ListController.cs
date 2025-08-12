@@ -234,7 +234,7 @@ namespace choosing.Controllers
                 // Si está siendo acreditado, guardar la hora actual
                 if (status.Acreditado > 0)
                 {
-                    invitado.horaAcreditacion = DateTime.Now;
+                    invitado.HoraAcreditacion = DateTime.Now;
                 }
 
                 await _listService.UpdateAccreditStatusAsync(invitado);
@@ -318,7 +318,7 @@ namespace choosing.Controllers
                 // Si está siendo acreditado, guardar la hora actual
                 if (status.Acreditado > 0)
                 {
-                    invitado.horaAcreditacion = DateTime.Now;
+                    invitado.HoraAcreditacion = DateTime.Now;
                 }
 
                 await _listService.UpdateAccreditStatusAsync(invitado);
@@ -384,7 +384,7 @@ namespace choosing.Controllers
                 // Si está siendo acreditado, guardar la hora actual
                 if (status.Acreditado > 0)
                 {
-                    invitado.horaAcreditacion = DateTime.Now;
+                    invitado.HoraAcreditacion = DateTime.Now;
                 }
 
                 await _listService.UpdateAccreditStatusAsync(invitado);
@@ -403,11 +403,13 @@ namespace choosing.Controllers
             int start = 0, 
             int length = 100,
             string search = "",
-            string filter = "")
+            string filter = "",
+            string orderColumn = "id",
+            string orderDirection = "asc")
         {
             try 
             {
-                var result = await _listService.GetPaginatedGuestsAsync(eventId, start, length, search, filter);
+                var result = await _listService.GetPaginatedGuestsAsync(eventId, start, length, search, filter, orderColumn, orderDirection);
                 
                 // RESPUESTA EN FORMATO DATATABLES
                 var response = new
@@ -423,11 +425,11 @@ namespace choosing.Controllers
                         mail = g.Mail,
                         telefono = g.Telefono,
                         empresa = g.Empresa,
-                        cargo = g.cargo,
+                        cargo = g.Cargo,
                         categoria = g.Categoria,
-                        profesion = g.profesion,
+                        profesion = g.Profesion,
                         acreditado = g.Acreditado > 0,
-                        horaAcreditacion = g.horaAcreditacion?.ToString("HH:mm"),
+                        horaAcreditacion = g.HoraAcreditacion?.ToString("HH:mm"),
                         idCode = g.IdCode
                     })
                 };

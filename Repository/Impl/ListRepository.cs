@@ -258,7 +258,9 @@ namespace choosing.Repository.Impl
             int start, 
             int length, 
             string search = "",
-            string filter = "")
+            string filter = "",
+            string orderColumn = "id",
+            string orderDirection = "asc")
         {
             try
             {
@@ -297,13 +299,37 @@ namespace choosing.Repository.Impl
                         (g.Mail != null && g.Mail.Contains(search)) ||  // Tu campo se llama Mail, no Email
                         (g.Telefono != null && g.Telefono.Contains(search)) ||
                         (g.Empresa != null && g.Empresa.Contains(search)) ||
-                        (g.cargo != null && g.cargo.Contains(search)) ||
+                        (g.Cargo != null && g.Cargo.Contains(search)) ||
                         (g.IdCode != null && g.IdCode.Contains(search)) ||
                         (g.Categoria != null && g.Categoria.Contains(search)) ||
-                        (g.profesion != null && g.profesion.Contains(search)) ||
+                        (g.Profesion != null && g.Profesion.Contains(search)) ||
                         (g.RedSocial != null && g.RedSocial.Contains(search))
                     );
                 }
+                
+                // 🔥 ORDENAMIENTO DINÁMICO PARA TODAS LAS COLUMNAS:
+    query = orderColumn.ToLower() switch
+    {
+        "id" => orderDirection == "desc" ? query.OrderByDescending(x => x.Id) : query.OrderBy(x => x.Id),
+        "nombre" => orderDirection == "desc" ? query.OrderByDescending(x => x.Nombre) : query.OrderBy(x => x.Nombre),
+        "apellido" => orderDirection == "desc" ? query.OrderByDescending(x => x.Apellido) : query.OrderBy(x => x.Apellido),
+        "dni" => orderDirection == "desc" ? query.OrderByDescending(x => x.Dni) : query.OrderBy(x => x.Dni),
+        "mail" => orderDirection == "desc" ? query.OrderByDescending(x => x.Mail) : query.OrderBy(x => x.Mail),
+        "telefono" => orderDirection == "desc" ? query.OrderByDescending(x => x.Telefono) : query.OrderBy(x => x.Telefono),
+        "empresa" => orderDirection == "desc" ? query.OrderByDescending(x => x.Empresa) : query.OrderBy(x => x.Empresa),
+        "cargo" => orderDirection == "desc" ? query.OrderByDescending(x => x.Cargo) : query.OrderBy(x => x.Cargo),
+        "profesion" => orderDirection == "desc" ? query.OrderByDescending(x => x.Profesion) : query.OrderBy(x => x.Profesion),
+        "categoria" => orderDirection == "desc" ? query.OrderByDescending(x => x.Categoria) : query.OrderBy(x => x.Categoria),
+        "lugar" => orderDirection == "desc" ? query.OrderByDescending(x => x.Lugar) : query.OrderBy(x => x.Lugar),
+        "redsocial" => orderDirection == "desc" ? query.OrderByDescending(x => x.RedSocial) : query.OrderBy(x => x.RedSocial),
+        "dayone" => orderDirection == "desc" ? query.OrderByDescending(x => x.DayOne) : query.OrderBy(x => x.DayOne),
+        "daytwo" => orderDirection == "desc" ? query.OrderByDescending(x => x.DayTwo) : query.OrderBy(x => x.DayTwo),
+        "daythree" => orderDirection == "desc" ? query.OrderByDescending(x => x.DayThree) : query.OrderBy(x => x.DayThree),
+        "infoadicional" => orderDirection == "desc" ? query.OrderByDescending(x => x.InfoAdicional) : query.OrderBy(x => x.InfoAdicional),
+        "acreditado" => orderDirection == "desc" ? query.OrderByDescending(x => x.Acreditado) : query.OrderBy(x => x.Acreditado),
+        "horaacreditacion" => orderDirection == "desc" ? query.OrderByDescending(x => x.HoraAcreditacion) : query.OrderBy(x => x.HoraAcreditacion),
+        _ => query.OrderBy(x => x.Id) // Default
+    };
                 
                 var filteredCount = await query.CountAsync();
                 

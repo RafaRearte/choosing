@@ -271,7 +271,7 @@ const accionesColumn = {
                 start: d.start,
                 length: d.length,
                 search: d.search.value,
-                orderColumn: d.order && d.order.length > 0 ? d.columns[d.order[0].column].data : 'nombre',
+                orderColumn: d.order && d.order.length > 0 ? d.columns[d.order[0].column].data : 'id',
                 orderDirection: d.order && d.order.length > 0 ? d.order[0].dir : 'asc',
                 eventId: currentEventId,
                 filter: currentFilter || '', // Permitir filtros adicionales

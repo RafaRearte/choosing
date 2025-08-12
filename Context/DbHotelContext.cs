@@ -80,6 +80,21 @@ public partial class DbHotelContext : DbContext
             entity.Property(e => e.RedSocial)
             .HasMaxLength(255)
             .HasColumnName("red_social");
+            entity.Property(e => e.Cargo)
+                .HasMaxLength(255)
+                .HasColumnName("cargo");
+
+            entity.Property(e => e.Profesion)
+                .HasMaxLength(255) 
+                .HasColumnName("profesion");
+
+            entity.Property(e => e.CantEntradas)
+                .HasColumnName("cant_entradas");
+            entity.Property(e => e.HoraAcreditacion)
+                .HasColumnName("horaAcreditacion");
+
+            entity.Property(e => e.EsNuevo)
+                .HasColumnName("EsNuevo");  
         });
 
         modelBuilder.Entity<EventModel>(entity =>

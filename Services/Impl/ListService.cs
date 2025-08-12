@@ -16,7 +16,7 @@ namespace choosing.Services.Impl
         public async Task AcreditarInvitadoAsync(Guest guest)
         {
             guest.Acreditado = 1;
-            guest.horaAcreditacion = DateTime.Now;
+            guest.HoraAcreditacion = DateTime.Now;
             await _listRepository.UpdateAsync(guest);
         }
 
@@ -191,7 +191,9 @@ namespace choosing.Services.Impl
             int start, 
             int length, 
             string search = "", 
-            string filter = "")
+            string filter = "", 
+            string orderColumn = "id", 
+            string orderDirection = "asc")
         {
             return await _listRepository.GetPaginatedByEventIdAsync(eventId, start, length, search, filter);
         }
