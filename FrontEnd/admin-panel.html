@@ -681,7 +681,12 @@
                     const row = `
                         <tr>
                             <td>${event.id}</td>
-                            <td>${event.nombre}</td>
+                            <td>
+                                <a href="#" onclick="goToEvent(${event.id}, '${event.nombre}')" 
+                                    style="color: #0d6efd; text-decoration: none; font-weight: 500;">
+                                    ${event.nombre}
+                                </a>    
+                            </td>
                             <td>${new Date(event.fechaInicio).toLocaleDateString()}</td>
                             <td>${new Date(event.fechaFin).toLocaleDateString()}</td>
                             <td>
@@ -1279,6 +1284,23 @@ function guardarConfiguracion(eventoId) {
         hideLoading();
     });
 }
+const goToEvent = (eventId, eventName) => {
+    // Guardar el evento seleccionado en localStorage
+    localStorage.setItem('currentEventId', eventId);
+    localStorage.setItem('currentEventName', eventName);
+    localStorage.setItem('currentEventAccess', JSON.stringify({
+        tipoAcceso: 'Admin',
+        permisos: {
+            puedeAcreditar: true,
+            puedeEditarInvitados: true,
+            puedeVerEstadisticas: true,
+            puedeConfigurar: true
+        }
+    }));
+    
+    // Redirigir al index del evento
+    window.location.href = 'index.html';
+};
 
     </script>
 </body>

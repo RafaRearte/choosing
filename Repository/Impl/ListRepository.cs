@@ -289,41 +289,28 @@ namespace choosing.Repository.Impl
                     }
                 }
                 
-                // BÚSQUEDA MEJORADA - Reemplazar la sección existente
+// REEMPLAZAR toda la sección de búsqueda por esta versión más simple:
                 if (!string.IsNullOrEmpty(search))
                 {
-                    search = search.ToLower().Trim();
-    
-                    // Normalizar búsqueda: remover acentos y caracteres especiales
-                    var searchNormalized = RemoveAccents(search);
+                    var searchLower = search.ToLower().Trim();
     
                     query = query.Where(g => 
-                        // Búsqueda en nombre + apellido (completo y por partes)
-                        (g.Nombre + " " + g.Apellido).ToLower().Contains(search) ||
-                        (g.Apellido + " " + g.Nombre).ToLower().Contains(search) ||
-        
-                        // Búsqueda sin acentos
-                        RemoveAccents((g.Nombre + " " + g.Apellido).ToLower()).Contains(searchNormalized) ||
-                        RemoveAccents((g.Apellido + " " + g.Nombre).ToLower()).Contains(searchNormalized) ||
-        
-                        // Búsqueda por partes separadas (para "rafa rearte" → "Rafael Rearte")
-                        search.Split(' ').All(word => 
-                            (g.Nombre + " " + g.Apellido).ToLower().Contains(word) ||
-                            RemoveAccents((g.Nombre + " " + g.Apellido).ToLower()).Contains(RemoveAccents(word))
-                        ) ||
+                        // Búsqueda en nombre + apellido
+                        (g.Nombre + " " + g.Apellido).ToLower().Contains(searchLower) ||
+                        (g.Apellido + " " + g.Nombre).ToLower().Contains(searchLower) ||
         
                         // Búsquedas individuales en cada campo
-                        (g.Nombre != null && g.Nombre.ToLower().Contains(search)) ||
-                        (g.Apellido != null && g.Apellido.ToLower().Contains(search)) ||
-                        g.Dni.ToString().Contains(search) ||
-                        (g.Mail != null && g.Mail.ToLower().Contains(search)) ||
-                        (g.Telefono != null && g.Telefono.Contains(search)) ||
-                        (g.Empresa != null && g.Empresa.ToLower().Contains(search)) ||
-                        (g.Cargo != null && g.Cargo.ToLower().Contains(search)) ||
-                        (g.IdCode != null && g.IdCode.ToLower().Contains(search)) ||
-                        (g.Categoria != null && g.Categoria.ToLower().Contains(search)) ||
-                        (g.Profesion != null && g.Profesion.ToLower().Contains(search)) ||
-                        (g.RedSocial != null && g.RedSocial.ToLower().Contains(search))
+                        (g.Nombre != null && g.Nombre.ToLower().Contains(searchLower)) ||
+                        (g.Apellido != null && g.Apellido.ToLower().Contains(searchLower)) ||
+                        g.Dni.ToString().Contains(searchLower) ||
+                        (g.Mail != null && g.Mail.ToLower().Contains(searchLower)) ||
+                        (g.Telefono != null && g.Telefono.Contains(searchLower)) ||
+                        (g.Empresa != null && g.Empresa.ToLower().Contains(searchLower)) ||
+                        (g.Cargo != null && g.Cargo.ToLower().Contains(searchLower)) ||
+                        (g.IdCode != null && g.IdCode.ToLower().Contains(searchLower)) ||
+                        (g.Categoria != null && g.Categoria.ToLower().Contains(searchLower)) ||
+                        (g.Profesion != null && g.Profesion.ToLower().Contains(searchLower)) ||
+                        (g.RedSocial != null && g.RedSocial.ToLower().Contains(searchLower))
                     );
                 }
                 
@@ -407,17 +394,5 @@ namespace choosing.Repository.Impl
             return guests;
         }
         
-        // MÉTODO PARA REMOVER ACENTOS - Agregar al final de la clase
-        private static string RemoveAccents(string text)
-        {
-            if (string.IsNullOrEmpty(text)) return text;
-    
-            return text
-                .Replace("á", "a").Replace("é", "e").Replace("í", "i").Replace("ó", "o").Replace("ú", "u")
-                .Replace("à", "a").Replace("è", "e").Replace("ì", "i").Replace("ò", "o").Replace("ù", "u")
-                .Replace("ä", "a").Replace("ë", "e").Replace("ï", "i").Replace("ö", "o").Replace("ü", "u")
-                .Replace("â", "a").Replace("ê", "e").Replace("î", "i").Replace("ô", "o").Replace("û", "u")
-                .Replace("ã", "a").Replace("õ", "o").Replace("ñ", "n").Replace("ç", "c");
-        }
     }
 }
