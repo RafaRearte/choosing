@@ -517,49 +517,53 @@
                         <div class="mb-3">
                             <h6 class="fw-bold">Campos a mostrar:</h6>
                         </div>
-                        <div class="form-check mb-2">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="configDni" checked>
                             <label class="form-check-label" for="configDni">DNI</label>
                         </div>
-                        <div class="form-check mb-2">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="configEmail" checked>
                             <label class="form-check-label" for="configEmail">Email</label>
                         </div>
-                        <div class="form-check mb-2">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="configEmpresa" checked>
                             <label class="form-check-label" for="configEmpresa">Empresa</label>
                         </div>
-                        <div class="form-check mb-2">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="configCategoria" checked>
                             <label class="form-check-label" for="configCategoria">Categoría</label>
                         </div>
-                        <div class="form-check mb-2">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="configProfesion" checked>
                             <label class="form-check-label" for="configProfesion">Profesión</label>
                         </div>
-                        <div class="form-check mb-2">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="configCargo" checked>
                             <label class="form-check-label" for="configCargo">Cargo</label>
                         </div>
-                        <div class="form-check mb-2">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="configLugar" checked>
                             <label class="form-check-label" for="configLugar">Lugar</label>
                         </div>
-                        <div class="form-check mb-2">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="configTelefono" checked>
                             <label class="form-check-label" for="configTelefono">Telefono</label>
                         </div>
-                        <div class="form-check mb-2">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="configRedSocial" checked>
                             <label class="form-check-label" for="configRedSocial">Red Social</label>
                         </div>
-                        <div class="form-check mb-2">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="configDias" checked>
                             <label class="form-check-label" for="configDias">Días (Día 1/Día 2/Día 3)</label>
                         </div>
-                        <div class="form-check mb-2">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="configInfoAdicional" checked>
                             <label class="form-check-label" for="configInfoAdicional">Información Adicional</label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="configMostrarQR" checked>
+                            <label class="form-check-label" for="configMostrarQR">Incluir QR en las etiquetas</label>
                         </div>
                     </form>
                 </div>
@@ -1217,6 +1221,8 @@ function mostrarModalConfiguracion(evento) {
     document.getElementById('configLugar').checked = configuracion.mostrarLugar !== false;
     document.getElementById('configTelefono').checked = configuracion.mostrarTelefono !== false;
     document.getElementById('configRedSocial').checked = configuracion.mostrarRedSocial !== false;
+    document.getElementById('configMostrarQR').checked = configuracion.mostrarQR !== false;
+    
 
     
     // Guardar el eventoId en el botón para usarlo después
@@ -1241,7 +1247,8 @@ function guardarConfiguracion(eventoId) {
         mostrarDias: document.getElementById('configDias').checked,
         mostrarInfoAdicional: document.getElementById('configInfoAdicional').checked,
         mostrarTelefono: document.getElementById('configTelefono').checked,
-        mostrarRedSocial: document.getElementById('configRedSocial').checked
+        mostrarRedSocial: document.getElementById('configRedSocial').checked,
+        mostrarQR: document.getElementById('configMostrarQR').checked
     };
     
     // Guardar configuración directamente usando endpoint específico

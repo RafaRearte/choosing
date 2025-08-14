@@ -243,7 +243,7 @@ const accionesColumn = {
         
         // Botón de etiqueta (solo si puede acreditar)
         if (puedeHacerAccion('acreditar')) {
-            actions += `<button type="button" class="btn btn-secondary btn-sm" onclick="printLabel(${data.id}, '${data.nombre}', '${data.apellido}','${data.telefono || ''}','${data.mail || ''}', '${data.dni || ''}', '${data.profesion || ''}', '${data.cargo || ''}', '${data.empresa || ''}', '${data.redSocial || ''}')">Etiqueta</button>`;
+            actions += `<button type="button" class="btn btn-secondary btn-sm" onclick="printLabelById(${data.id})">Etiqueta</button>`;
         }
         
         // Botón de acreditar (solo si puede acreditar)
@@ -870,8 +870,6 @@ const updateCounters = (guests, newCount = null) => {
     document.getElementById("notAccredited").innerText = `No acreditados: ${notAccreditedGuests}`;
     if (newCount !== null) {
         document.getElementById("new").innerText = `Nuevos: ${newCount}`;
-    } else {
-        fetchNewCount();
     }
 };
 
@@ -1061,72 +1059,6 @@ const fetchNewCount = async () => {
         console.error('Error fetching new guests count:', error);
     }
 };
-
-// Función para cargar datos filtrados según el contador seleccionado
-const loadFilteredData = async (url) => {
-    // Mostrar indicador de carga
-    document.getElementById('loadingIndicator').style.display = 'block';
-    
-    try {
-        const response = await authenticatedFetch(url);
-        if (!response) return;
-        
-        if (!response.ok) throw new Error('Error al obtener los datos filtrados');
-        const guests = await response.json();
-
-        // Limpiar y actualizar la tabla
-        dataTable.clear();
-        dataTable.rows.add(guests);
-        dataTable.draw();
-        
-        // Si el filtro es GetAll, actualizar todos los contadores
-        if (url.endsWith(`GetAll?eventId=${currentEventId}`)) {
-            updateCounters(guests);
-        }
-    } catch (error) {
-        console.error('Error loading filtered data:', error);
-        alert('Error al cargar los datos filtrados');
-    } finally {
-        // Ocultar indicador de carga
-        document.getElementById('loadingIndicator').style.display = 'none';
-    }
-};
-
-// Función para normalizar nombres y evitar problemas con el vCard
-const normalizeNameForVCard = (text) => {
-    if (!text) return '';
-    
-    return text
-        .trim()
-        // Reemplazar caracteres problemáticos
-        .replace(/[^\w\s\-\.]/g, '') // Solo letras, números, espacios, guiones y puntos
-        // Normalizar espacios múltiples
-        .replace(/\s+/g, ' ')
-        // Limitar longitud para evitar problemas
-        .substring(0, 50)
-        .trim();
-};
-
-// Función mejorada para dividir nombres largos
-const splitLongName = (fullName) => {
-    if (!fullName) return { nombre: '', apellido: '' };
-    
-    const normalized = normalizeNameForVCard(fullName);
-    const parts = normalized.split(' ');
-    
-    if (parts.length === 1) {
-        return { nombre: parts[0], apellido: '' };
-    } else if (parts.length === 2) {
-        return { nombre: parts[0], apellido: parts[1] };
-    } else {
-        // Si hay más de 2 palabras, tomar la primera como nombre y el resto como apellido
-        return { 
-            nombre: parts[0], 
-            apellido: parts.slice(1).join(' ').substring(0, 30) // Limitar apellido
-        };
-    }
-};
-
 //FUNCIÓN PRINTLABEL MEJORADA CON VALIDACIÓN DE TAMAÑO QR
 const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial) => {
     try {
@@ -1164,6 +1096,29 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
             alert('Error: No se puede generar el código QR sin nombre');
             return;
         }
+
+        // 🔥 VERIFICAR CONFIG DEL QR
+        const config = eventData?.configuracionJson ? JSON.parse(eventData.configuracionJson) : {};
+        if (config.mostrarQR === false) {
+            console.log('QR deshabilitado para este evento, generando etiqueta sin QR');
+
+            const nombreCompleto = `${nombre || ''} ${apellido || ''}`.trim();
+            const etiquetaSinQR = `
+            <div style="width: 90mm; height: 26mm; font-family: Arial, sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0; padding: 4mm 3mm; box-sizing: border-box;">
+                <div style="font-weight: bold; font-size: 18pt; margin-bottom: 2mm; text-align: center;">${nombreCompleto}</div>
+                ${empresa ? `<div style="font-size: 14pt; margin-bottom: 1mm; text-align: center;">${empresa.length > 45 ? empresa.substring(0, 45) + '...' : empresa}</div>` : ''}
+                ${cargo ? `<div style="font-size: 12pt; text-align: center;">${cargo.length > 35 ? cargo.substring(0, 35) + '...' : cargo}</div>` : ''}
+            </div>`;
+
+            const printWindow = window.open('', '', 'width=600,height=400');
+            printWindow.document.write(`<!DOCTYPE html><html><head><title>Etiqueta</title><style>@page{size:90mm 26mm;margin:0;}body{margin:0;padding:0;font-family:Arial,sans-serif;}</style></head><body>${etiquetaSinQR}</body></html>`);
+            printWindow.document.close();
+            printWindow.print();
+
+            // Actualizar contadores y salir
+            loadCounters();
+            return;
+        }
         
         // 🎯 CREAR vCard OPTIMIZADO CON VALIDACIÓN DE TAMAÑO
         const { vcard, version, estimatedSize } = createOptimizedVCard(nombreCompleto, empresaLimpia, emailLimpio, telefonoLimpio, redSocialLimpia, cargoLimpio);
@@ -1191,8 +1146,6 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
         alert('Ocurrió un error al generar la etiqueta: ' + error.message);
     }
 };
-
-
 // Guardar nuevo invitado Y imprimir - VERSIÓN CORREGIDA
 const saveNewGuestAndPrint = async () => {
     if (!puedeHacerAccion('editar')) {
@@ -1388,18 +1341,6 @@ FN:${nombreCompleto}`;
     return { vcard, version: 'básico', estimatedSize: complexity.size };
 };
 
-// 🆘 FUNCIÓN DE EMERGENCIA PARA QRs MÍNIMOS
-const createMinimalVCard = (nombreCompleto, telefono) => {
-    // Solo nombre y teléfono (lo más básico posible)
-    const vcard = `BEGIN:VCARD
-VERSION:3.0
-FN:${nombreCompleto}${telefono ? `\nTEL:${telefono}` : ''}
-END:VCARD`;
-
-    console.log('🆘 vCard mínimo de emergencia:', vcard.length, 'caracteres');
-    return { vcard, version: 'mínimo' };
-};
-
 // 🏷️ FUNCIÓN CON MÁRGENES VERTICALES ARREGLADOS
 const generateAndPrintLabel = (vcard, nombreCompleto, empresa, cargo, version) => {
     try {
@@ -1409,67 +1350,95 @@ const generateAndPrintLabel = (vcard, nombreCompleto, empresa, cargo, version) =
         qr.make();
         
         // QR de tamaño normal
-        const qrSvg = qr.createSvgTag(2.0, 0); // Un poquito más chico para dar más margen
+        const qrSvg = qr.createSvgTag(1.8, 1);
         
         // 🏷️ ETIQUETA CON MÁRGENES VERTICALES SEGUROS
-        const etiquetaHTML = `
+const etiquetaHTML = `
+<div style="
+    width: 90mm;
+    height: 26mm;
+    font-family: Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 2mm;
+    box-sizing: border-box;
+">
+    <!-- Contenedor del texto CENTRADO COMPLETAMENTE -->
+    <div style="
+        width: 60mm;
+        max-width: 60mm;
+        height: 22mm;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding-right: 3mm;
+        flex-shrink: 0;
+        text-align: center;
+    ">
         <div style="
-            width: 90mm;
-            height: 26mm;
-            font-family: Arial, sans-serif;
-            display: flex;
-            align-items: center;
-            margin: 0;
-            padding: 3mm 2mm; 
-            box-sizing: border-box;
+            font-weight: bold; 
+            font-size: 16pt; 
+            margin-bottom: 1mm; 
+            line-height: 1.1;
+            width: 100%;
         ">
-            <!-- Contenedor del texto -->
-            <div style="
-                flex: 1; 
-                text-align: left;
-                padding-right: 4mm;
-            ">
-                <div style="
-                    font-weight: bold; 
-                    font-size: 16pt; 
-                    margin-bottom: 1mm; 
-                    line-height: 1.1;
-                ">
-                    ${nombreCompleto}
-                </div>
-                
-                ${empresa ? `<div style="
-                    font-size: 12pt; 
-                    margin-bottom: 0.5mm; 
-                    line-height: 1.1;
-                    color: #333;
-                ">
-                    ${empresa.length > 40 ? empresa.substring(0, 40) + '...' : empresa}
-                </div>` : ''}
-                
-                ${cargo ? `<div style="
-                    font-size: 11pt; 
-                    line-height: 1.1;
-                    color: #555;
-                ">
-                    ${cargo.length > 30 ? cargo.substring(0, 30) + '...' : cargo}
-                </div>` : ''}
-            </div>
-            
-            <!-- Contenedor del QR con márgenes verticales -->
-            <div style="
-                width: 18mm; 
-                height: 18mm; 
-                display: flex; 
-                align-items: center; 
-                justify-content: center;
-                flex-shrink: 0;
-                margin: 2mm 2mm 2mm 0mm;
-            ">
-                ${qrSvg}
-            </div>
+            ${nombreCompleto}
         </div>
-        `;
+        
+        ${empresa ? `<div style="
+            font-size: 12pt; 
+            margin-bottom: 0.5mm; 
+            line-height: 1.1;
+            color: #333;
+            width: 100%;
+        ">
+            ${empresa.length > 35 ? empresa.substring(0, 35) + '...' : empresa}
+        </div>` : ''}
+        
+        ${cargo ? `<div style="
+            font-size: 11pt; 
+            line-height: 1.1;
+            color: #555;
+            width: 100%;
+        ">
+            ${cargo.length > 25 ? cargo.substring(0, 25) + '...' : cargo}
+        </div>` : ''}
+    </div>
+    
+    <!-- Contenedor del QR FIJO CON LÍMITES ESTRICTOS -->
+<div style="
+    width: 25mm;
+    min-width: 25mm;
+    max-width: 25mm;
+    height: 22mm;
+    min-height: 22mm;
+    max-height: 22mm;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    margin-left: auto;
+    margin-top: 2mm;
+">
+    <div style="
+        width: 16mm;
+        height: 16mm;
+        max-width: 16mm;
+        max-height: 16mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    ">
+        ${qrSvg}
+    </div>
+</div>
+    </div>
+</div>
+`;
 
         // Mostrar etiqueta
         const printWindow = window.open('', '', 'width=600,height=400');
@@ -1539,63 +1508,7 @@ const generateAndPrintLabel = (vcard, nombreCompleto, empresa, cargo, version) =
     }
 };
 
-// 🆘 FALLBACK: Etiqueta sin QR con layout optimizado
-const generateLabelWithoutQROptimized = (nombreCompleto, empresa, cargo) => {
-    return `
-    <div style="
-        width: 90mm;
-        height: 26mm;
-        font-family: Arial, sans-serif;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: flex-start;
-        margin: 0;
-        padding: 3mm 4mm;
-        box-sizing: border-box;
-        border: 1px solid #ddd;
-    ">
-        <div style="
-            font-weight: bold; 
-            font-size: 20pt; 
-            margin-bottom: 2mm; 
-            line-height: 1.0;
-            color: #000;
-            width: 100%;
-        ">
-            ${nombreCompleto}
-        </div>
-        
-        ${empresa ? `<div style="
-            font-size: 14pt; 
-            margin-bottom: 1mm; 
-            line-height: 1.1;
-            color: #333;
-            width: 100%;
-        ">
-            ${empresa.length > 50 ? empresa.substring(0, 50) + '...' : empresa}
-        </div>` : ''}
-        
-        ${cargo ? `<div style="
-            font-size: 13pt; 
-            line-height: 1.1;
-            color: #555;
-            width: 100%;
-        ">
-            ${cargo.length > 40 ? cargo.substring(0, 40) + '...' : cargo}
-        </div>` : ''}
-        
-        <div style="
-            font-size: 8pt; 
-            color: #999; 
-            margin-top: auto;
-            width: 100%;
-        ">
-            Sin QR - Layout optimizado
-        </div>
-    </div>
-    `;
-};
+
 const openGuestQr = (id, nombre, apellido) => {
     const qrContent = `${id}`; // solo el ID para escanear
 
@@ -1726,22 +1639,6 @@ const openScanMode = () => {
     }, 500);
 };
 
-const resetScan = () => {
-    // Limpiar input y spinner
-    const input = document.getElementById('scanInput');
-    const result = document.getElementById('scanResult');
-    const spinner = document.getElementById('scanSpinner');
-
-    if (input) input.value = '';
-    if (result) result.style.display = 'none';
-    if (spinner) spinner.style.display = 'block';
-
-    // Dejar el foco de nuevo en el input
-    setTimeout(() => {
-        input.focus();
-    }, 200);
-};
-
 
 // Función para procesar el código escaneado (versión mejorada)
 const processScanInput = (scannedData) => {
@@ -1774,8 +1671,6 @@ const processScanInput = (scannedData) => {
         showScanError(`Código no reconocido. Formato: "${cleanData}". Longitud: ${cleanData.length}`);
     }
 };
-
-
 
 // Función para parsear DNI del código PDF417 argentino
 const parseDniFromPdf417 = (data) => {
@@ -1840,7 +1735,6 @@ const quickAccreditByIdCode = async (idCode) => {
         alert('Error al acreditar invitado');
     }
 };
-
 
 // Buscar invitado por ID
 const searchGuestById = async (guestId) => {
@@ -1914,7 +1808,7 @@ const showGuestFound = (guest) => {
                         <button class="btn ${isAccredited ? 'btn-outline-danger' : 'btn-success'} btn-sm" style="min-width:110px;" onclick="toggleAccreditStatus(${guest.id}, ${isAccredited})">
                             <i class="bi bi-check-lg me-1"></i>${isAccredited ? 'Desacreditar' : 'Acreditar'}
                         </button>
-                        <button class="btn ${isAccredited ? 'btn-outline-primary' : 'btn-primary'} btn-sm" style="min-width:110px;" onclick="printLabel(${guest.id}, '${guest.nombre}', '${guest.apellido}','${guest.telefono || ''}', '${guest.email || ''}', '${guest.dni || ''}', '${guest.profesion || ''}', '${guest.cargo || ''}', '${guest.empresa || ''}', '${guest.redSocial || ''}')">
+                        <button class="btn ${isAccredited ? 'btn-outline-primary' : 'btn-primary'} btn-sm" style="min-width:110px;" onclick="printLabelById(${guest.id})">
                             <i class="bi bi-printer me-1"></i>${isAccredited ? 'Etiqueta' : 'Acreditar+Imprimir'}
                         </button>
                         <button class="btn btn-outline-secondary btn-sm" style="min-width:110px;" onclick="openEditModal(${guest.id}); closeScanModal();">
@@ -1972,12 +1866,35 @@ const quickAccredit = async (guestId) => {
     }
 };
 
-// Acreditar e imprimir
-const accreditAndPrint = async (id, nombre, apellido,telefono, dni, profesion, cargo, empresa) => {
-    await quickAccredit(id);
-    setTimeout(() => {
-        printLabel(id, nombre, apellido,telefono, dni, profesion, cargo, empresa);
-    }, 500);
+// NUEVA FUNCIÓN: Imprimir etiqueta solo con ID
+const printLabelById = async (id) => {
+    try {
+        // 1. Obtener datos del invitado desde la API
+        const response = await authenticatedFetch(`${apiUrl}/GetById/${id}?eventId=${currentEventId}`);
+        if (!response || !response.ok) {
+            throw new Error('No se encontró el invitado');
+        }
+        
+        const guest = await response.json();
+        
+        // 2. Llamar a la función printLabel original con los datos obtenidos
+        await printLabel(
+            guest.id,
+            guest.nombre || '',
+            guest.apellido || '',
+            guest.telefono || '',
+            guest.mail || '',
+            guest.dni || '',
+            guest.profesion || '',
+            guest.cargo || '',
+            guest.empresa || '',
+            guest.redSocial || ''
+        );
+        
+    } catch (error) {
+        console.error('Error al imprimir etiqueta:', error);
+        alert('Error al obtener los datos del invitado');
+    }
 };
 
 // Resetear modo escaneo
