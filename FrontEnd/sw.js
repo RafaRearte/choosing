@@ -1,34 +1,37 @@
-const CACHE_NAME = 'choosing-v1.0.1';
-const STATIC_CACHE = 'choosing-static-v1';
-const API_CACHE = 'choosing-api-v1';
+const CACHE_NAME = 'choosing-v1.0.2';
+const STATIC_CACHE = 'choosing-static-v2';
+const API_CACHE = 'choosing-api-v2';
 
-// 🎯 ARCHIVOS ESPECÍFICOS DE TU APP CHOOSING
+// ✅ SOLO ARCHIVOS QUE SÍ EXISTEN (basado en tu ls -la)
 const STATIC_FILES = [
-  // HTML Pages
+  // HTML Pages ✅ CONFIRMADOS
   '/',
-  '/index.html',
-  '/admin-panel.html',
-  '/login.html',
-  '/event-selection.html',
-  '/registro-evento.html',
-  '/offline.html',
-  '/acreditacion-offline.html',
-  '/stats.html',
-  '/etiqueta.html',
+  '/Index.html',                    // ✅ Existe
+  '/acreditacion-offline.html',     // ✅ Existe
+  '/admin-panel.html',              // ✅ Existe
+  '/etiqueta.html',                 // ✅ Existe
+  '/event-selection.html',          // ✅ Existe
+  '/login.html',                    // ✅ Existe
+  '/offline.html',                  // ✅ Existe
+  '/print-labels.html',             // ✅ Existe
+  '/stats.html',                    // ✅ Existe
   
-  // JS Files  
-  '/scriptindex.js',
-  '/script-admin.js',
-  '/script-event-selection.js',
-  '/script-login.js',
-  '/script-stats.js',
-  '/script-registro.js',
-  '/script-offline.js',
+  // JS Files ✅ CONFIRMADOS (js/ folder)
+  '/js/actions.js',                 // ✅ Existe
+  '/js/core.js',                    // ✅ Existe
+  '/js/data.js',                    // ✅ Existe
+  '/js/main.js',                    // ✅ Existe
+  '/js/modals.js',                  // ✅ Existe
+  '/js/print.js',                   // ✅ Existe
+  '/js/pwa.js',                     // ✅ Existe
+  '/js/scanner.js',                 // ✅ Existe
+  '/js/table.js',                   // ✅ Existe
   
-  // Images & Icons
-  '/images/icon.png',
-  '/images/icon-512.png',
-  '/images/icon-180.png',
+  // Images ✅ CONFIRMADOS
+  '/images/icon.png',               // ✅ Existe
+  // ❌ REMOVIDOS: icon-512.png, icon-180.png (no existen)
+  
+  // Manifest
   '/manifest.json',
   
   // External CDN Resources (críticos)
@@ -39,10 +42,18 @@ const STATIC_FILES = [
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js',
   'https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/print-js/1.6.0/print.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/print-js/1.6.0/print.min.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/print-js/1.6.0/print.min.js',
+  'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'
 ];
 
-// 🎯 APIs DE TU SISTEMA CHOOSING PARA CACHE INTELIGENTE
+// ❌ REMOVIDOS todos los archivos que NO EXISTEN:
+// '/script-admin.js', '/script-event-selection.js', '/script-login.js', 
+// '/script-stats.js', '/script-registro.js', '/script-offline.js',
+// '/scriptindex.js', '/registro-evento.html', '/images/icon-512.png', 
+// '/images/icon-180.png'
+
+// 🎯 APIs DE TU SISTEMA CHOOSING
 const API_PATTERNS = [
   '/api/List/GetAll',
   '/api/List/GetPaginated', 
@@ -61,12 +72,12 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then(cache => {
-        console.log('📦 SW: Cacheando archivos estáticos de Choosing');
+        console.log('📦 SW: Cacheando archivos estáticos...');
         return cache.addAll(STATIC_FILES);
       })
       .then(() => {
         console.log('✅ SW: Choosing PWA instalada correctamente');
-        return self.skipWaiting();
+        self.skipWaiting();
       })
       .catch(error => {
         console.error('❌ SW: Error instalando Choosing PWA:', error);
@@ -74,59 +85,52 @@ self.addEventListener('install', event => {
   );
 });
 
-// 🔄 ACTIVACIÓN Y LIMPIEZA DE CACHE OBSOLETO
+// ⚡ ACTIVACIÓN
 self.addEventListener('activate', event => {
   console.log('⚡ SW: Activando Choosing PWA...');
   
   event.waitUntil(
-    caches.keys()
-      .then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cacheName => {
-            if (cacheName !== STATIC_CACHE && cacheName !== API_CACHE) {
-              console.log('🗑️ SW: Eliminando cache obsoleto:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-      .then(() => {
-        console.log('🎯 SW: Choosing PWA activada y lista');
-        return self.clients.claim();
-      })
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== STATIC_CACHE && cacheName !== API_CACHE) {
+            console.log('🗑️ SW: Eliminando cache viejo:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => {
+      console.log('🎯 SW: Choosing PWA activada y lista');
+      return self.clients.claim();
+    })
   );
 });
 
-// 🌐 INTERCEPTOR DE REQUESTS - ESTRATEGIA INTELIGENTE
+// 🌐 INTERCEPTAR REQUESTS
 self.addEventListener('fetch', event => {
-  const { request } = event;
-  const url = new URL(request.url);
-
-  // Solo manejar HTTP/HTTPS
-  if (!request.url.startsWith('http')) return;
-
+  const request = event.request;
+  
   // 🎯 ESTRATEGIA 1: ARCHIVOS ESTÁTICOS (Cache First)
   if (isStaticFile(request)) {
     event.respondWith(
       caches.match(request)
-        .then(cachedResponse => {
-          if (cachedResponse) {
-            console.log('💾 SW: Sirviendo desde cache:', request.url);
-            return cachedResponse;
+        .then(response => {
+          if (response) {
+            return response;
           }
-          
-          // Si no está en cache, fetch y guardar
           return fetch(request)
             .then(response => {
-              if (response.status === 200) {
-                const responseClone = response.clone();
-                caches.open(STATIC_CACHE)
-                  .then(cache => cache.put(request, responseClone));
+              if (!response || response.status !== 200 || response.type !== 'basic') {
+                return response;
               }
+              const responseToCache = response.clone();
+              caches.open(STATIC_CACHE)
+                .then(cache => {
+                  cache.put(request, responseToCache);
+                });
               return response;
             })
             .catch(() => {
-              // Fallback para páginas offline
               if (request.destination === 'document') {
                 return caches.match('/offline.html');
               }
@@ -136,9 +140,8 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 🎯 ESTRATEGIA 2: APIs DE CHOOSING (Hybrid Strategy)
+  // 🎯 ESTRATEGIA 2: APIs DE CHOOSING (Network First)
   if (isChoosingAPI(request)) {
-    // Para GET requests: Network First con Cache Fallback
     if (request.method === 'GET') {
       event.respondWith(
         fetch(request)
@@ -147,39 +150,23 @@ self.addEventListener('fetch', event => {
               const responseClone = response.clone();
               caches.open(API_CACHE)
                 .then(cache => {
-                  console.log('💾 SW: Cacheando API response:', request.url);
                   cache.put(request, responseClone);
                 });
             }
             return response;
           })
           .catch(() => {
-            console.log('📡 SW: Network failed, usando cache para:', request.url);
             return caches.match(request)
               .then(cachedResponse => {
                 if (cachedResponse) {
-                  // Agregar header para indicar que viene de cache
-                  const response = cachedResponse.clone();
-                  response.headers.set('X-Served-By', 'ServiceWorker-Cache');
-                  return response;
+                  return cachedResponse;
                 }
-                
-                // Si no hay cache, respuesta offline personalizada
                 return new Response(
                   JSON.stringify({ 
-                    error: 'Sin conexión a internet',
-                    offline: true,
-                    message: 'Los datos mostrados pueden no estar actualizados',
-                    timestamp: new Date().toISOString()
+                    error: 'Sin conexión',
+                    offline: true
                   }),
-                  {
-                    status: 503,
-                    statusText: 'Service Unavailable - Offline Mode',
-                    headers: { 
-                      'Content-Type': 'application/json',
-                      'X-Served-By': 'ServiceWorker-Offline'
-                    }
-                  }
+                  { status: 503, headers: { 'Content-Type': 'application/json' } }
                 );
               });
           })
@@ -187,19 +174,15 @@ self.addEventListener('fetch', event => {
       return;
     }
     
-    // Para POST/PUT/DELETE: Solo Network (no cachear)
+    // POST/PUT/DELETE: Solo Network
     event.respondWith(
       fetch(request).catch(() => {
         return new Response(
           JSON.stringify({ 
-            error: 'Acción requiere conexión a internet',
-            offline: true,
-            action: 'retry_when_online' 
+            error: 'Acción requiere conexión',
+            offline: true
           }),
-          {
-            status: 503,
-            headers: { 'Content-Type': 'application/json' }
-          }
+          { status: 503, headers: { 'Content-Type': 'application/json' } }
         );
       })
     );
