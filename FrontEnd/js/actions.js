@@ -1,111 +1,14 @@
-//FUNCIÓN PRINTLABEL MEJORADA CON VALIDACIÓN DE TAMAÑO QR
-const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial) => {
-    try {
-        // Si hay id, acreditar al invitado
-        if (id) {
-            const response = await authenticatedFetch(`${apiUrl}/updateAccreditStatusById/${id}?eventId=${currentEventId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ acreditado: 1 })
-            });
-            
-            if (!response || !response.ok) {
-                console.error('Error al acreditar al invitado');
-            }
-        }
-        
-        // Normalizar y limpiar datos
-        const nombreCompleto = `${nombre || ''} ${apellido || ''}`.trim();
-        const emailLimpio = (email || '').trim().substring(0, 50);
-        const telefonoLimpio = (telefono || '').toString().replace(/[^\d\+\-\s]/g, '').trim();
-        const empresaLimpia = (empresa || '').trim();
-        const cargoLimpio = (cargo || '').trim();
-        const redSocialLimpia = (redSocial || '').trim();
-        
-        // Verificar que tenemos al menos un nombre
-        if (!nombreCompleto) {
-            alert('Error: No se puede generar el código QR sin nombre');
-            return;
-        }
+$('#exportCsvBtn').on('click', function() {
+    const url = `${apiUrl}/ExportCsv?eventId=${currentEventId}`;
+    window.open(url, '_blank');
+});
 
-        // 🔥 VERIFICAR CONFIG DEL QR
-        const config = eventData?.configuracionJson ? JSON.parse(eventData.configuracionJson) : {};
-        if (config.mostrarQR === false) {
 
-            const nombreCompleto = `${nombre || ''} ${apellido || ''}`.trim();
-            const etiquetaSinQR = `
-            <div style="width: 90mm; height: 26mm; font-family: Arial, sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0; padding: 4mm 3mm; box-sizing: border-box;">
-                <div style="font-weight: bold; font-size: 18pt; margin-bottom: 2mm; text-align: center;">${nombreCompleto}</div>
-                ${empresa ? `<div style="font-size: 14pt; margin-bottom: 1mm; text-align: center;">${empresa.length > 45 ? empresa.substring(0, 45) + '...' : empresa}</div>` : ''}
-                ${cargo ? `<div style="font-size: 12pt; text-align: center;">${cargo.length > 35 ? cargo.substring(0, 35) + '...' : cargo}</div>` : ''}
-            </div>`;
+    // Variables para el modo escaneo
+let scanModalInstance = null;
+let scanTimeout = null;
 
-            const printWindow = window.open('', '', 'width=600,height=400');
-            printWindow.document.write(`<!DOCTYPE html><html><head><title>Etiqueta</title><style>@page{size:90mm 26mm;margin:0;}body{margin:0;padding:0;font-family:Arial,sans-serif;}</style></head><body>${etiquetaSinQR}</body></html>`);
-            printWindow.document.close();
-            printWindow.print();
-
-            // Actualizar contadores y salir
-            loadCounters();
-            return;
-        }
-        
-        // 🎯 CREAR vCard OPTIMIZADO CON VALIDACIÓN DE TAMAÑO
-        const { vcard, version, estimatedSize } = createOptimizedVCard(nombreCompleto, empresaLimpia, emailLimpio, telefonoLimpio, redSocialLimpia, cargoLimpio);
-        
-        
-        // 🚨 VALIDACIÓN CRÍTICA: Si el QR sigue siendo muy grande, usar versión mínima
-        if (vcard.length > 300) {
-            console.warn('⚠️ QR aún muy grande, forzando versión mínima');
-            const minimalVCard = createMinimalVCard(nombreCompleto, telefonoLimpio);
-            return generateAndPrintLabel(minimalVCard.vcard, nombreCompleto, empresa, cargo, 'mínimo-forzado');
-        }
-        
-        // Generar etiqueta con el vCard optimizado
-        generateAndPrintLabel(vcard, nombreCompleto, empresa, cargo, version);
-        
-        // Actualizar la tabla después de acreditar
-        loadCounters();
-
-    } catch (error) {
-        console.error('❌ Error:', error);
-        alert('Ocurrió un error al generar la etiqueta: ' + error.message);
-    }
-};
-// NUEVA FUNCIÓN: Imprimir etiqueta solo con ID
-const printLabelById = async (id) => {
-    try {
-        // 1. Obtener datos del invitado desde la API
-        const response = await authenticatedFetch(`${apiUrl}/GetById/${id}?eventId=${currentEventId}`);
-        if (!response || !response.ok) {
-            throw new Error('No se encontró el invitado');
-        }
-        
-        const guest = await response.json();
-        
-        // 2. Llamar a la función printLabel original con los datos obtenidos
-        await printLabel(
-            guest.id,
-            guest.nombre || '',
-            guest.apellido || '',
-            guest.telefono || '',
-            guest.mail || '',
-            guest.dni || '',
-            guest.profesion || '',
-            guest.cargo || '',
-            guest.empresa || '',
-            guest.redSocial || ''
-        );
-        
-    } catch (error) {
-        console.error('Error al imprimir etiqueta:', error);
-        alert('Error al obtener los datos del invitado');
-    }
-};
-
-    // Guardar nuevo invitado (continuación)
+// Guardar nuevo invitado (continuación)
 const saveNewGuest = async () => {
         if (!puedeHacerAccion('editar')) {
         alert('No tiene permisos para crear invitados');
@@ -181,7 +84,6 @@ const saveNewGuest = async () => {
         alert("Hubo un error al intentar crear el invitado.");
     }
 };
-
 // Función para eliminar un invitado
 const deleteGuest = async () => {
         if (!puedeHacerAccion('editar')) {
@@ -215,7 +117,6 @@ const deleteGuest = async () => {
         alert('Ha ocurrido un error al intentar eliminar el invitado');
     }
 };
-
 // Función para cambiar el estado de acreditación (toggle)
 const toggleAccreditStatus = async (id, currentStatus) => {
     if (!puedeHacerAccion('acreditar')) {
@@ -257,7 +158,6 @@ const toggleAccreditStatus = async (id, currentStatus) => {
         alert('Ha ocurrido un error al intentar cambiar el estado de acreditación');
     }
 };
-
 // Función para configurar el evento actual
 function configurarEvento() {
     // Verificar que se ha seleccionado un evento
@@ -297,8 +197,6 @@ function configurarEvento() {
         hideLoading();
     });
 }
-
-
 function guardarConfiguracion(eventoId) {
     // Recopilar configuración del formulario
     const configuracion = {
@@ -349,8 +247,6 @@ function guardarConfiguracion(eventoId) {
         hideLoading();
     });
 }
-
-
 //scanner
 
 // Función para abrir el modal de escaneo
@@ -374,8 +270,6 @@ const openScanMode = () => {
         document.getElementById('scanInput').focus();
     }, 500);
 };
-
-
 // Función para procesar el código escaneado (versión mejorada)
 const processScanInput = (scannedData) => {
     if (!scannedData.trim()) return;
@@ -405,7 +299,6 @@ const processScanInput = (scannedData) => {
         showScanError(`Código no reconocido. Formato: "${cleanData}". Longitud: ${cleanData.length}`);
     }
 };
-
 // Resetear modo escaneo
 const resetScanMode = () => {
     document.getElementById('scanInput').value = '';
@@ -539,192 +432,208 @@ const saveEditedGuest = async () => {
         alert('Ha ocurrido un error al intentar actualizar el invitado');
     }
 };
-// Nueva función: Guardar invitado editado Y imprimir
-const saveEditedGuestAndPrint = async () => {
-    if (!puedeHacerAccion('editar')) {
-        alert('No tiene permisos para editar invitados');
-        return;
-    }
-    
-    // Usar la misma lógica que saveEditedGuest pero sin cerrar modal aún
-    const id = document.getElementById('editGuestId').value;
-    // ... resto del código igual que saveEditedGuest ...
-        // Obtener los valores del formulario
-    const dni = document.getElementById('editGuestDni').value;
-    const nombre = document.getElementById('editGuestNombre').value;
-    const apellido = document.getElementById('editGuestApellido').value;
-    const email = document.getElementById('editGuestEmail').value;
-    const empresa = document.getElementById('editGuestEmpresa').value;
-    const categoria = document.getElementById('editGuestCategoria').value;
-    const profesion = document.getElementById('editGuestProfesion').value;
-    const cargo = document.getElementById('editGuestCargo').value;
-    const lugar = document.getElementById('editGuestLugar').value;
-    const telefono = document.getElementById('editGuestTelefono').value;
-    const redSocial = document.getElementById('editGuestRedSocial').value; // 🆕 NUEVO CAMPO
-    const dayOne = document.getElementById('editGuestDayOne').checked ? 'SI' : 'NO';
-    const dayTwo = document.getElementById('editGuestDayTwo').checked ? 'SI' : 'NO';
-    const dayThree = document.getElementById('editGuestDayThree').checked ? 'SI' : 'NO';
-    const infoAdicional = document.getElementById('editGuestInfoAdicional').value;
-    const acreditado = document.getElementById('editGuestAcreditado').checked ? 1 : 0;
-    
-    // Validación básica
-    if (!nombre || !apellido) {
-        alert('Por favor complete los campos obligatorios: Nombre y Apellido');
-        return;
-    }
-    
-    // Crear objeto con los datos actualizados
-    const updatedGuest = {
-        id: parseInt(id),
-        dni: dni ? parseInt(dni) : null,
-        nombre: nombre,
-        apellido: apellido,
-        mail: email,
-        empresa: empresa,
-        categoria: categoria,
-        profesion: profesion,
-        cargo: cargo,
-        lugar: lugar,
-        telefono: telefono,
-        redSocial: redSocial,
-        dayOne: dayOne,
-        dayTwo: dayTwo,
-        dayThree: dayThree,
-        infoAdicional: infoAdicional,
-        acreditado: acreditado,
-        eventoId: parseInt(currentEventId)
-    };
-    
+
+// Buscar invitado por ID
+const searchGuestById = async (guestId) => {
     try {
-        const response = await authenticatedFetch(`${apiUrl}/updateById/${id}?eventId=${currentEventId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedGuest)
+        const response = await authenticatedFetch(`${apiUrl}/GetById/${guestId}?eventId=${currentEventId}`);
+        
+        if (!response || !response.ok) {
+            showScanError(`No se encontró invitado con ID: ${guestId}`);
+            return;
+        }
+        
+        const guest = await response.json();
+        showGuestFound(guest);
+    } catch (error) {
+        console.error('Error buscando por ID:', error);
+        showScanError('Error al buscar el invitado');
+    }
+};
+
+// Buscar invitado por DNI
+const searchGuestByDni = async (dni) => {
+    try {
+        const response = await authenticatedFetch(`${apiUrl}/searchByDni?dni=${dni}&eventId=${currentEventId}`);
+        
+        if (!response || !response.ok) {
+            showScanError(`No se encontró invitado con DNI: ${dni}`);
+            return;
+        }
+        
+        const guest = await response.json();
+        showGuestFound(guest);
+    } catch (error) {
+        console.error('Error buscando por DNI:', error);
+        showScanError('Error al buscar el invitado');
+    }
+};
+
+// Mostrar invitado encontrado
+const showGuestFound = (guest) => {
+    const isAccredited = guest.acreditado > 0;
+    const statusBadge = isAccredited ? 
+        '<span class="badge bg-success">YA ACREDITADO</span>' : 
+        '<span class="badge bg-danger">NO ACREDITADO</span>';
+    
+    // 🆕 MOSTRAR INFORMACIÓN DEL IdCode SI EXISTE
+
+    const idCodeInfo = guest.idCode ? 
+        `<small class="text-muted d-block">Código de invitación: ${guest.idCode}</small>` : '';
+    
+    const resultHtml = `
+        <div class="">
+            <div class="row mb-3">
+                <h3 style="font-size: 2rem;"><i class="bi bi-person-check me-2"></i>Invitado Encontrado</h3>
+                <div class="">
+                    <strong style="font-size: 1.5rem;">${guest.nombre} ${guest.apellido}</strong><br>
+                    ${guest.dni ? `<span style="font-size: 1.1rem;">DNI: ${guest.dni}</span><br>` : ''}
+                    ${guest.empresa ? `<span style="font-size: 1.1rem;">Empresa: ${guest.empresa}</span><br>` : ''}
+                    ${guest.categoria ? `<span style="font-size: 1.1rem;">Categoría: ${guest.categoria}</span><br>` : ''}
+                    ${idCodeInfo}
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-12 text-center mb-3">
+                    <h4>${statusBadge}</h4>
+                    ${isAccredited && guest.horaAcreditacion ? 
+                        `<small class="text-muted">Acreditado: ${new Date(guest.horaAcreditacion).toLocaleString()}</small>` : 
+                        ''}
+                </div>
+                <div class="col-12 text-center">
+                    <div class="d-flex justify-content-center gap-2 mt-2 flex-row">
+                        <button class="btn ${isAccredited ? 'btn-outline-danger' : 'btn-success'} btn-sm" style="min-width:110px;" onclick="toggleAccreditStatus(${guest.id}, ${isAccredited})">
+                            <i class="bi bi-check-lg me-1"></i>${isAccredited ? 'Desacreditar' : 'Acreditar'}
+                        </button>
+                        <button class="btn ${isAccredited ? 'btn-outline-primary' : 'btn-primary'} btn-sm" style="min-width:110px;" onclick="printLabelById(${guest.id})">
+                            <i class="bi bi-printer me-1"></i>${isAccredited ? 'Etiqueta' : 'Acreditar+Imprimir'}
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" style="min-width:110px;" onclick="openEditModal(${guest.id}); closeScanModal();">
+                            <i class="bi bi-pencil me-1"></i>Editar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('scanResult').innerHTML = resultHtml;
+    document.getElementById('scanResult').style.display = 'block';
+setTimeout(() => {
+    const printBtn = document.querySelector('#scanResult button[onclick*="printLabel"]');
+    if (printBtn) {
+        printBtn.focus();
+        printBtn.style.outline = '2px solid #0d6efd';
+    }
+}, 200);
+};
+
+// Mostrar error de escaneo
+const showScanError = (message) => {
+    const errorHtml = `
+        <div class="alert alert-danger">
+            <h5><i class="bi bi-exclamation-triangle me-2"></i>No Encontrado</h5>
+            <p>${message}</p>
+            <button class="btn btn-warning btn-sm" onclick="resetScanMode()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Escanear Nuevamente
+            </button>
+        </div>
+    `;
+    
+    document.getElementById('scanResult').innerHTML = errorHtml;
+    document.getElementById('scanResult').style.display = 'block';
+};
+
+// Acreditación rápida
+const quickAccredit = async (guestId) => {
+    try {
+        const response = await authenticatedFetch(`${apiUrl}/acreditarById/${guestId}?eventId=${currentEventId}`, {
+            method: 'PUT'
         });
         
-        if (response?.ok) {
-            $('#editGuestModal').modal('hide');
-            
-            // 🔥 IMPRIMIR DESPUÉS DE GUARDAR
-            setTimeout(() => {
-                printLabel(
-                    id, 
-                    nombre, 
-                    apellido, 
-                    telefono, 
-                    email, 
-                    dni, 
-                    profesion, 
-                    cargo, 
-                    empresa, 
-                    redSocial
-                );
-            }, 500);
-            
-            dataTable.ajax.reload(null, false);
+        if (response && response.ok) {
+            closeScanModal();
+            dataTable.ajax.reload(null, false); // Actualizar tabla
+        } else {
+            alert('Error al acreditar invitado');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error al actualizar invitado');
+        alert('Error al acreditar invitado');
     }
 };
-// Guardar nuevo invitado Y imprimir - VERSIÓN CORREGIDA
-const saveNewGuestAndPrint = async () => {
-    if (!puedeHacerAccion('editar')) {
-        alert('No tiene permisos para crear invitados');
+
+
+// Event Listeners para el escaneo
+document.addEventListener('DOMContentLoaded', function() {
+    // Botón de escaneo
+    document.getElementById('scanModeBtn').addEventListener('click', openScanMode);
+    
+    // Input de escaneo - detectar cuando se completa el escaneo
+    document.getElementById('scanInput').addEventListener('input', function(e) {
+        clearTimeout(scanTimeout);
+        
+        // Esperar un poco después del último carácter para procesar
+        scanTimeout = setTimeout(() => {
+            const value = e.target.value.trim();
+            if (value.length > 3) { // Mínimo 4 caracteres
+                processScanInput(value);
+            }
+        }, 300); // 300ms después del último carácter
+    });
+    
+    
+    // Auto-focus cuando se abre el modal
+    document.getElementById('scanModal').addEventListener('shown.bs.modal', function() {
+        document.getElementById('scanInput').focus();
+    });
+});
+
+// Función para parsear DNI del código PDF417 argentino
+const parseDniFromPdf417 = (data) => {
+    try {
+
+        // Buscar todos los números de 7 u 8 dígitos
+        const matches = data.match(/\d{7,8}/g);
+
+        if (matches && matches.length >= 2) {
+            const dni = matches[1];
+            return dni;
+        }
+
+        console.warn('No se encontró un DNI válido');
+        return null;
+
+    } catch (error) {
+        console.error('Error al parsear PDF417:', error);
+        return null;
+    }
+};
+
+// Agregar eventos para botón del modal
+document.addEventListener("DOMContentLoaded", function() {
+    // Botón para abrir el modal de nuevo invitado
+    document.querySelectorAll('.open-add-guest-btn').forEach(btn => {
+        btn.addEventListener('click', openAddGuestModal);
+    });
+    
+    // Verificar si tiene acceso al evento actual
+    const currentEventId = localStorage.getItem('currentEventId');
+    const eventAccess = localStorage.getItem('currentEventAccess');
+    
+    if (currentEventId && !eventAccess) {
+        alert('Necesita un código de acceso para este evento');
+        window.location.href = 'event-selection.html';
         return;
     }
     
-    // Obtener los valores del formulario (IGUAL que saveNewGuest)
-    const dni = document.getElementById("newGuestDni").value;
-    const nombre = document.getElementById("newGuestNombre").value;
-    const apellido = document.getElementById("newGuestApellido").value;
-    const email = document.getElementById("newGuestEmail").value;
-    const empresa = document.getElementById("newGuestEmpresa").value;
-    const categoria = document.getElementById("newGuestCategoria").value;
-    const profesion = document.getElementById("newGuestProfesion").value;
-    const cargo = document.getElementById("newGuestCargo").value;
-    const lugar = document.getElementById("newGuestLugar").value;
-    const telefono = document.getElementById("newGuestTelefono").value;
-    const redSocial = document.getElementById("newGuestRedSocial").value;
-    const dayOne = document.getElementById("newGuestDayOne").checked ? "SI" : "NO";
-    const dayTwo = document.getElementById("newGuestDayTwo").checked ? "SI" : "NO";
-    const dayThree = document.getElementById("newGuestDayThree").checked ? "SI" : "NO";
-    const infoAdicional = document.getElementById("newGuestInfoAdicional").value;
-
-    // Validación básica
-    if (!nombre || !apellido) {
-        alert("Por favor, complete los campos obligatorios: Nombre y Apellido.");
-        return;
+    // Configurar permisos en la UI
+    configurarElementosSegunPermisos();
+    
+    // Mostrar tipo de acceso en algún lugar (opcional)
+    const accessInfo = JSON.parse(eventAccess || '{}');
+    if (accessInfo.tipoAcceso) {
+        // Opcional: mostrar en la UI el tipo de acceso
+        // document.querySelector('.navbar-brand').innerHTML += ` <small class="badge bg-secondary">${accessInfo.tipoAcceso}</small>`;
     }
-
-    // Crear objeto con los datos del nuevo invitado
-    const newGuest = {
-        dni: dni ? parseInt(dni) : null,
-        nombre,
-        apellido,
-        mail: email,
-        empresa,
-        categoria,
-        profesion,
-        cargo,
-        lugar,
-        telefono,
-        redSocial,
-        dayOne,
-        dayTwo,
-        dayThree,
-        infoAdicional,
-        acreditado: 0, // Crear sin acreditar
-        eventoId: parseInt(currentEventId),
-        esNuevo: true
-    };
-
-    try {
-        // 1. CREAR EL INVITADO
-        const response = await authenticatedFetch(`${apiUrl}/create`, {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(newGuest)
-        });
-
-        if (!response) return;
-
-        if (response.ok) {
-            const createdGuest = await response.json();
-            
-            // 2. CERRAR MODAL Y LIMPIAR FORMULARIO
-            $("#addGuestModal").modal("hide");
-            document.getElementById("addGuestForm").reset();
-            
-            // 3. IMPRIMIR ETIQUETA (que también va a acreditar)
-            setTimeout(() => {
-                printLabel(
-                    createdGuest.id, 
-                    nombre, 
-                    apellido, 
-                    telefono, 
-                    email, 
-                    dni, 
-                    profesion, 
-                    cargo, 
-                    empresa, 
-                    redSocial
-                );
-            }, 500);
-            
-            // 4. RECARGAR LISTA
-            loadCounters();
-            
-            
-        } else {
-            const errorText = await response.text();
-            alert(`Error al crear invitado: ${errorText}`);
-        }
-    } catch (error) {
-        console.error("Error al crear invitado:", error);
-        alert("Hubo un error al intentar crear el invitado.");
-    }
-};
+    });
