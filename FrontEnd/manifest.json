@@ -1,0 +1,91 @@
+{
+  "name": "Sistema de Acreditación Choosing",
+  "short_name": "Choosing",
+  "description": "App para acreditación de eventos con control de ingresos, roles de usuario y generación de etiquetas",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
+  "lang": "es",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "./images/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./images/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "apple-touch-icon"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Acreditar Invitados",
+      "short_name": "Acreditar",
+      "description": "Acceso rápido para acreditar invitados del evento",
+      "url": "/index.html",
+      "icons": [
+        {
+          "src": "./images/icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Panel de Administración",
+      "short_name": "Admin",
+      "description": "Panel de administración del sistema",
+      "url": "/admin-panel.html",
+      "icons": [
+        {
+          "src": "./images/icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Seleccionar Evento",
+      "short_name": "Eventos",
+      "description": "Seleccionar evento activo",
+      "url": "/event-selection.html",
+      "icons": [
+        {
+          "src": "./images/icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "categories": ["business", "productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "./images/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Vista móvil de acreditación"
+    },
+    {
+      "src": "./images/screenshot-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Panel de administración"
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 480
+  }
+}
