@@ -303,14 +303,9 @@ namespace choosing.Repository.Impl
                         (g.Nombre != null && g.Nombre.ToLower().Contains(searchLower)) ||
                         (g.Apellido != null && g.Apellido.ToLower().Contains(searchLower)) ||
                         g.Dni.ToString().Contains(searchLower) ||
-                        (g.Mail != null && g.Mail.ToLower().Contains(searchLower)) ||
                         (g.Telefono != null && g.Telefono.Contains(searchLower)) ||
                         (g.Empresa != null && g.Empresa.ToLower().Contains(searchLower)) ||
-                        (g.Cargo != null && g.Cargo.ToLower().Contains(searchLower)) ||
-                        (g.IdCode != null && g.IdCode.ToLower().Contains(searchLower)) ||
-                        (g.Categoria != null && g.Categoria.ToLower().Contains(searchLower)) ||
-                        (g.Profesion != null && g.Profesion.ToLower().Contains(searchLower)) ||
-                        (g.RedSocial != null && g.RedSocial.ToLower().Contains(searchLower))
+                        (g.IdCode != null && g.IdCode.ToLower().Contains(searchLower))
                     );
                 }
                 
