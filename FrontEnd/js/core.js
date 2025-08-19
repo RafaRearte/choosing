@@ -18,7 +18,6 @@ if (!currentEventId) {
 }
 // Actualizar cada 30 segundos
 const fetchInterval = 30000; 
-
 // Función para cerrar sesión
 const logout = () => {
     localStorage.removeItem('authToken');
@@ -31,7 +30,6 @@ const logout = () => {
 
     window.location.href = 'login.html';
 };
-
 // Función helper para hacer peticiones autenticadas
 const authenticatedFetch = async (url, options = {}) => {
     const token = localStorage.getItem('authToken');
