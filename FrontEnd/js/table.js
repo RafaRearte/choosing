@@ -164,41 +164,10 @@ const accionesColumn = {
     
     // Inicializar DataTable con las columnas definidas
     dataTable = $('#invitadosTable').DataTable({
-            processing: true,
-    serverSide: true,
-    ajax: {
-        url: `${apiUrl}/GetPaginated`,
-        type: 'GET',
-        data: function(d) {
-            return {
-                draw: d.draw,
-                start: d.start,
-                length: d.length,
-                search: d.search.value,
-                orderColumn: d.order && d.order.length > 0 ? d.columns[d.order[0].column].data : 'id',
-                orderDirection: d.order && d.order.length > 0 ? d.order[0].dir : 'asc',
-                eventId: currentEventId,
-                filter: currentFilter || '', // Permitir filtros adicionales
-            };
-        },
-        beforeSend: function(xhr) {
-            const token = localStorage.getItem('authToken');
-            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        },
-        dataSrc: function(json) {
-            if (json.counters) {
-                updateCountersFromResponse(json.counters);
-            }
-            return json.data || [];
-        },
-        error: function(xhr, error, code) {
-            console.error('Error en DataTable AJAX:', error);
-            if (xhr.status === 401) {
-                logout();
-            }
-        }
-    },
-        pageLength: 25,  // 🔥 DEFAULT 50 EN LUGAR DE 100
+    processing: false,          // ← CAMBIAR a false
+    serverSide: false,          // ← CAMBIAR a false
+    data: allGuests,            // ← AGREGAR esta línea (reemplaza todo el bloque ajax)
+    pageLength: 25,
         scrollY: "60vh",  // 🔥 ALTURA FIJA PARA SCROLL
         scrollCollapse: true,  // 🔥 PERMITIR COLAPSAR SCROLL
         scrollX: true,  // 🔥 PERMITIR SCROLL HORIZONTAL

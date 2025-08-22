@@ -133,3 +133,26 @@ function loadUserInfo() {
         menuEventElement.textContent = currentEventName;
     }
 }
+
+// Agregar al final de data.js:
+const loadAllGuestsOffline = async () => {
+    try {
+        console.log('📥 Cargando todos los invitados...');
+        const response = await authenticatedFetch(`${apiUrl}/GetAll?eventId=${currentEventId}`);
+        
+        if (response && response.ok) {
+            allGuests = await response.json();
+            localStorage.setItem(`allGuests_${currentEventId}`, JSON.stringify(allGuests));
+            console.log(`✅ ${allGuests.length} invitados cargados`);
+            return true;
+        }
+    } catch (error) {
+        // Fallback a localStorage
+        const cached = localStorage.getItem(`allGuests_${currentEventId}`);
+        if (cached) {
+            allGuests = JSON.parse(cached);
+            return true;
+        }
+    }
+    return false;
+};

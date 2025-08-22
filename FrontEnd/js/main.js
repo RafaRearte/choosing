@@ -4,12 +4,12 @@ let isOnline = navigator.onLine;
 let useOfflineMode = false; // Flag para controlar modo
 
 
-const startPolling = () => {
-    fetchEventData()
-        .then(() => {
-            initializeDataTable();
-            loadCounters();
-        });
+// Cambiar en main.js:
+const startPolling = async () => {
+    await fetchEventData();
+    await loadAllGuestsOffline(); // ← AGREGAR ESTA LÍNEA
+    initializeDataTable();
+    loadCounters();
     setInterval(loadCounters, fetchInterval);
 }
 
