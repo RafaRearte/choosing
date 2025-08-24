@@ -74,7 +74,7 @@ const saveNewGuest = async () => {
             alert("Invitado agregado con éxito.");
             $("#addGuestModal").modal("hide");
             document.getElementById("addGuestForm").reset();
-            dataTable.ajax.reload(null, false); // Recargar lista de invitados
+            fetchGuests(); // Recargar lista de invitados
         } else {
             const errorText = await response.text();
             alert(`Error al crear invitado: ${errorText}`);
@@ -107,7 +107,7 @@ const deleteGuest = async () => {
         if (response.ok) {
             alert('Invitado eliminado con éxito');
             $('#editGuestModal').modal('hide');
-            dataTable.ajax.reload(null, false); // Recargar lista de invitados
+            fetchGuests(); // Recargar lista de invitados
         } else {
             const errorText = await response.text();
             alert(`Error al eliminar invitado: ${errorText}`);
@@ -148,7 +148,7 @@ const toggleAccreditStatus = async (id, currentStatus) => {
         
         if (response.ok) {
             // No mostrar alert para una mejor experiencia de usuario
-            dataTable.ajax.reload(null, false); // Recargar lista de invitados
+            fetchGuests(); // Recargar lista de invitados
         } else {
             const errorText = await response.text();
             alert(`Error al cambiar estado de acreditación: ${errorText}`);
@@ -280,7 +280,7 @@ const quickAccreditByIdCode = async (idCode) => {
         if (response && response.ok) {
             alert('✅ Invitado acreditado exitosamente');
             closeScanModal();
-            dataTable.ajax.reload(null, false); // Actualizar tabla
+            fetchGuests(); // Recargar lista de invitados
         } else {
             alert('Error al acreditar invitado');
         }
@@ -359,7 +359,7 @@ const saveEditedGuest = async () => {
         if (response.ok) {
             alert('Invitado actualizado con éxito');
             $('#editGuestModal').modal('hide');
-            dataTable.ajax.reload(null, false); // Recargar lista de invitados
+            fetchGuests(); // Recargar lista de invitados
         } else {
             const errorText = await response.text();
             alert(`Error al actualizar invitado: ${errorText}`);
@@ -417,7 +417,7 @@ const quickAccredit = async (guestId) => {
         
         if (response && response.ok) {
             closeScanModal();
-            dataTable.ajax.reload(null, false); // Actualizar tabla
+            fetchGuests(); // Recargar lista de invitados
         } else {
             alert('Error al acreditar invitado');
         }

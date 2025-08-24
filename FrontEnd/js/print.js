@@ -186,7 +186,8 @@ const saveEditedGuestAndPrint = async () => {
                 );
             }, 500);
             
-            dataTable.ajax.reload(null, false);
+            fetchGuests(); // Recargar lista de invitados
+
         }
     } catch (error) {
         console.error('Error:', error);

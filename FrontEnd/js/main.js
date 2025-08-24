@@ -45,7 +45,7 @@ $(document).ready(function () {
         }
 
         // Recargar DataTable para que mande el filtro al backend
-        dataTable.ajax.reload();
+        fetchGuests(); // Recargar lista de invitados
     });
 
     

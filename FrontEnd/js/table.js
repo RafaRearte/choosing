@@ -166,7 +166,7 @@ const accionesColumn = {
     dataTable = $('#invitadosTable').DataTable({
     processing: false,          // ← CAMBIAR a false
     serverSide: false,          // ← CAMBIAR a false
-    data: allGuests,            // ← AGREGAR esta línea (reemplaza todo el bloque ajax)
+    data: allGuests,            // ← AGREGAR esta línea
     pageLength: 25,
         scrollY: "60vh",  // 🔥 ALTURA FIJA PARA SCROLL
         scrollCollapse: true,  // 🔥 PERMITIR COLAPSAR SCROLL
