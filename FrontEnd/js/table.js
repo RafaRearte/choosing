@@ -164,9 +164,9 @@ const accionesColumn = {
     
     // Inicializar DataTable con las columnas definidas
     dataTable = $('#invitadosTable').DataTable({
-    processing: false,          // ← CAMBIAR a false
-    serverSide: false,          // ← CAMBIAR a false
-    data: allGuests,            // ← AGREGAR esta línea
+    processing: false,         // Sin indicador de carga
+    serverSide: false,         // Mantener client-side
+    data: allGuests,           // Cargar datos directamente
     pageLength: 25,
         scrollY: "60vh",  // 🔥 ALTURA FIJA PARA SCROLL
         scrollCollapse: true,  // 🔥 PERMITIR COLAPSAR SCROLL
@@ -192,6 +192,13 @@ const accionesColumn = {
         lengthChange: true,
         autoWidth: true,
         searching: true,
+        // Búsqueda normal de DataTable
+        search: {
+            search: "",
+            smart: true,
+            regex: false,
+            caseInsensitive: true
+        },
         columns: allColumns,
         // Configuración personalizada del search externo:
         initComplete: function() {

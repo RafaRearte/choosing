@@ -74,7 +74,8 @@ const saveNewGuest = async () => {
             alert("Invitado agregado con éxito.");
             $("#addGuestModal").modal("hide");
             document.getElementById("addGuestForm").reset();
-            fetchGuests(); // Recargar lista de invitados
+            // ✅ OPTIMIZACIÓN: Solo recargar si es necesario (nuevo invitado requiere el ID del servidor)
+            fetchGuests(); // Mantener por ahora para nuevos invitados
         } else {
             const errorText = await response.text();
             alert(`Error al crear invitado: ${errorText}`);
@@ -147,8 +148,8 @@ const toggleAccreditStatus = async (id, currentStatus) => {
         if (!response) return; // Si hay redirección por token inválido
         
         if (response.ok) {
-            // No mostrar alert para una mejor experiencia de usuario
-            fetchGuests(); // Recargar lista de invitados
+            // ✅ OPTIMIZACIÓN: Actualizar solo localmente, NO recargar toda la tabla
+            updateGuestLocallyAndTable(id, newStatus);
         } else {
             const errorText = await response.text();
             alert(`Error al cambiar estado de acreditación: ${errorText}`);
@@ -279,8 +280,11 @@ const quickAccreditByIdCode = async (idCode) => {
         
         if (response && response.ok) {
             alert('✅ Invitado acreditado exitosamente');
+            // ✅ OPTIMIZACIÓN: Actualizar solo localmente
+            // Necesitamos obtener el ID del invitado desde la respuesta
+            const result = await response.json();
+            updateGuestLocallyAndTable(result.id || result.guestId, 1); // 1 = acreditado
             closeScanModal();
-            fetchGuests(); // Recargar lista de invitados
         } else {
             alert('Error al acreditar invitado');
         }
@@ -359,7 +363,8 @@ const saveEditedGuest = async () => {
         if (response.ok) {
             alert('Invitado actualizado con éxito');
             $('#editGuestModal').modal('hide');
-            fetchGuests(); // Recargar lista de invitados
+            // ✅ OPTIMIZACIÓN: Actualizar localmente en lugar de recargar todo
+            updateGuestDataLocally(parseInt(id), updatedGuest);
         } else {
             const errorText = await response.text();
             alert(`Error al actualizar invitado: ${errorText}`);
@@ -416,8 +421,9 @@ const quickAccredit = async (guestId) => {
         });
         
         if (response && response.ok) {
+            // ✅ OPTIMIZACIÓN: Actualizar solo localmente
+            updateGuestLocallyAndTable(guestId, 1); // 1 = acreditado
             closeScanModal();
-            fetchGuests(); // Recargar lista de invitados
         } else {
             alert('Error al acreditar invitado');
         }
@@ -429,6 +435,85 @@ const quickAccredit = async (guestId) => {
 
 
 
+
+// ✅ FUNCIÓN DE OPTIMIZACIÓN: Actualizar invitado localmente sin recargar tabla
+const updateGuestLocallyAndTable = (guestId, newStatus) => {
+    try {
+        const id = parseInt(guestId);
+        
+        // 1. Actualizar en cache local allGuests
+        const guest = allGuests.find(g => g.id === id);
+        if (guest) {
+            guest.acreditado = newStatus;
+            guest.horaAcreditacion = newStatus > 0 ? new Date().toISOString() : null;
+            
+            // 2. Actualizar localStorage
+            localStorage.setItem(`allGuests_${currentEventId}`, JSON.stringify(allGuests));
+            
+            // 3. Actualizar SOLO esa fila en la tabla
+            const table = $('#invitadosTable').DataTable();
+            const rowNode = table.rows().nodes().to$().find(`button[data-id="${id}"]`).closest('tr');
+            
+            if (rowNode.length) {
+                const rowData = table.row(rowNode).data();
+                rowData.acreditado = newStatus;
+                rowData.horaAcreditacion = guest.horaAcreditacion;
+                table.row(rowNode).data(rowData).draw(false);
+            }
+            
+            // 4. Actualizar contadores (instantáneo)
+            updateCountersFromCache();
+        }
+    } catch (error) {
+        console.error('Error actualizando localmente:', error);
+        // Fallback: recargar todo si hay error
+        fetchGuests();
+    }
+};
+
+// Función para actualizar contadores desde cache local
+const updateCountersFromCache = () => {
+    if (!allGuests || allGuests.length === 0) return;
+    
+    const totalGuests = allGuests.length;
+    const accreditedGuests = allGuests.filter(guest => guest.acreditado > 0).length;
+    const notAccreditedGuests = totalGuests - accreditedGuests;
+    
+    document.getElementById("totalGuests").textContent = `Invitados: ${totalGuests}`;
+    document.getElementById("accredited").textContent = `Acreditados: ${accreditedGuests}`;
+    document.getElementById("notAccredited").textContent = `No acreditados: ${notAccreditedGuests}`;
+    
+    // El contador de nuevos se mantiene igual (requiere endpoint específico)
+};
+
+// Función para actualizar datos completos de un invitado localmente
+const updateGuestDataLocally = (guestId, updatedGuestData) => {
+    try {
+        // 1. Actualizar en cache local
+        const guestIndex = allGuests.findIndex(g => g.id === guestId);
+        if (guestIndex !== -1) {
+            allGuests[guestIndex] = { ...allGuests[guestIndex], ...updatedGuestData };
+            
+            // 2. Actualizar localStorage
+            localStorage.setItem(`allGuests_${currentEventId}`, JSON.stringify(allGuests));
+            
+            // 3. Actualizar fila en tabla
+            const table = $('#invitadosTable').DataTable();
+            const rowNode = table.rows().nodes().to$().find(`button[data-id="${guestId}"]`).closest('tr');
+            
+            if (rowNode.length) {
+                table.row(rowNode).data(allGuests[guestIndex]).draw(false);
+            }
+            
+            // 4. Actualizar contadores
+            updateCountersFromCache();
+        }
+    } catch (error) {
+        console.error('Error actualizando datos localmente:', error);
+        // Fallback: recargar todo
+        fetchGuests();
+    }
+};
 
 // Agregar eventos para botón del modal
 document.addEventListener("DOMContentLoaded", function() {
