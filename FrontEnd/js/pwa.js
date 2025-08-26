@@ -42,9 +42,10 @@ window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
   
-  if (!isInstalled) {
-    showInstallPrompt();
-  }
+  // Ya no se muestra automáticamente el prompt molesto
+  // if (!isInstalled) {
+  //   showInstallPrompt();
+  // }
 });
 
 // Detectar instalación exitosa
