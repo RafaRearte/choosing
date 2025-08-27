@@ -540,7 +540,7 @@
             const fileExtension = file.name.split('.').pop().toLowerCase();
             
             if (!['xlsx', 'xls', 'csv'].includes(fileExtension)) {
-                alert('Formato de archivo no soportado. Use .xlsx, .xls o .csv');
+                toast.error('Formato de archivo no soportado. Use .xlsx, .xls o .csv');
                 return;
             }
             
@@ -555,7 +555,7 @@
                     }
                 } catch (error) {
                     console.error('Error procesando archivo:', error);
-                    alert('Error al procesar el archivo. Verifique el formato.');
+                    toast.error('Error al procesar el archivo. Verifique el formato');
                 }
             };
             
@@ -587,9 +587,9 @@
             
             if (importedGuests.length > 0) {
                 addImportedGuests(importedGuests);
-                alert(`Se importaron ${importedGuests.length} invitados desde el archivo CSV.`);
+                toast.success(`Se importaron ${importedGuests.length} invitados desde el archivo CSV`);
             } else {
-                alert('No se encontraron datos válidos en el archivo CSV.');
+                toast.warning('No se encontraron datos válidos en el archivo CSV');
             }
         }
         
@@ -602,7 +602,7 @@
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
             
             if (jsonData.length < 2) {
-                alert('El archivo Excel no tiene suficientes datos.');
+                toast.warning('El archivo Excel no tiene suficientes datos');
                 return;
             }
             
@@ -622,9 +622,9 @@
             
             if (importedGuests.length > 0) {
                 addImportedGuests(importedGuests);
-                alert(`Se importaron ${importedGuests.length} invitados desde el archivo Excel.`);
+                toast.success(`Se importaron ${importedGuests.length} invitados desde el archivo Excel`);
             } else {
-                alert('No se encontraron datos válidos en el archivo Excel.');
+                toast.warning('No se encontraron datos válidos en el archivo Excel');
             }
         }
         
@@ -718,7 +718,7 @@
             const redSocial = document.getElementById('guestRedSocial').value.trim(); // 🆕
             
             if (!nombre || !apellido) {
-                alert('Por favor complete los campos obligatorios: Nombre y Apellido');
+                toast.warning('Por favor complete los campos obligatorios: Nombre y Apellido');
                 return;
             }
             
@@ -951,7 +951,7 @@
                 
             } catch (error) {
                 console.error('❌ Error generando etiqueta offline:', error);
-                alert('Error al generar la etiqueta: ' + error.message);
+                toast.error('Error al generar la etiqueta: ' + error.message);
             }
         }
         
@@ -1031,7 +1031,7 @@ END:VCARD`;
         // Imprimir todas las etiquetas (SIN QR - como el scriptindex original)
         function printAllLabels() {
             if (guests.length === 0) {
-                alert('No hay invitados para imprimir');
+                toast.warning('No hay invitados para imprimir');
                 return;
             }
             
@@ -1052,7 +1052,7 @@ END:VCARD`;
             }
             
             if (guestsToPrint.length === 0) {
-                alert('No hay invitados para imprimir con el filtro actual');
+                toast.warning('No hay invitados para imprimir con el filtro actual');
                 return;
             }
             
@@ -1119,7 +1119,7 @@ END:VCARD`;
         // 🆕 EXPORTAR A CSV CON RED SOCIAL
         function exportToCSV() {
             if (guests.length === 0) {
-                alert('No hay invitados para exportar');
+                toast.warning('No hay invitados para exportar');
                 return;
             }
             
@@ -1160,7 +1160,7 @@ END:VCARD`;
         // 🆕 EXPORTAR A EXCEL CON RED SOCIAL
         function exportToExcel() {
             if (guests.length === 0) {
-                alert('No hay invitados para exportar');
+                toast.warning('No hay invitados para exportar');
                 return;
             }
             
@@ -1199,7 +1199,7 @@ END:VCARD`;
                 localStorage.setItem('nextId', nextId.toString());
             } catch (error) {
                 console.error('Error guardando datos:', error);
-                alert('Error al guardar los datos. El navegador puede estar sin espacio.');
+                toast.error('Error al guardar los datos. El navegador puede estar sin espacio');
             }
         }
         
@@ -1256,7 +1256,7 @@ END:VCARD`;
                 guests = [];
                 nextId = 1;
                 updateDisplay();
-                alert('Todos los datos han sido eliminados.');
+                toast.success('Todos los datos han sido eliminados');
             }
         }
         
@@ -1265,7 +1265,7 @@ END:VCARD`;
                 guests = guests.filter(g => g.origin !== 'imported');
                 saveGuests();
                 updateDisplay();
-                alert('Datos importados eliminados.');
+                toast.success('Datos importados eliminados');
             }
         }
         
@@ -1277,7 +1277,7 @@ END:VCARD`;
                 });
                 saveGuests();
                 updateDisplay();
-                alert('Todas las acreditaciones han sido eliminadas.');
+                toast.success('Todas las acreditaciones han sido eliminadas');
             }
         }
         
@@ -1287,7 +1287,7 @@ END:VCARD`;
             const imported = guests.filter(g => g.origin === 'imported').length;
             const manual = guests.filter(g => g.origin === 'manual').length;
             
-            alert(`📊 ESTADÍSTICAS DETALLADAS
+            toast.info(`📊 ESTADÍSTICAS DETALLADAS
             
 Total de invitados: ${total}
 ├─ Acreditados: ${accredited}
@@ -1315,5 +1315,11 @@ Funciones disponibles en consola:
 Total de invitados cargados: ${guests.length}
         `);
     </script>
+
+<!-- ✅ Contenedor para Toasts/Notificaciones -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+    <div id="toast-container"></div>
+</div>
+<script src="js/toasts.js"></script>
 </body>
 </html>

@@ -11,7 +11,7 @@ let scanTimeout = null;
 // Guardar nuevo invitado (continuación)
 const saveNewGuest = async () => {
         if (!puedeHacerAccion('editar')) {
-        alert('No tiene permisos para crear invitados');
+        toast.warning('No tiene permisos para crear invitados');
         return;
     }
     // Obtener los valores del formulario
@@ -33,7 +33,7 @@ const saveNewGuest = async () => {
 
     // Validación básica
     if (!nombre || !apellido) {
-        alert("Por favor, complete los campos obligatorios: Nombre y Apellido.");
+        toast.warning("Por favor, complete los campos obligatorios: Nombre y Apellido.");
         return;
     }
 
@@ -71,31 +71,31 @@ const saveNewGuest = async () => {
         if (!response) return; // Si hay redirección por token inválido
 
         if (response.ok) {
-            alert("Invitado agregado con éxito.");
+            toast.success("Invitado agregado con éxito");
             $("#addGuestModal").modal("hide");
             document.getElementById("addGuestForm").reset();
             // ✅ OPTIMIZACIÓN: Solo recargar si es necesario (nuevo invitado requiere el ID del servidor)
             fetchGuests(); // Mantener por ahora para nuevos invitados
         } else {
             const errorText = await response.text();
-            alert(`Error al crear invitado: ${errorText}`);
+            toast.error(`Error al crear invitado: ${errorText}`);
         }
     } catch (error) {
         console.error("Error al crear invitado:", error);
-        alert("Hubo un error al intentar crear el invitado.");
+        toast.error("Hubo un error al intentar crear el invitado");
     }
 };
 // Función para eliminar un invitado
 const deleteGuest = async () => {
         if (!puedeHacerAccion('editar')) {
-        alert('No tiene permisos para eliminar invitados');
+        toast.warning('No tiene permisos para eliminar invitados');
         return;
     }
     // Obtener el ID del invitado a eliminar
     const id = document.getElementById('editGuestId').value;
     
     // Confirmar la eliminación
-    const confirmDelete = confirm(`¿Está seguro que desea eliminar este invitado?`);
+    const confirmDelete = await showDeleteConfirm('¿Está seguro que desea eliminar este invitado? Esta acción no se puede deshacer.');
     if (!confirmDelete) return;
     
     try {
@@ -106,28 +106,28 @@ const deleteGuest = async () => {
         if (!response) return; // Si hay redirección por token inválido
         
         if (response.ok) {
-            alert('Invitado eliminado con éxito');
+            toast.success('Invitado eliminado con éxito');
             $('#editGuestModal').modal('hide');
             fetchGuests(); // Recargar lista de invitados
         } else {
             const errorText = await response.text();
-            alert(`Error al eliminar invitado: ${errorText}`);
+            toast.error(`Error al eliminar invitado: ${errorText}`);
         }
     } catch (error) {
         console.error('Error al eliminar invitado:', error);
-        alert('Ha ocurrido un error al intentar eliminar el invitado');
+        toast.error('Ha ocurrido un error al intentar eliminar el invitado');
     }
 };
 // Función para cambiar el estado de acreditación (toggle)
 const toggleAccreditStatus = async (id, currentStatus) => {
     if (!puedeHacerAccion('acreditar')) {
-        alert('No tiene permisos para acreditar invitados');
+        toast.warning('No tiene permisos para acreditar invitados');
         return;
     }
         // Verificar fechas del evento
     const eventAccess = JSON.parse(localStorage.getItem('currentEventAccess') || '{}');
     if (!eventAccess.eventoEnFechas && eventAccess.tipoAcceso !== 'Admin') {
-        alert('El evento no está en fechas válidas para acreditación');
+        toast.warning('El evento no está en fechas válidas para acreditación');
         return;
     }
     try {
@@ -152,18 +152,18 @@ const toggleAccreditStatus = async (id, currentStatus) => {
             updateGuestLocallyAndTable(id, newStatus);
         } else {
             const errorText = await response.text();
-            alert(`Error al cambiar estado de acreditación: ${errorText}`);
+            toast.error(`Error al cambiar estado de acreditación: ${errorText}`);
         }
     } catch (error) {
         console.error('Error al cambiar estado de acreditación:', error);
-        alert('Ha ocurrido un error al intentar cambiar el estado de acreditación');
+        toast.error('Ha ocurrido un error al intentar cambiar el estado de acreditación');
     }
 };
 // Función para configurar el evento actual
 function configurarEvento() {
     // Verificar que se ha seleccionado un evento
     if (!currentEventId) {
-        alert("Primero debe seleccionar un evento");
+        toast.warning("Primero debe seleccionar un evento");
         return;
     }
 
@@ -192,7 +192,7 @@ function configurarEvento() {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al cargar la configuración del evento');
+        toast.error('Error al cargar la configuración del evento');
     })
     .finally(() => {
         hideLoading();
@@ -238,11 +238,11 @@ function guardarConfiguracion(eventoId) {
             loadCounters();
         });
         
-        alert('Configuración guardada correctamente');
+        toast.success('Configuración guardada correctamente');
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al guardar la configuración: ' + error.message);
+        toast.error('Error al guardar la configuración: ' + error.message);
     })
     .finally(() => {
         hideLoading();
@@ -279,25 +279,25 @@ const quickAccreditByIdCode = async (idCode) => {
         });
         
         if (response && response.ok) {
-            alert('✅ Invitado acreditado exitosamente');
+            toast.success('Invitado acreditado exitosamente');
             // ✅ OPTIMIZACIÓN: Actualizar solo localmente
             // Necesitamos obtener el ID del invitado desde la respuesta
             const result = await response.json();
             updateGuestLocallyAndTable(result.id || result.guestId, 1); // 1 = acreditado
             closeScanModal();
         } else {
-            alert('Error al acreditar invitado');
+            toast.error('Error al acreditar invitado');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error al acreditar invitado');
+        toast.error('Error al acreditar invitado');
     }
 };
 
 // Función para guardar los cambios del invitado editado
 const saveEditedGuest = async () => {
     if (!puedeHacerAccion('editar')) {
-        alert('No tiene permisos para editar invitados');
+        toast.warning('No tiene permisos para editar invitados');
         return;
     }
     // Obtener el ID del invitado
@@ -323,7 +323,7 @@ const saveEditedGuest = async () => {
     
     // Validación básica
     if (!nombre || !apellido) {
-        alert('Por favor complete los campos obligatorios: Nombre y Apellido');
+        toast.warning('Por favor complete los campos obligatorios: Nombre y Apellido');
         return;
     }
     
@@ -361,17 +361,17 @@ const saveEditedGuest = async () => {
         if (!response) return; // Si hay redirección por token inválido
         
         if (response.ok) {
-            alert('Invitado actualizado con éxito');
+            toast.success('Invitado actualizado con éxito');
             $('#editGuestModal').modal('hide');
             // ✅ OPTIMIZACIÓN: Actualizar localmente en lugar de recargar todo
             updateGuestDataLocally(parseInt(id), updatedGuest);
         } else {
             const errorText = await response.text();
-            alert(`Error al actualizar invitado: ${errorText}`);
+            toast.error(`Error al actualizar invitado: ${errorText}`);
         }
     } catch (error) {
         console.error('Error al actualizar invitado:', error);
-        alert('Ha ocurrido un error al intentar actualizar el invitado');
+        toast.error('Ha ocurrido un error al intentar actualizar el invitado');
     }
 };
 
@@ -425,11 +425,11 @@ const quickAccredit = async (guestId) => {
             updateGuestLocallyAndTable(guestId, 1); // 1 = acreditado
             closeScanModal();
         } else {
-            alert('Error al acreditar invitado');
+            toast.error('Error al acreditar invitado');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error al acreditar invitado');
+        toast.error('Error al acreditar invitado');
     }
 };
 
@@ -527,7 +527,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const eventAccess = localStorage.getItem('currentEventAccess');
     
     if (currentEventId && !eventAccess) {
-        alert('Necesita un código de acceso para este evento');
+        toast.warning('Necesita un código de acceso para este evento');
         window.location.href = 'event-selection.html';
         return;
     }

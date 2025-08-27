@@ -54,7 +54,7 @@ const authenticatedFetch = async (url, options = {}) => {
         
         // Si hay error de autenticación, redirigir al login
         if (response.status === 401) {
-            alert('Sesión expirada. Por favor inicie sesión nuevamente.');
+            toast.error('Sesión expirada. Por favor inicie sesión nuevamente');
             logout();
             return null;
         }

@@ -293,7 +293,7 @@
                 })
                 .catch(error => {
                     console.error('Error al iniciar:', error);
-                    alert('Error al cargar los datos del evento. Redirigiendo a la selección de eventos...');
+                    toast.error('Error al cargar los datos del evento. Redirigiendo a la selección de eventos');
                     window.location.href = 'event-selection.html';
                 });
             
@@ -545,7 +545,7 @@
                 
                 // Si hay error de autenticación, redirigir al login
                 if (response.status === 401) {
-                    alert('Sesión expirada. Por favor inicie sesión nuevamente.');
+                    toast.error('Sesión expirada. Por favor inicie sesión nuevamente');
                     logout();
                     return null;
                 }
@@ -676,7 +676,61 @@
     margin-top: 10px;
   }
 }
+/* Toast styles */
+.toast-spin {
+    animation: toast-spin 1s linear infinite;
+}
+@keyframes toast-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.toast {
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
 </style>
+
+<!-- ✅ Contenedor para Toasts/Notificaciones -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+    <div id="toast-container"></div>
+</div>
+<script>
+// Sistema de toasts simplificado para stats.html
+const toast = {
+    success: (message) => showToast(message, 'success'),
+    error: (message) => showToast(message, 'error'),
+    warning: (message) => showToast(message, 'warning'),
+    info: (message) => showToast(message, 'info')
+};
+
+function showToast(message, type = 'info') {
+    const toastId = 'toast-' + Date.now();
+    const colors = {
+        success: 'bg-success text-white',
+        error: 'bg-danger text-white', 
+        warning: 'bg-warning text-dark',
+        info: 'bg-info text-white'
+    };
+    
+    const toastHTML = `
+        <div id="${toastId}" class="toast align-items-center ${colors[type]} border-0 mb-2" 
+             role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" 
+                        data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('toast-container').insertAdjacentHTML('beforeend', toastHTML);
+    const toastElement = document.getElementById(toastId);
+    const bsToast = new bootstrap.Toast(toastElement, { delay: 5000 });
+    bsToast.show();
+    
+    toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+}
+</script>
 </body>
 <footer class="bg-dark text-white text-center py-3 mt-5">
     <p>&copy; 2025 - Acreditación de Eventos</p>

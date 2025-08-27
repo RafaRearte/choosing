@@ -1,7 +1,7 @@
 // Función para abrir el modal de escaneo
 const openScanMode = () => {
     if (!puedeHacerAccion('acreditar')) {
-        alert('No tiene permisos para acreditar invitados');
+        toast.warning('No tiene permisos para acreditar invitados');
         return;
     }
     

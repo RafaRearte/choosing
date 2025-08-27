@@ -263,7 +263,7 @@ const openEditModal = async (id) => {
         $('#editGuestModal').modal('show');
     } catch (error) {
         console.error('Error al cargar los datos del invitado:', error);
-        alert('No se pudieron cargar los datos del invitado');
+        toast.error('No se pudieron cargar los datos del invitado');
     }
 };
 

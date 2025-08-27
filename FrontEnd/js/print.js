@@ -26,7 +26,7 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
         
         // Verificar que tenemos al menos un nombre
         if (!nombreCompleto) {
-            alert('Error: No se puede generar el código QR sin nombre');
+            toast.error('Error: No se puede generar el código QR sin nombre');
             return;
         }
 
@@ -71,7 +71,7 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
 
     } catch (error) {
         console.error('❌ Error:', error);
-        alert('Ocurrió un error al generar la etiqueta: ' + error.message);
+        toast.error('Ocurrió un error al generar la etiqueta: ' + error.message);
     }
 };
 // NUEVA FUNCIÓN: Imprimir etiqueta solo con ID
@@ -101,13 +101,13 @@ const printLabelById = async (id) => {
         
     } catch (error) {
         console.error('Error al imprimir etiqueta:', error);
-        alert('Error al obtener los datos del invitado');
+        toast.error('Error al obtener los datos del invitado');
     }
 };
 // Nueva función: Guardar invitado editado Y imprimir
 const saveEditedGuestAndPrint = async () => {
     if (!puedeHacerAccion('editar')) {
-        alert('No tiene permisos para editar invitados');
+        toast.warning('No tiene permisos para editar invitados');
         return;
     }
     
@@ -134,7 +134,7 @@ const saveEditedGuestAndPrint = async () => {
     
     // Validación básica
     if (!nombre || !apellido) {
-        alert('Por favor complete los campos obligatorios: Nombre y Apellido');
+        toast.warning('Por favor complete los campos obligatorios: Nombre y Apellido');
         return;
     }
     
@@ -191,13 +191,13 @@ const saveEditedGuestAndPrint = async () => {
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error al actualizar invitado');
+        toast.error('Error al actualizar invitado');
     }
 };
 // Guardar nuevo invitado Y imprimir - VERSIÓN CORREGIDA
 const saveNewGuestAndPrint = async () => {
     if (!puedeHacerAccion('editar')) {
-        alert('No tiene permisos para crear invitados');
+        toast.warning('No tiene permisos para crear invitados');
         return;
     }
     
@@ -220,7 +220,7 @@ const saveNewGuestAndPrint = async () => {
 
     // Validación básica
     if (!nombre || !apellido) {
-        alert("Por favor, complete los campos obligatorios: Nombre y Apellido.");
+        toast.warning("Por favor, complete los campos obligatorios: Nombre y Apellido");
         return;
     }
 
@@ -287,11 +287,11 @@ const saveNewGuestAndPrint = async () => {
             
         } else {
             const errorText = await response.text();
-            alert(`Error al crear invitado: ${errorText}`);
+            toast.error(`Error al crear invitado: ${errorText}`);
         }
     } catch (error) {
         console.error("Error al crear invitado:", error);
-        alert("Hubo un error al intentar crear el invitado.");
+        toast.error("Hubo un error al intentar crear el invitado");
     }
 };
 // 🏷️ FUNCIÓN CON MÁRGENES VERTICALES ARREGLADOS
@@ -483,7 +483,7 @@ const openGuestQr = (id, nombre, apellido) => {
         </html>
     `;
 
-    const qrWindow = window.open('', '_blank');
+    const qrWindow = window.open('', '', 'width=600,height=400');
     qrWindow.document.write(html);
     qrWindow.document.close();
 };

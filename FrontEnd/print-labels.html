@@ -225,7 +225,7 @@
                 }
             } catch (error) {
                 console.error('Error al cargar eventos:', error);
-                alert('Error al cargar la lista de eventos');
+                toast.error('Error al cargar la lista de eventos');
             }
         }
         
@@ -269,7 +269,7 @@
                 applyFilters();
             } catch (error) {
                 console.error('Error al cargar invitados:', error);
-                alert('Error al cargar la lista de invitados');
+                toast.error('Error al cargar la lista de invitados');
             }
         }
         
@@ -277,7 +277,7 @@
         function applyFilters() {
             const eventId = $('#eventSelect').val();
             if (!eventId) {
-                alert('Por favor, seleccione un evento');
+                toast.warning('Por favor, seleccione un evento');
                 return;
             }
             
@@ -341,16 +341,16 @@
         }
         
         // Función para imprimir las etiquetas
-        function printLabels() {
+        async function printLabels() {
             const etiquetasCount = $('#etiquetasContainer .etiqueta').length;
             
             if (etiquetasCount === 0) {
-                alert('No hay etiquetas para imprimir');
+                toast.warning('No hay etiquetas para imprimir');
                 return;
             }
             
             // Confirmar impresión
-            if (confirm(`¿Está seguro que desea imprimir ${etiquetasCount} etiquetas?`)) {
+            if (await showActionConfirm('Imprimir etiquetas', `¿Está seguro que desea imprimir ${etiquetasCount} etiquetas?`)) {
                 window.print();
             }
         }
@@ -379,7 +379,7 @@
                 
                 // Si hay error de autenticación, redirigir al login
                 if (response.status === 401) {
-                    alert('Sesión expirada. Por favor inicie sesión nuevamente.');
+                    toast.error('Sesión expirada. Por favor inicie sesión nuevamente');
                     logout();
                     return null;
                 }
@@ -446,5 +446,12 @@
   }
 }
 </style>
+
+<!-- ✅ Contenedor para Toasts/Notificaciones -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+    <div id="toast-container"></div>
+</div>
+
+<script src="js/toasts.js"></script>
 </body>
 </html>

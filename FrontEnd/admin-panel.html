@@ -624,7 +624,7 @@
             try {
                 const response = await fetch(url, { ...options, headers });
                 if (response.status === 401) {
-                    alert('Sesión expirada. Por favor inicie sesión nuevamente.');
+                    toast.error('Sesión expirada. Por favor inicie sesión nuevamente');
                     logout();
                     return null;
                 }
@@ -806,7 +806,7 @@
             };
 
             if (!eventData.nombre || !eventData.fechaInicio || !eventData.fechaFin) {
-                alert('Por favor complete los campos obligatorios');
+                toast.warning('Por favor complete los campos obligatorios');
                 return;
             }
 
@@ -819,18 +819,18 @@
                 });
 
                 if (response && response.ok) {
-                    alert('Evento creado exitosamente');
+                    toast.success('Evento creado exitosamente');
                     $('#createEventModal').modal('hide');
                     document.getElementById('createEventForm').reset();
                     loadEvents();
                     loadDashboardStats();
                 } else {
                     const error = await response.text();
-                    alert(`Error: ${error}`);
+                    toast.error(`Error: ${error}`);
                 }
             } catch (error) {
                 console.error('Error creating event:', error);
-                alert('Error al crear el evento');
+                toast.error('Error al crear el evento');
             } finally {
                 hideLoading();
             }
@@ -899,17 +899,17 @@
                 });
 
                 if (response && response.ok) {
-                    alert('Evento actualizado exitosamente');
+                    toast.success('Evento actualizado exitosamente');
                     $('#editEventModal').modal('hide');
                     loadEvents();
                     loadDashboardStats();
                 } else {
                     const error = await response.text();
-                    alert(`Error: ${error}`);
+                    toast.error(`Error: ${error}`);
                 }
             } catch (error) {
                 console.error('Error updating event:', error);
-                alert('Error al actualizar el evento');
+                toast.error('Error al actualizar el evento');
             } finally {
                 hideLoading();
             }
@@ -920,7 +920,7 @@
             const id = document.getElementById('editEventId').value;
             const name = document.getElementById('editEventName').value;
             
-            if (!confirm(`¿Está seguro que desea eliminar el evento "${name}"? Esta acción no se puede deshacer.`)) {
+            if (!await showDeleteConfirm(`¿Está seguro que desea eliminar el evento "${name}"? Esta acción no se puede deshacer.`)) {
                 return;
             }
 
@@ -931,17 +931,17 @@
                 });
 
                 if (response && response.ok) {
-                    alert('Evento eliminado exitosamente');
+                    toast.success('Evento eliminado exitosamente');
                     $('#editEventModal').modal('hide');
                     loadEvents();
                     loadDashboardStats();
                 } else {
                     const error = await response.text();
-                    alert(`Error: ${error}`);
+                    toast.error(`Error: ${error}`);
                 }
             } catch (error) {
                 console.error('Error deleting event:', error);
-                alert('Error al eliminar el evento');
+                toast.error('Error al eliminar el evento');
             } finally {
                 hideLoading();
             }
@@ -960,11 +960,11 @@
                     loadDashboardStats();
                 } else {
                     const error = await response.text();
-                    alert(`Error: ${error}`);
+                    toast.error(`Error: ${error}`);
                 }
             } catch (error) {
                 console.error('Error toggling event status:', error);
-                alert('Error al cambiar el estado del evento');
+                toast.error('Error al cambiar el estado del evento');
             } finally {
                 hideLoading();
             }
@@ -996,16 +996,16 @@
                 });
 
                 if (response && response.ok) {
-                    alert('Evento duplicado exitosamente');
+                    toast.success('Evento duplicado exitosamente');
                     loadEvents();
                     loadDashboardStats();
                 } else {
                     const error = await response.text();
-                    alert(`Error: ${error}`);
+                    toast.error(`Error: ${error}`);
                 }
             } catch (error) {
                 console.error('Error duplicating event:', error);
-                alert('Error al duplicar el evento');
+                toast.error('Error al duplicar el evento');
             } finally {
                 hideLoading();
             }
@@ -1020,7 +1020,7 @@
             };
 
             if (!userData.username || !userData.email || !userData.password) {
-                alert('Por favor complete todos los campos');
+                toast.warning('Por favor complete todos los campos');
                 return;
             }
 
@@ -1033,18 +1033,18 @@
                 });
 
                 if (response && response.ok) {
-                    alert('Usuario creado exitosamente');
+                    toast.success('Usuario creado exitosamente');
                     $('#createUserModal').modal('hide');
                     document.getElementById('createUserForm').reset();
                     loadUsers();
                     loadDashboardStats();
                 } else {
                     const error = await response.text();
-                    alert(`Error: ${error}`);
+                    toast.error(`Error: ${error}`);
                 }
             } catch (error) {
                 console.error('Error creating user:', error);
-                alert('Error al crear el usuario');
+                toast.error('Error al crear el usuario');
             } finally {
                 hideLoading();
             }
@@ -1087,24 +1087,24 @@
                 });
 
                 if (response && response.ok) {
-                    alert('Usuario actualizado exitosamente');
+                    toast.success('Usuario actualizado exitosamente');
                     $('#editUserModal').modal('hide');
                     loadUsers();
                 } else {
                     const error = await response.text();
-                    alert(`Error: ${error}`);
+                    toast.error(`Error: ${error}`);
                 }
             } catch (error) {
                 console.error('Error updating user:', error);
-                alert('Error al actualizar el usuario');
+                toast.error('Error al actualizar el usuario');
             } finally {
                 hideLoading();
             }
         };
 
         // Confirmar eliminar usuario
-        const confirmDeleteUser = (id, username) => {
-            if (confirm(`¿Está seguro que desea eliminar el usuario "${username}"? Esta acción no se puede deshacer.`)) {
+        const confirmDeleteUser = async (id, username) => {
+            if (await showDeleteConfirm(`¿Está seguro que desea eliminar el usuario "${username}"? Esta acción no se puede deshacer.`)) {
                 deleteUserById(id);
             }
         };
@@ -1118,16 +1118,16 @@
                 });
 
                 if (response && response.ok) {
-                    alert('Usuario eliminado exitosamente');
+                    toast.success('Usuario eliminado exitosamente');
                     loadUsers();
                     loadDashboardStats();
                 } else {
                     const error = await response.text();
-                    alert(`Error: ${error}`);
+                    toast.error(`Error: ${error}`);
                 }
             } catch (error) {
                 console.error('Error deleting user:', error);
-                alert('Error al eliminar el usuario');
+                toast.error('Error al eliminar el usuario');
             } finally {
                 hideLoading();
             }
@@ -1138,7 +1138,7 @@
             const id = document.getElementById('editUserId').value;
             const username = document.getElementById('editUserName').value;
             
-            if (confirm(`¿Está seguro que desea eliminar el usuario "${username}"? Esta acción no se puede deshacer.`)) {
+            if (await showDeleteConfirm(`¿Está seguro que desea eliminar el usuario "${username}"? Esta acción no se puede deshacer.`)) {
                 await deleteUserById(id);
                 $('#editUserModal').modal('hide');
             }
@@ -1185,7 +1185,7 @@
     if (eventoId) {
         guardarConfiguracion(eventoId);
     } else {
-        alert('Error: No se encontró el ID del evento');
+        toast.error('Error: No se encontró el ID del evento');
     }
 });
         });
@@ -1194,7 +1194,7 @@
 function configureEventColumns(eventId) {
     // Verificar que se ha recibido un eventId válido
     if (!eventId) {
-        alert("Error: ID de evento no válido");
+        toast.error("Error: ID de evento no válido");
         return;
     }
 
@@ -1217,7 +1217,7 @@ function configureEventColumns(eventId) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al cargar la configuración del evento');
+        toast.error('Error al cargar la configuración del evento');
     })
     .finally(() => {
         hideLoading();
@@ -1289,11 +1289,11 @@ function guardarConfiguracion(eventoId) {
         const modal = bootstrap.Modal.getInstance(document.getElementById('configModal'));
         modal.hide();
         
-        alert('Configuración guardada correctamente');
+        toast.success('Configuración guardada correctamente');
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al guardar la configuración: ' + error.message);
+        toast.error('Error al guardar la configuración: ' + error.message);
     })
     .finally(() => {
         hideLoading();
@@ -1361,5 +1361,12 @@ const goToEvent = (eventId, eventName) => {
   }
 }
 </style>
+
+<!-- ✅ Contenedor para Toasts/Notificaciones -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+    <div id="toast-container"></div>
+</div>
+
+<script src="js/toasts.js"></script>
 </body>
 </html>
