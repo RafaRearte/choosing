@@ -5,11 +5,11 @@ const updateCounters = (guests, newCount = null) => {
     const accreditedGuests = guests.filter(guest => guest.acreditado > 0).length;
     const notAccreditedGuests = totalGuests - accreditedGuests;
 
-    document.getElementById("totalGuests").innerText = `Invitados: ${totalGuests}`;
-    document.getElementById("accredited").innerText = `Acreditados: ${accreditedGuests}`;
-    document.getElementById("notAccredited").innerText = `No acreditados: ${notAccreditedGuests}`;
+    document.getElementById("totalGuests").textContent = `Invitados: ${totalGuests}`;
+    document.getElementById("accredited").textContent = `Acreditados: ${accreditedGuests}`;
+    document.getElementById("notAccredited").textContent = `No acreditados: ${notAccreditedGuests}`;
     if (newCount !== null) {
-        document.getElementById("new").innerText = `Nuevos: ${newCount}`;
+        document.getElementById("new").textContent = `Nuevos: ${newCount}`;
     }
 };
 // Función para obtener los datos del evento

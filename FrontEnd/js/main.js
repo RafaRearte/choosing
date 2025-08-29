@@ -57,5 +57,10 @@ $(document).ready(function () {
 });
 
 
-// Agregar evento al botón de cerrar sesión
-document.getElementById('logoutButton').addEventListener('click', logout);
+// Agregar evento al botón de cerrar sesión cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    const logoutBtn = document.getElementById('logoutButton');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+    }
+});
