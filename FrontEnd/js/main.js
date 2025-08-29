@@ -40,6 +40,7 @@ $(document).ready(function () {
             case "GetNuevos":
                 currentFilter = "nuevos";
                 break;
+            case "GetAll":
             default:
                 currentFilter = "";
         }

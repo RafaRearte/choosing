@@ -39,7 +39,27 @@ const fetchGuests = async () => {
     try {
         await fetchEventData();
         
-        const response = await authenticatedFetch(`${apiUrl}/GetAll?eventId=${currentEventId}`);
+        // Construir la URL según el filtro actual
+        let url = `${apiUrl}/GetAll?eventId=${currentEventId}`;
+        
+        // Si hay un filtro activo, usar el endpoint específico
+        if (currentFilter) {
+            switch (currentFilter) {
+                case "acreditados":
+                    url = `${apiUrl}/GetAcreditados?eventId=${currentEventId}`;
+                    break;
+                case "no-acreditados":
+                    url = `${apiUrl}/GetNoAcreditados?eventId=${currentEventId}`;
+                    break;
+                case "nuevos":
+                    url = `${apiUrl}/GetNuevos?eventId=${currentEventId}`;
+                    break;
+                default:
+                    url = `${apiUrl}/GetAll?eventId=${currentEventId}`;
+            }
+        }
+        
+        const response = await authenticatedFetch(url);
         if (!response) return; // Si hay redirección por token inválido
         
         if (!response.ok) throw new Error('Error al obtener los invitados');
@@ -50,13 +70,16 @@ const fetchGuests = async () => {
         dataTable.rows.add(guests);
         dataTable.draw();
 
-        // Obtener el contador de nuevos invitados en una llamada separada
-        const newResponse = await authenticatedFetch(`${apiUrl}/GetNuevos?eventId=${currentEventId}`);
-        if (newResponse && newResponse.ok) {
-            const newGuests = await newResponse.json();
-            updateCounters(guests, newGuests.length);
-        } else {
-            updateCounters(guests);
+        // Actualizar contadores (solo si no hay filtro para mostrar el total real)
+        if (!currentFilter) {
+            // Obtener el contador de nuevos invitados en una llamada separada
+            const newResponse = await authenticatedFetch(`${apiUrl}/GetNuevos?eventId=${currentEventId}`);
+            if (newResponse && newResponse.ok) {
+                const newGuests = await newResponse.json();
+                updateCounters(guests, newGuests.length);
+            } else {
+                updateCounters(guests);
+            }
         }
 
         configurarElementosSegunPermisos();
