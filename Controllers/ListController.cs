@@ -13,11 +13,86 @@ namespace choosing.Controllers
     public class ListController : ControllerBase
     {
         private readonly IListService _listService;
+        private readonly IEventService _eventService;
+        private readonly IEmailService _emailService;
 
-        public ListController(IListService listService)
+        public ListController(IListService listService, IEventService eventService, IEmailService emailService)
         {
             _listService = listService;
+            _eventService = eventService;
+            _emailService = emailService;
         }
+
+        // ✅ ENDPOINT PÚBLICO PARA REGISTRO DE INVITADOS
+        [HttpPost("register-public")]
+        [AllowAnonymous] // Sin autenticación para registro público
+        public async Task<IActionResult> RegisterPublicGuest([FromBody] PublicGuestRegistration request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                // 1. Validar que el evento existe y está activo
+                var evento = await _eventService.GetEventByIdAsync(request.EventId);
+                if (evento == null)
+                    return BadRequest("El evento especificado no existe");
+                
+                if (!evento.Activo)
+                    return BadRequest("Este evento no está disponible para registro público");
+
+                // 2. Validar que no existe un invitado con el mismo email en este evento
+                var existingGuests = await _listService.GetInvitadosByEventIdAsync(request.EventId);
+                if (existingGuests.Any(g => g.Mail?.ToLower() == request.Email.ToLower()))
+                    return Conflict("Ya existe un registro con este email para este evento");
+
+                // 3. Si tiene DNI, validar que no exista
+                if (request.Dni.HasValue)
+                {
+                    var existingByDni = await _listService.GetInvitadoByDniAndEventIdAsync(request.Dni.Value, request.EventId);
+                    if (existingByDni != null)
+                        return Conflict("Ya existe un registro con este DNI para este evento");
+                }
+
+                // 4. Crear el invitado
+                var guest = new Guest
+                {
+                    Nombre = request.Nombre.Trim(),
+                    Apellido = request.Apellido.Trim(),
+                    Mail = request.Email.Trim().ToLower(),
+                    Dni = request.Dni,
+                    Empresa = request.Empresa?.Trim(),
+                    Cargo = request.Cargo?.Trim(),
+                    Telefono = request.Telefono?.Trim(),
+                    Categoria = request.Categoria?.Trim(),
+                    Profesion = request.Profesion?.Trim(),
+                    Lugar = request.Lugar?.Trim(),
+                    RedSocial = request.RedSocial?.Trim(),
+                    InfoAdicional = request.InfoAdicional?.Trim(),
+                    EventoId = request.EventId,
+                    EsNuevo = true,
+                    Acreditado = 0,
+                    IdCode = Guid.NewGuid().ToString("N")[..12].ToUpper() // Código único para QR
+                };
+
+                var createdGuest = await _listService.CreateInvitadoAsync(guest);
+
+                // 5. Enviar email con invitación y QR
+                await _emailService.SendInvitationEmailAsync(createdGuest, evento);
+
+                return Ok(new 
+                { 
+                    mensaje = "¡Registro exitoso! Revisa tu email para obtener tu código QR de acceso.",
+                    invitadoId = createdGuest.Id,
+                    codigoQR = createdGuest.IdCode
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno al procesar el registro: {ex.Message}");
+            }
+        }
+
         // Obtener todos los invitados
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllInvitados([FromQuery] int eventId)

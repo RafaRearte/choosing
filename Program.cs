@@ -49,7 +49,9 @@ builder.Services.AddScoped<IListRepository, ListRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("JwtConfig"));
+builder.Services.Configure<EmailConfig>(builder.Configuration.GetSection("EmailConfig"));
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -75,6 +77,13 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction()) // Habili
 
 app.UseCors("AllowAll");
 
+// Servir archivos estáticos desde FrontEnd
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "FrontEnd")),
+    RequestPath = ""
+});
 
 app.MapGet("/", () => "API funcionando o");
 
