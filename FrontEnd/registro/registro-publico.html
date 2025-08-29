@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Invitados - Sistema Choosing</title>
+    <link rel="icon" href="./images/icon.png">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .registration-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+        
+        .header-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header-logo h1 {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .header-logo p {
+            color: #6c757d;
+            margin: 0;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+        }
+        
+        .form-section h5 {
+            color: #495057;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .event-card {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .event-card:hover {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+        }
+        
+        .event-card.selected {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .event-card h6 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+        
+        .loading {
+            display: none;
+        }
+        
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .success-message i {
+            font-size: 60px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="registration-container">
+            <!-- Header -->
+            <div class="header-logo">
+                <h1><i class="bi bi-calendar-event"></i> Sistema Choosing</h1>
+                <p>Registro de Invitados</p>
+            </div>
+
+            <!-- Loading -->
+            <div id="loadingEvents" class="text-center loading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando eventos...</span>
+                </div>
+                <p class="mt-3">Cargando eventos disponibles...</p>
+            </div>
+
+            <!-- Event Selection -->
+            <div id="eventSelection">
+                <div class="form-section">
+                    <h5><i class="bi bi-calendar3"></i> Selecciona tu Evento</h5>
+                    <div id="eventsList">
+                        <!-- Los eventos se cargan dinámicamente aquí -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registration Form -->
+            <div id="registrationForm" style="display: none;">
+                <div class="form-section">
+                    <h5><i class="bi bi-person-plus"></i> Información Personal</h5>
+                    
+                    <form id="guestForm">
+                        <input type="hidden" id="selectedEventId" name="eventId">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="nombre" class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="apellido" class="form-label">Apellido *</label>
+                                <input type="text" class="form-control" id="apellido" name="apellido" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="form-text">Recibirás tu código QR de acceso en este email</div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="dni" class="form-label">DNI</label>
+                                <input type="number" class="form-control" id="dni" name="dni">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="telefono" class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="telefono" name="telefono">
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h5><i class="bi bi-building"></i> Información Profesional</h5>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="empresa" class="form-label">Empresa</label>
+                                    <input type="text" class="form-control" id="empresa" name="empresa">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="cargo" class="form-label">Cargo</label>
+                                    <input type="text" class="form-control" id="cargo" name="cargo">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="profesion" class="form-label">Profesión</label>
+                                    <input type="text" class="form-control" id="profesion" name="profesion">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="categoria" class="form-label">Categoría</label>
+                                    <input type="text" class="form-control" id="categoria" name="categoria">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="lugar" class="form-label">Lugar/Ciudad</label>
+                                    <input type="text" class="form-control" id="lugar" name="lugar">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="redSocial" class="form-label">Red Social</label>
+                                    <input type="text" class="form-control" id="redSocial" name="redSocial" placeholder="@usuario o enlace">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="infoAdicional" class="form-label">Información Adicional</label>
+                                <textarea class="form-control" id="infoAdicional" name="infoAdicional" rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-secondary" onclick="goBackToEvents()">
+                                <i class="bi bi-arrow-left"></i> Cambiar Evento
+                            </button>
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                <i class="bi bi-envelope"></i> Registrarse y Recibir QR
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Success Message -->
+            <div id="successMessage" class="success-message">
+                <i class="bi bi-check-circle-fill"></i>
+                <h3 class="text-success">¡Registro Exitoso!</h3>
+                <p class="mb-4">Te has registrado correctamente al evento.</p>
+                <div class="alert alert-info">
+                    <i class="bi bi-envelope"></i>
+                    <strong>Revisa tu email</strong> para obtener tu código QR de acceso al evento.
+                </div>
+                <button class="btn btn-primary" onclick="location.reload()">
+                    Registrar Otro Invitado
+                </button>
+            </div>
+
+            <!-- Error Alert -->
+            <div id="errorAlert" class="alert alert-danger" style="display: none;">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span id="errorMessage"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        const apiUrl = 'https://api.rafarearte.com/api';
+        let selectedEvent = null;
+
+        // Cargar eventos al inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar si hay evento en la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventId = urlParams.get('evento') || urlParams.get('eventId');
+            
+            if (eventId) {
+                loadSpecificEvent(eventId);
+            } else {
+                loadEvents();
+            }
+        });
+
+        // Cargar evento específico por ID
+        async function loadSpecificEvent(eventId) {
+            showLoading(true);
+            
+            try {
+                const response = await fetch(`${apiUrl}/Event/${eventId}`);
+                if (!response.ok) throw new Error('Evento no encontrado');
+                
+                const event = await response.json();
+                
+                if (!event.activo) {
+                    showError('Este evento no está disponible para registro público.');
+                    return;
+                }
+                
+                // Seleccionar directamente el evento y mostrar formulario
+                selectedEvent = event;
+                document.getElementById('selectedEventId').value = event.id;
+                
+                // Mostrar info del evento y formulario
+                displayEventInfo(event);
+                document.getElementById('eventSelection').style.display = 'none';
+                document.getElementById('registrationForm').style.display = 'block';
+                showLoading(false);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Error al cargar el evento. Verifica el enlace.');
+                showLoading(false);
+                // Mostrar selector de eventos como fallback
+                setTimeout(() => loadEvents(), 2000);
+            }
+        }
+
+        // Cargar eventos disponibles
+        async function loadEvents() {
+            showLoading(true);
+            
+            try {
+                const response = await fetch(`${apiUrl}/Event/GetAll`);
+                if (!response.ok) throw new Error('Error al cargar eventos');
+                
+                const events = await response.json();
+                const activeEvents = events.filter(event => event.activo);
+                
+                if (activeEvents.length === 0) {
+                    showError('No hay eventos disponibles para registro público en este momento.');
+                    return;
+                }
+                
+                displayEvents(activeEvents);
+                showLoading(false);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Error al cargar los eventos. Por favor recarga la página.');
+                showLoading(false);
+            }
+        }
+
+        // Mostrar eventos
+        function displayEvents(events) {
+            const eventsList = document.getElementById('eventsList');
+            eventsList.innerHTML = '';
+            
+            events.forEach(event => {
+                const eventCard = document.createElement('div');
+                eventCard.className = 'event-card';
+                eventCard.onclick = () => selectEvent(event);
+                
+                const fechaInicio = new Date(event.fechaInicio).toLocaleDateString('es-ES');
+                const fechaFin = new Date(event.fechaFin).toLocaleDateString('es-ES');
+                
+                eventCard.innerHTML = `
+                    <h6><i class="bi bi-calendar-event"></i> ${event.nombre}</h6>
+                    <p class="mb-2"><small class="text-muted">${event.descripcion || 'Sin descripción'}</small></p>
+                    <p class="mb-0">
+                        <i class="bi bi-calendar3"></i> ${fechaInicio} - ${fechaFin}<br>
+                        <i class="bi bi-geo-alt"></i> ${event.ubicacion || 'Ubicación por confirmar'}
+                    </p>
+                `;
+                
+                eventsList.appendChild(eventCard);
+            });
+        }
+
+        // Mostrar información del evento seleccionado
+        function displayEventInfo(event) {
+            const fechaInicio = new Date(event.fechaInicio).toLocaleDateString('es-ES');
+            const fechaFin = new Date(event.fechaFin).toLocaleDateString('es-ES');
+            
+            // Crear banner con info del evento
+            const eventInfo = document.createElement('div');
+            eventInfo.className = 'alert alert-primary mb-4';
+            eventInfo.innerHTML = `
+                <h6 class="alert-heading"><i class="bi bi-calendar-event"></i> ${event.nombre}</h6>
+                <p class="mb-1">${event.descripcion || 'Sin descripción'}</p>
+                <small>
+                    <i class="bi bi-calendar3"></i> ${fechaInicio} - ${fechaFin} | 
+                    <i class="bi bi-geo-alt"></i> ${event.ubicacion || 'Ubicación por confirmar'}
+                </small>
+            `;
+            
+            // Insertar antes del formulario
+            const registrationForm = document.getElementById('registrationForm');
+            registrationForm.insertBefore(eventInfo, registrationForm.firstChild);
+        }
+
+        // Seleccionar evento
+        function selectEvent(event) {
+            selectedEvent = event;
+            
+            // Marcar visualmente el evento seleccionado
+            document.querySelectorAll('.event-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.target?.closest('.event-card')?.classList.add('selected');
+            
+            // Mostrar formulario
+            document.getElementById('selectedEventId').value = event.id;
+            document.getElementById('eventSelection').style.display = 'none';
+            document.getElementById('registrationForm').style.display = 'block';
+        }
+
+        // Volver a selección de eventos
+        function goBackToEvents() {
+            document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('eventSelection').style.display = 'block';
+            selectedEvent = null;
+        }
+
+        // Submit del formulario
+        document.getElementById('guestForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registrando...';
+            
+            try {
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData.entries());
+                
+                // Limpiar campos vacíos y convertir tipos
+                Object.keys(data).forEach(key => {
+                    if (data[key] === '') data[key] = null;
+                });
+                
+                if (data.dni) data.dni = parseInt(data.dni);
+                if (data.eventId) data.eventId = parseInt(data.eventId);
+                
+                const response = await fetch(`${apiUrl}/List/register-public`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || errorData.title || 'Error en el registro');
+                }
+
+                const result = await response.json();
+                
+                // Mostrar mensaje de éxito
+                document.getElementById('registrationForm').style.display = 'none';
+                document.getElementById('successMessage').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-envelope"></i> Registrarse y Recibir QR';
+            }
+        });
+
+        // Funciones auxiliares
+        function showLoading(show) {
+            document.getElementById('loadingEvents').style.display = show ? 'block' : 'none';
+            document.getElementById('eventSelection').style.display = show ? 'none' : 'block';
+        }
+
+        function showError(message) {
+            const errorAlert = document.getElementById('errorAlert');
+            document.getElementById('errorMessage').textContent = message;
+            errorAlert.style.display = 'block';
+            
+            setTimeout(() => {
+                errorAlert.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
