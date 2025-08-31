@@ -38,6 +38,7 @@ namespace choosing.Services.Interfaces
 
         Task<(int total, int acreditados, int nuevos)> GetEventCountersAsync(int eventId);
         Task<List<Guest>> ExportCsvAsync(int eventId);
+        Task<List<Guest>> GetAllByEventIdViaSPAsync(int eventId);
         
     }
 }

@@ -1,8 +1,10 @@
 ﻿using System.Text;
+using System.Data;
 using choosing.Context;
 using choosing.Domain;
 using choosing.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 
 namespace choosing.Repository.Impl
 {
@@ -387,6 +389,24 @@ namespace choosing.Repository.Impl
                 .ToListAsync();
             
             return guests;
+        }
+
+        // MÉTODO SÚPER RÁPIDO CON STORED PROCEDURE
+        public async Task<List<Guest>> GetAllByEventIdViaSPAsync(int eventId)
+        {
+            try
+            {
+                var parameter = new SqlParameter("@EventoId", eventId);
+                var guests = await _context.Guests
+                    .FromSqlRaw("EXEC sp_GetAllInvitados @EventoId", parameter)
+                    .ToListAsync();
+                
+                return guests;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error executing stored procedure sp_GetAllInvitados", ex);
+            }
         }
         
     }

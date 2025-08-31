@@ -104,6 +104,28 @@ namespace choosing.Controllers
             return Ok(guests);
         }
 
+        // ENDPOINT SÚPER RÁPIDO CON STORED PROCEDURE
+        [HttpGet("GetAllFast")]
+        public async Task<IActionResult> GetAllInvitadosFast([FromQuery] int eventId)
+        {
+            if (eventId <= 0)
+                return BadRequest("Se requiere un ID de evento válido");
+
+            try
+            {
+                var guests = await _listService.GetAllByEventIdViaSPAsync(eventId);
+                return Ok(new { 
+                    data = guests,
+                    count = guests.Count,
+                    message = $"Retrieved {guests.Count} guests using optimized stored procedure"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving guests: {ex.Message}");
+            }
+        }
+
         // Para invitados acreditados
         [HttpGet("GetAcreditados")]
         public async Task<IActionResult> GetInvitadosAcreditados([FromQuery] int eventId)

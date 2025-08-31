@@ -207,5 +207,11 @@ namespace choosing.Services.Impl
         {
             return await _listRepository.ExportCsvAsync(eventId);
         }
+
+        // MÉTODO SÚPER RÁPIDO CON STORED PROCEDURE
+        public async Task<List<Guest>> GetAllByEventIdViaSPAsync(int eventId)
+        {
+            return await _listRepository.GetAllByEventIdViaSPAsync(eventId);
+        }
     }
 }
