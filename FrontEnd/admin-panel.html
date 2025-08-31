@@ -58,8 +58,9 @@
             z-index: 1000;
         }
         .table-container {
-            max-height: 400px;
+            max-height: 70vh;
             overflow-y: auto;
+            min-height: 500px;
         }
         .badge-status {
             font-size: 0.8rem;
@@ -576,10 +577,6 @@
                             <input class="form-check-input" type="checkbox" id="configInfoAdicional" checked>
                             <label class="form-check-label" for="configInfoAdicional">Información Adicional</label>
                         </div>
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="configMostrarQR" checked>
-                            <label class="form-check-label" for="configMostrarQR">Incluir QR en las etiquetas</label>
-                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -590,10 +587,128 @@
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white text-center py-3 mt-5">
-        <p>&copy; 2025 - Panel de Administración - Sistema de Acreditación</p>
-    </footer>
+    <!-- Modal de Configuración de Etiquetas -->
+    <div class="modal fade" id="labelsModal" tabindex="-1" aria-labelledby="labelsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="labelsModalLabel">
+                        <i class="bi bi-tags me-2"></i>Configuración de Etiquetas
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="labelsForm">
+                        <!-- SECCIÓN: DATOS EN LA ETIQUETA -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary border-bottom pb-2">
+                                <i class="bi bi-card-text me-2"></i>Datos a mostrar en la etiqueta:
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="labelEmpresa" checked>
+                                        <label class="form-check-label" for="labelEmpresa">
+                                            <i class="bi bi-building me-1"></i>Empresa
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="labelCargo" checked>
+                                        <label class="form-check-label" for="labelCargo">
+                                            <i class="bi bi-person-badge me-1"></i>Cargo
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="labelCategoria">
+                                        <label class="form-check-label" for="labelCategoria">
+                                            <i class="bi bi-tags me-1"></i>Categoría
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="labelProfesion">
+                                        <label class="form-check-label" for="labelProfesion">
+                                            <i class="bi bi-briefcase me-1"></i>Profesión
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SECCIÓN: CONFIGURACIÓN DEL QR -->
+                        <div class="border-top pt-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="form-check form-switch me-3">
+                                    <input class="form-check-input" type="checkbox" id="labelMostrarQR" checked>
+                                    <label class="form-check-label fw-bold text-primary" for="labelMostrarQR">
+                                        <i class="bi bi-qr-code me-2"></i>Incluir código QR en las etiquetas
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div id="qrConfigSection">
+                                <h6 class="fw-bold text-secondary mb-2">Datos a incluir en el código QR:</h6>
+                                <small class="text-muted d-block mb-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Selecciona qué información aparecerá en el QR. Menos datos = QR más pequeño y confiable.
+                                </small>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="qrTelefono" checked>
+                                            <label class="form-check-label" for="qrTelefono">
+                                                <i class="bi bi-telephone me-1"></i>Teléfono
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="qrEmail" checked>
+                                            <label class="form-check-label" for="qrEmail">
+                                                <i class="bi bi-envelope me-1"></i>Email
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="qrEmpresa">
+                                            <label class="form-check-label" for="qrEmpresa">
+                                                <i class="bi bi-building me-1"></i>Empresa
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="qrCargo">
+                                            <label class="form-check-label" for="qrCargo">
+                                                <i class="bi bi-person-badge me-1"></i>Cargo
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="qrRedSocial">
+                                            <label class="form-check-label" for="qrRedSocial">
+                                                <i class="bi bi-share me-1"></i>Red Social
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-success mt-3" role="alert">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    <strong>Recomendado:</strong> El nombre y apellido siempre se incluyen en el QR. 
+                                    Para mejor legibilidad, selecciona máximo 2 campos adicionales.
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="saveLabelsBtn">
+                        <i class="bi bi-check-lg me-1"></i>Guardar Configuración
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -705,21 +820,26 @@
                             <td>${new Date(event.fechaInicio).toLocaleDateString()}</td>
                             <td>${new Date(event.fechaFin).toLocaleDateString()}</td>
                             <td>
-                                <span class="badge ${event.activo ? 'bg-success' : 'bg-secondary'} badge-status">
-                                    ${event.activo ? 'Activo' : 'Inactivo'}
-                                </span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" ${event.activo ? 'checked' : ''} 
+                                           onclick="toggleEventStatus(${event.id})" 
+                                           style="cursor: pointer;">
+                                    <label class="form-check-label text-muted" style="font-size: 0.8em;">
+                                        ${event.activo ? 'Activo' : 'Inactivo'}
+                                    </label>
+                                </div>
                             </td>
                             <td><span class="badge bg-primary">${event.stats?.totalInvitados || 0}</span></td>
                             <td><span class="badge bg-success">${event.stats?.acreditados || 0}</span></td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary" onclick="editEventData(${event.id})" title="Editar">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editEventData(${event.id})" title="Editar Evento">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                    <button class="btn btn-sm btn-outline-secondary" onclick="configureEventColumns(${event.id})" title="Configurar Columnas">
-                                    <i class="bi bi-gear"></i>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="configureEventColumns(${event.id})" title="Configurar Columnas">
+                                    <i class="bi bi-table"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-${event.activo ? 'warning' : 'success'}" onclick="toggleEventStatus(${event.id})" title="${event.activo ? 'Desactivar' : 'Activar'}">
-                                    <i class="bi bi-${event.activo ? 'pause' : 'play'}"></i>
+                                <button class="btn btn-sm btn-outline-success" onclick="configureEventLabels(${event.id})" title="Configurar Etiquetas">
+                                    <i class="bi bi-tags"></i>
                                 </button>
                                 <button class="btn btn-sm btn-outline-info" onclick="duplicateEvent(${event.id})" title="Duplicar">
                                     <i class="bi bi-files"></i>
@@ -1188,6 +1308,21 @@
         toast.error('Error: No se encontró el ID del evento');
     }
 });
+
+            // Event listener para el botón de guardar etiquetas
+            document.getElementById('saveLabelsBtn').addEventListener('click', function() {
+                const eventoId = document.getElementById('saveLabelsBtn').getAttribute('data-event-id');
+                if (eventoId) {
+                    guardarConfiguracionEtiquetas(eventoId);
+                } else {
+                    toast.error('Error: No se encontró el ID del evento');
+                }
+            });
+
+            // Event listener para el toggle del QR en el modal de etiquetas
+            document.getElementById('labelMostrarQR').addEventListener('change', function() {
+                toggleQRSection();
+            });
         });
 
 // Función para configurar el evento actual
@@ -1241,9 +1376,6 @@ function mostrarModalConfiguracion(evento) {
     document.getElementById('configLugar').checked = configuracion.mostrarLugar !== false;
     document.getElementById('configTelefono').checked = configuracion.mostrarTelefono !== false;
     document.getElementById('configRedSocial').checked = configuracion.mostrarRedSocial !== false;
-    document.getElementById('configMostrarQR').checked = configuracion.mostrarQR !== false;
-    
-
     
     // Guardar el eventoId en el botón para usarlo después
     document.getElementById('saveConfigBtn').setAttribute('data-event-id', evento.id);
@@ -1267,8 +1399,7 @@ function guardarConfiguracion(eventoId) {
         mostrarDias: document.getElementById('configDias').checked,
         mostrarInfoAdicional: document.getElementById('configInfoAdicional').checked,
         mostrarTelefono: document.getElementById('configTelefono').checked,
-        mostrarRedSocial: document.getElementById('configRedSocial').checked,
-        mostrarQR: document.getElementById('configMostrarQR').checked
+        mostrarRedSocial: document.getElementById('configRedSocial').checked
     };
     
     // Guardar configuración directamente usando endpoint específico
@@ -1299,6 +1430,132 @@ function guardarConfiguracion(eventoId) {
         hideLoading();
     });
 }
+
+// Función para configurar etiquetas del evento
+function configureEventLabels(eventId) {
+    // Verificar que se ha recibido un eventId válido
+    if (!eventId) {
+        toast.error("Error: ID de evento no válido");
+        return;
+    }
+
+    // Mostrar loading
+    showLoading();
+    
+    // Obtener configuración del evento específico
+    fetch(`${apiBaseUrl}/Event/${eventId}`, {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Error al obtener datos del evento');
+        return response.json();
+    })
+    .then(evento => {
+        // Mostrar modal de configuración de etiquetas
+        mostrarModalEtiquetas(evento);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toast.error('Error al cargar la configuración de etiquetas');
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
+// Función para mostrar modal de configuración de etiquetas
+function mostrarModalEtiquetas(evento) {
+    // Cargar configuración actual (si existe)
+    const configuracion = evento.configuracionJson ? JSON.parse(evento.configuracionJson) : {};
+    
+    // Configurar datos de la etiqueta
+    document.getElementById('labelEmpresa').checked = configuracion.labelEmpresa !== false;
+    document.getElementById('labelCargo').checked = configuracion.labelCargo !== false;
+    document.getElementById('labelCategoria').checked = configuracion.labelCategoria === true;
+    document.getElementById('labelProfesion').checked = configuracion.labelProfesion === true;
+    
+    // Configurar QR
+    document.getElementById('labelMostrarQR').checked = configuracion.mostrarQR !== false;
+    document.getElementById('qrTelefono').checked = configuracion.qrTelefono !== false;
+    document.getElementById('qrEmail').checked = configuracion.qrEmail !== false;
+    document.getElementById('qrEmpresa').checked = configuracion.qrEmpresa === true;
+    document.getElementById('qrCargo').checked = configuracion.qrCargo === true;
+    document.getElementById('qrRedSocial').checked = configuracion.qrRedSocial === true;
+    
+    // Mostrar/ocultar sección QR según el toggle
+    toggleQRSection();
+    
+    // Guardar el eventoId en el botón para usarlo después
+    document.getElementById('saveLabelsBtn').setAttribute('data-event-id', evento.id);
+    
+    // Mostrar el modal
+    const modalInstance = new bootstrap.Modal(document.getElementById('labelsModal'));
+    modalInstance.show();
+}
+
+// Función para mostrar/ocultar sección de configuración QR
+function toggleQRSection() {
+    const qrEnabled = document.getElementById('labelMostrarQR').checked;
+    const qrSection = document.getElementById('qrConfigSection');
+    
+    if (qrEnabled) {
+        qrSection.style.display = 'block';
+        qrSection.style.opacity = '1';
+    } else {
+        qrSection.style.display = 'none';
+        qrSection.style.opacity = '0.5';
+    }
+}
+
+// Función para guardar configuración de etiquetas
+function guardarConfiguracionEtiquetas(eventoId) {
+    // Recopilar configuración del formulario
+    const configuracion = {
+        // Datos de la etiqueta
+        labelEmpresa: document.getElementById('labelEmpresa').checked,
+        labelCargo: document.getElementById('labelCargo').checked,
+        labelCategoria: document.getElementById('labelCategoria').checked,
+        labelProfesion: document.getElementById('labelProfesion').checked,
+        // Configuración del QR
+        mostrarQR: document.getElementById('labelMostrarQR').checked,
+        qrTelefono: document.getElementById('qrTelefono').checked,
+        qrEmail: document.getElementById('qrEmail').checked,
+        qrEmpresa: document.getElementById('qrEmpresa').checked,
+        qrCargo: document.getElementById('qrCargo').checked,
+        qrRedSocial: document.getElementById('qrRedSocial').checked
+    };
+    
+    // Guardar configuración
+    showLoading();
+    
+    fetch(`${apiBaseUrl}/Event/update-config/${eventoId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify(JSON.stringify(configuracion))
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Error al guardar la configuración de etiquetas');
+        
+        // Cerrar el modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('labelsModal'));
+        modal.hide();
+        
+        toast.success('Configuración de etiquetas guardada correctamente');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toast.error('Error al guardar la configuración: ' + error.message);
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
 const goToEvent = (eventId, eventName) => {
     // Guardar el evento seleccionado en localStorage
     localStorage.setItem('currentEventId', eventId);

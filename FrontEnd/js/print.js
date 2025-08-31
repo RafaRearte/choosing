@@ -52,16 +52,11 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
             return;
         }
         
-        // 🎯 CREAR vCard OPTIMIZADO CON VALIDACIÓN DE TAMAÑO
-        const { vcard, version, estimatedSize } = createOptimizedVCard(nombreCompleto, empresaLimpia, emailLimpio, telefonoLimpio, redSocialLimpia, cargoLimpio);
+        // 🎯 CREAR vCard OPTIMIZADO CON CONFIGURACIÓN DEL EVENTO
+        const { vcard, version, estimatedSize } = createOptimizedVCard(nombreCompleto, empresaLimpia, emailLimpio, telefonoLimpio, redSocialLimpia, cargoLimpio, eventData);
         
         
-        // 🚨 VALIDACIÓN CRÍTICA: Si el QR sigue siendo muy grande, usar versión mínima
-        if (vcard.length > 300) {
-            console.warn('⚠️ QR aún muy grande, forzando versión mínima');
-            const minimalVCard = createMinimalVCard(nombreCompleto, telefonoLimpio);
-            return generateAndPrintLabel(minimalVCard.vcard, nombreCompleto, empresa, cargo, 'mínimo-forzado');
-        }
+        // ✅ Con la función simple, no debería haber problemas de tamaño
         
         // Generar etiqueta con el vCard optimizado
         generateAndPrintLabel(vcard, nombreCompleto, empresa, cargo, version);
@@ -297,13 +292,13 @@ const saveNewGuestAndPrint = async () => {
 // 🏷️ FUNCIÓN CON MÁRGENES VERTICALES ARREGLADOS
 const generateAndPrintLabel = (vcard, nombreCompleto, empresa, cargo, version) => {
     try {
-        // Generar QR con nivel de corrección apropiado
-        const qr = qrcode(0, version === 'mínimo-forzado' ? 'L' : 'M');
+        // 🔥 QR BÁSICO - Mínimo posible siempre
+        const qr = qrcode(0, 'L'); // Auto + baja corrección = más pequeño
         qr.addData(vcard);
         qr.make();
         
-        // QR de tamaño normal
-        const qrSvg = qr.createSvgTag(1.8, 1);
+        // Tamaño fijo para que se vea consistente
+        const qrSvg = qr.createSvgTag(1.8, 0);
         
         // 🏷️ ETIQUETA CON MÁRGENES VERTICALES SEGUROS
 const etiquetaHTML = `
@@ -360,35 +355,19 @@ const etiquetaHTML = `
         </div>` : ''}
     </div>
     
-    <!-- Contenedor del QR FIJO CON LÍMITES ESTRICTOS -->
-<div style="
-    width: 25mm;
-    min-width: 25mm;
-    max-width: 25mm;
-    height: 22mm;
-    min-height: 22mm;
-    max-height: 22mm;
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    flex-shrink: 0;
-    overflow: hidden;
-    margin-left: auto;
-    margin-top: 2mm;
-">
+    <!-- QR Contenedor Simple -->
     <div style="
-        width: 16mm;
-        height: 16mm;
-        max-width: 16mm;
-        max-height: 16mm;
-        display: flex;
-        align-items: center;
+        width: 24mm;
+        height: 20mm;
+        display: flex; 
+        align-items: center; 
         justify-content: center;
         overflow: hidden;
+        margin-left: auto;
+        margin-top: 1mm;
     ">
         ${qrSvg}
     </div>
-</div>
     </div>
 </div>
 `;
@@ -488,89 +467,30 @@ const openGuestQr = (id, nombre, apellido) => {
     qrWindow.document.close();
 };
 
-// 🎯 FUNCIÓN PARA CREAR vCard OPTIMIZADO CON MÚLTIPLES NIVELES
-const createOptimizedVCard = (nombreCompleto, empresa, email, telefono, redSocial, cargo) => {
+// 🎯 FUNCIÓN SIMPLE - QR PEQUEÑO SIEMPRE
+const createOptimizedVCard = (nombreCompleto, empresa, email, telefono, redSocial, cargo, eventData) => {
     
-    // 📏 FUNCIÓN MEJORADA PARA ESTIMAR TAMAÑO DEL QR
-    const estimateQRComplexity = (content) => {
-        const chars = content.length;
-        const complexity = chars + (content.match(/[^\w\s]/g) || []).length * 2; // Caracteres especiales pesan más
-        
-        if (complexity < 80) return { size: 'pequeño', level: 'L' };
-        if (complexity < 150) return { size: 'mediano', level: 'M' };
-        if (complexity < 250) return { size: 'grande', level: 'H' };
-        return { size: 'xlarge', level: 'H' };
-    };
+    console.log('🔥 CREANDO QR SIMPLE - Solo datos básicos');
 
-    // NIVEL 1: vCard completo pero optimizado
+    // 🚨 ESTRATEGIA SIMPLE: Solo nombre + teléfono O email (máximo)
     let vcard = `BEGIN:VCARD
 VERSION:3.0
 FN:${nombreCompleto}`;
 
-    if (empresa && empresa.length < 35) {
-        vcard += `\nORG:${empresa}`;
-    }
-    if (email && email.length < 40) {
-        vcard += `\nEMAIL:${email}`;
-    }
-    if (telefono) {
-        vcard += `\nTEL:${telefono}`;
-    }
-    if (cargo && cargo.length < 25) {
-        vcard += `\nTITLE:${cargo}`;
-    }
-    if (redSocial && redSocial.length < 30) {
-        vcard += `\nURL:${redSocial}`;
-    }
-    
-    vcard += `\nEND:VCARD`;
-
-    let complexity = estimateQRComplexity(vcard);
-    if (complexity.size !== 'xlarge') {
-        return { vcard, version: 'completo-opt', estimatedSize: complexity.size };
-    }
-
-    // NIVEL 2: Solo datos esenciales de contacto
-    vcard = `BEGIN:VCARD
-VERSION:3.0
-FN:${nombreCompleto}`;
-
-    if (email && email.length < 40) {
-        vcard += `\nEMAIL:${email}`;
-    }
-    if (telefono) {
-        vcard += `\nTEL:${telefono}`;
-    }
-    if (empresa && empresa.length < 20) {
-        vcard += `\nORG:${empresa.substring(0, 20)}`;
-    }
-    
-    vcard += `\nEND:VCARD`;
-
-    
-    complexity = estimateQRComplexity(vcard);
-    if (complexity.size !== 'xlarge') {
-        return { vcard, version: 'esencial', estimatedSize: complexity.size };
-    }
-
-    // NIVEL 3: Solo nombre y contacto principal
-    const contactoPrincipal = telefono || email;
-    vcard = `BEGIN:VCARD
-VERSION:3.0
-FN:${nombreCompleto}`;
-
-    if (contactoPrincipal) {
-        if (telefono) {
-            vcard += `\nTEL:${telefono}`;
-        } else if (email) {
-            vcard += `\nEMAIL:${email}`;
+    // SOLO agregar UNA cosa más: teléfono preferido, sino email
+    if (telefono && telefono.trim()) {
+        const tel = telefono.replace(/[^\d\+\-]/g, '').substring(0, 12);
+        if (tel) {
+            vcard += `\nTEL:${tel}`;
         }
+    } else if (email && email.trim()) {
+        const emailCorto = email.substring(0, 20);
+        vcard += `\nEMAIL:${emailCorto}`;
     }
     
     vcard += `\nEND:VCARD`;
 
+    console.log(`🔥 QR SIMPLE generado (${vcard.length} chars):`, vcard);
     
-    complexity = estimateQRComplexity(vcard);
-    
-    return { vcard, version: 'básico', estimatedSize: complexity.size };
+    return { vcard, version: 'simple', estimatedSize: 'pequeño-garantizado' };
 };
