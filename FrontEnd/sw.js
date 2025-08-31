@@ -1,6 +1,7 @@
-const CACHE_NAME = 'choosing-v1.0.2';
-const STATIC_CACHE = 'choosing-static-v2';
-const API_CACHE = 'choosing-api-v2';
+const VERSION = '1.0.5';
+const CACHE_NAME = `choosing-v${VERSION}`;
+const STATIC_CACHE = `choosing-static-v${VERSION}`;
+const API_CACHE = `choosing-api-v${VERSION}`;
 
 // ✅ SOLO ARCHIVOS QUE SÍ EXISTEN (basado en tu ls -la)
 const STATIC_FILES = [

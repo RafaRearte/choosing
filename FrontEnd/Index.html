@@ -278,6 +278,9 @@ html, body {
     <a href="admin-panel.html" class="btn btn-primary" id="adminSection" style="display: none;">
         <i class="bi bi-shield-check me-2"></i>Panel de Administración
     </a>
+    <span id="versionBadge" class="badge bg-secondary ms-2" style="display: none; font-size: 0.7rem;">
+        v<span id="appVersion">cargando...</span>
+    </span>
     </div>
     <div class="container my-2">
     <!-- Lista de Invitados -->
@@ -589,6 +592,30 @@ html, body {
 <script src="js/main.js"></script>
 <script src="js/pwa.js"></script>
 
+<script>
+// Obtener versión desde Service Worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(registration => {
+        const messageChannel = new MessageChannel();
+        messageChannel.port1.onmessage = function(event) {
+            if (event.data && event.data.version) {
+                const version = event.data.version.replace('choosing-v', '');
+                document.getElementById('appVersion').textContent = version;
+            }
+        };
+        
+        if (registration.active) {
+            registration.active.postMessage({type: 'GET_VERSION'}, [messageChannel.port2]);
+        }
+    }).catch(() => {
+        // Fallback si no hay SW
+        document.getElementById('appVersion').textContent = '1.0.5';
+    });
+} else {
+    // Fallback si no soporta SW  
+    document.getElementById('appVersion').textContent = '1.0.5';
+}
+</script>
 
 <!--
 <script src="scriptindex.js"></script>

@@ -26,7 +26,10 @@ if ('serviceWorker' in navigator) {
         
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            showUpdateAvailable();
+            // ✅ AUTO-RELOAD: Sin preguntar, actualizar directamente
+            console.log('🔄 Nueva versión detectada, recargando automáticamente...');
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+            window.location.reload();
           }
         });
       });

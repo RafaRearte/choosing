@@ -142,6 +142,7 @@ function loadUserInfo() {
         document.getElementById('userName').textContent = userData.name || 'Usuario';
         if (userData.name === 'admin' || userData.name === 'rafa') {
             document.getElementById('adminSection').style.display = 'block';
+            document.getElementById('versionBadge').style.display = 'inline';
         }
     }
     
