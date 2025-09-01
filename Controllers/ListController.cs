@@ -114,11 +114,8 @@ namespace choosing.Controllers
             try
             {
                 var guests = await _listService.GetAllByEventIdViaSPAsync(eventId);
-                return Ok(new { 
-                    data = guests,
-                    count = guests.Count,
-                    message = $"Retrieved {guests.Count} guests using optimized stored procedure"
-                });
+                // Devolver el mismo formato que el endpoint original para compatibilidad
+                return Ok(guests);
             }
             catch (Exception ex)
             {

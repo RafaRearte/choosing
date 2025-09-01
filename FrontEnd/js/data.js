@@ -40,7 +40,7 @@ const fetchGuests = async () => {
         await fetchEventData();
         
         // Construir la URL según el filtro actual
-        let url = `${apiUrl}/GetAll?eventId=${currentEventId}`;
+        let url = `${apiUrl}/GetAllFast?eventId=${currentEventId}`;
         
         // Si hay un filtro activo, usar el endpoint específico
         if (currentFilter) {
@@ -55,7 +55,7 @@ const fetchGuests = async () => {
                     url = `${apiUrl}/GetNuevos?eventId=${currentEventId}`;
                     break;
                 default:
-                    url = `${apiUrl}/GetAll?eventId=${currentEventId}`;
+                    url = `${apiUrl}/GetAllFast?eventId=${currentEventId}`;
             }
         }
         
@@ -162,7 +162,7 @@ function loadUserInfo() {
 const loadAllGuestsOffline = async () => {
     try {
         console.log('📥 Cargando todos los invitados...');
-        const response = await authenticatedFetch(`${apiUrl}/GetAll?eventId=${currentEventId}`);
+        const response = await authenticatedFetch(`${apiUrl}/GetAllFast?eventId=${currentEventId}`);
         
         if (response && response.ok) {
             allGuests = await response.json();
