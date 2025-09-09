@@ -66,11 +66,43 @@ const authenticatedFetch = async (url, options = {}) => {
     }
 };
 // Función para mostrar/ocultar el indicador de carga
-const showLoading = () => {
-    document.getElementById('loadingIndicator').style.display = 'block';
+const showLoading = (message = 'Cargando...') => {
+    const overlay = document.getElementById('loadingOverlay');
+    const messageEl = document.getElementById('loadingMessage');
+    const submessageEl = document.getElementById('loadingSubmessage');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    
+    if (overlay) {
+        overlay.style.display = 'flex';
+        if (messageEl) messageEl.textContent = message;
+        if (submessageEl) submessageEl.textContent = 'Preparando datos...';
+        if (progressBar) progressBar.style.width = '0%';
+        if (progressText) progressText.textContent = '0%';
+    }
 };
+
 const hideLoading = () => {
-    document.getElementById('loadingIndicator').style.display = 'none';
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+};
+
+const updateProgress = (percentage, message = '') => {
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const submessageEl = document.getElementById('loadingSubmessage');
+    
+    if (progressBar) {
+        progressBar.style.width = `${percentage}%`;
+    }
+    if (progressText) {
+        progressText.textContent = `${Math.round(percentage)}%`;
+    }
+    if (message && submessageEl) {
+        submessageEl.textContent = message;
+    }
 };
 const puedeHacerAccion = (accion) => {
     const eventAccess = JSON.parse(localStorage.getItem('currentEventAccess') || '{}');
