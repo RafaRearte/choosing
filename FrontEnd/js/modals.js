@@ -1,19 +1,7 @@
-// Función para mostrar modal de configuración
+// Función para mostrar modal de configuración unificado
 function mostrarModalConfiguracion(evento) {
-    // Cargar configuración actual (si existe)
-    const configuracion = evento.configuracionJson ? JSON.parse(evento.configuracionJson) : {};
-    
-    // Asignar valores a los checkboxes
-    document.getElementById('configDni').checked = configuracion.mostrarDni !== false;
-    document.getElementById('configEmail').checked = configuracion.mostrarEmail !== false;
-    document.getElementById('configEmpresa').checked = configuracion.mostrarEmpresa !== false;
-    document.getElementById('configCategoria').checked = configuracion.mostrarCategoria !== false;
-    document.getElementById('configProfesion').checked = configuracion.mostrarProfesion !== false;
-    document.getElementById('configCargo').checked = configuracion.mostrarCargo !== false;
-    document.getElementById('configDias').checked = configuracion.mostrarDias !== false;
-    document.getElementById('configInfoAdicional').checked = configuracion.mostrarInfoAdicional !== false;
-    document.getElementById('configLugar').checked = configuracion.mostrarLugar !== false;
-    document.getElementById('configTelefono').checked = configuracion.mostrarTelefono !== false;
+    // Cargar configuración usando la nueva función centralizada
+    cargarConfiguracionModal(evento.id);
     
     // Mostrar el modal
     const modalInstance = new bootstrap.Modal(document.getElementById('configModal'));

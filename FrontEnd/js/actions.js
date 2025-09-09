@@ -199,7 +199,7 @@ function configurarEvento() {
     });
 }
 function guardarConfiguracion(eventoId) {
-    // Recopilar configuración del formulario
+    // Recopilar configuración del formulario (columnas de tabla)
     const configuracion = {
         mostrarDni: document.getElementById('configDni').checked,
         mostrarEmail: document.getElementById('configEmail').checked,
@@ -211,7 +211,21 @@ function guardarConfiguracion(eventoId) {
         mostrarDias: document.getElementById('configDias').checked,
         mostrarInfoAdicional: document.getElementById('configInfoAdicional').checked,
         mostrarTelefono: document.getElementById('configTelefono').checked,
-        mostrarRedSocial: document.getElementById('configRedSocial').checked
+        mostrarRedSocial: document.getElementById('configRedSocial').checked,
+        
+        // Configuración de etiquetas
+        labelEmpresa: document.getElementById('labelEmpresa').checked,
+        labelCargo: document.getElementById('labelCargo').checked,
+        labelCategoria: document.getElementById('labelCategoria').checked,
+        labelProfesion: document.getElementById('labelProfesion').checked,
+        
+        // Configuración de QR
+        labelMostrarQR: document.getElementById('labelMostrarQR').checked,
+        qrTelefono: document.getElementById('qrTelefono').checked,
+        qrEmail: document.getElementById('qrEmail').checked,
+        qrEmpresa: document.getElementById('qrEmpresa').checked,
+        qrCargo: document.getElementById('qrCargo').checked,
+        qrRedSocial: document.getElementById('qrRedSocial').checked
     };
     
     // Guardar configuración directamente usando endpoint específico
@@ -248,6 +262,82 @@ function guardarConfiguracion(eventoId) {
         hideLoading();
     });
 }
+
+// Función para cargar configuración al abrir el modal
+function cargarConfiguracionModal(eventoId) {
+    if (!eventoId) return;
+    
+    // Obtener configuración actual del evento
+    fetch(`${eventApiUrl}/get-config/${eventoId}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error al cargar la configuración');
+        }
+        return response.json();
+    })
+    .then(config => {
+        // Aplicar configuración de columnas de tabla
+        if (document.getElementById('configDni')) document.getElementById('configDni').checked = config.mostrarDni !== false;
+        if (document.getElementById('configEmail')) document.getElementById('configEmail').checked = config.mostrarEmail !== false;
+        if (document.getElementById('configEmpresa')) document.getElementById('configEmpresa').checked = config.mostrarEmpresa !== false;
+        if (document.getElementById('configCategoria')) document.getElementById('configCategoria').checked = config.mostrarCategoria !== false;
+        if (document.getElementById('configProfesion')) document.getElementById('configProfesion').checked = config.mostrarProfesion !== false;
+        if (document.getElementById('configCargo')) document.getElementById('configCargo').checked = config.mostrarCargo !== false;
+        if (document.getElementById('configLugar')) document.getElementById('configLugar').checked = config.mostrarLugar !== false;
+        if (document.getElementById('configDias')) document.getElementById('configDias').checked = config.mostrarDias !== false;
+        if (document.getElementById('configInfoAdicional')) document.getElementById('configInfoAdicional').checked = config.mostrarInfoAdicional !== false;
+        if (document.getElementById('configTelefono')) document.getElementById('configTelefono').checked = config.mostrarTelefono !== false;
+        if (document.getElementById('configRedSocial')) document.getElementById('configRedSocial').checked = config.mostrarRedSocial !== false;
+        
+        // Aplicar configuración de etiquetas
+        if (document.getElementById('labelEmpresa')) document.getElementById('labelEmpresa').checked = config.labelEmpresa !== false;
+        if (document.getElementById('labelCargo')) document.getElementById('labelCargo').checked = config.labelCargo !== false;
+        if (document.getElementById('labelCategoria')) document.getElementById('labelCategoria').checked = config.labelCategoria === true;
+        if (document.getElementById('labelProfesion')) document.getElementById('labelProfesion').checked = config.labelProfesion === true;
+        
+        // Aplicar configuración de QR
+        if (document.getElementById('labelMostrarQR')) document.getElementById('labelMostrarQR').checked = config.labelMostrarQR !== false;
+        if (document.getElementById('qrTelefono')) document.getElementById('qrTelefono').checked = config.qrTelefono !== false;
+        if (document.getElementById('qrEmail')) document.getElementById('qrEmail').checked = config.qrEmail !== false;
+        if (document.getElementById('qrEmpresa')) document.getElementById('qrEmpresa').checked = config.qrEmpresa === true;
+        if (document.getElementById('qrCargo')) document.getElementById('qrCargo').checked = config.qrCargo === true;
+        if (document.getElementById('qrRedSocial')) document.getElementById('qrRedSocial').checked = config.qrRedSocial === true;
+        
+        // Ejecutar la función de toggle QR para aplicar el estado correcto
+        if (typeof setupConfigModal === 'function') {
+            // Re-ejecutar setup para aplicar estados
+            const event = new Event('change');
+            const qrToggle = document.getElementById('labelMostrarQR');
+            if (qrToggle) qrToggle.dispatchEvent(event);
+        }
+    })
+    .catch(error => {
+        console.error('Error cargando configuración:', error);
+        // Si hay error, usar valores por defecto (todos marcados excepto algunos QR)
+        const defaultChecked = ['configDni', 'configEmail', 'configEmpresa', 'configCategoria', 
+                               'configProfesion', 'configCargo', 'configLugar', 'configDias',
+                               'configInfoAdicional', 'configTelefono', 'configRedSocial',
+                               'labelEmpresa', 'labelCargo', 'labelMostrarQR', 'qrTelefono', 'qrEmail'];
+        
+        defaultChecked.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.checked = true;
+        });
+        
+        // Ejecutar toggle QR
+        const qrToggle = document.getElementById('labelMostrarQR');
+        if (qrToggle) {
+            const event = new Event('change');
+            qrToggle.dispatchEvent(event);
+        }
+    });
+}
+
 //scanner
 
 
