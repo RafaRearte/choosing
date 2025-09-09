@@ -143,6 +143,11 @@
                     <i class="bi bi-gear me-2"></i>Configuración
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="feedback-tab" data-bs-toggle="pill" data-bs-target="#feedback" type="button" role="tab">
+                    <i class="bi bi-chat-heart me-2"></i>Feedback
+                </button>
+            </li>
         </ul>
 
         <!-- Tab Content -->
@@ -265,6 +270,80 @@
                                 <p><strong>Base de Datos:</strong> SQL Server</p>
                                 <p><strong>Última Actualización:</strong> <span id="lastUpdate">--</span></p>
                                 <p><strong>Estado:</strong> <span class="badge bg-success">Operativo</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FEEDBACK TAB -->
+            <div class="tab-pane fade" id="feedback" role="tabpanel">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-chat-heart me-2"></i>Gestión de Feedback
+                                </h5>
+                                <a href="feedback.html" target="_blank" class="btn btn-outline-primary">
+                                    <i class="bi bi-eye me-1"></i>Ver Página de Feedback
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Seleccionar Evento para Feedback:</label>
+                                        <select class="form-select" id="feedbackEventSelect">
+                                            <option value="">Seleccione un evento...</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 d-flex align-items-end">
+                                        <button class="btn btn-primary me-2" onclick="setFeedbackEvent()">
+                                            <i class="bi bi-check-circle me-1"></i>Activar para Feedback
+                                        </button>
+                                        <button class="btn btn-info" onclick="loadFeedbackStats()">
+                                            <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="row" id="feedbackStatsContainer" style="display: none;">
+                                    <div class="col-md-12 mb-3">
+                                        <h6>Evento Activo: <span id="currentFeedbackEvent" class="text-primary">Ninguno</span></h6>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-primary text-white">
+                                            <div class="card-body text-center">
+                                                <h4 id="totalFeedbacks">0</h4>
+                                                <small>Total Opiniones</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-success text-white">
+                                            <div class="card-body text-center">
+                                                <h4 id="happyFeedbacks">0</h4>
+                                                <small>😊 Excelente</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-warning text-white">
+                                            <div class="card-body text-center">
+                                                <h4 id="neutralFeedbacks">0</h4>
+                                                <small>😐 Regular</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-danger text-white">
+                                            <div class="card-body text-center">
+                                                <h4 id="sadFeedbacks">0</h4>
+                                                <small>😞 Mejorar</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1270,6 +1349,8 @@
                         loadUsers();
                     } else if (e.target.id === 'events-tab') {
                         loadEvents();
+                    } else if (e.target.id === 'feedback-tab') {
+                        loadFeedbackEventSelect();
                     }
                 });
             });
@@ -1410,6 +1491,98 @@ const goToEvent = (eventId, eventName) => {
     
     // Redirigir al index del evento
     window.location.href = 'index.html';
+};
+
+// ===== FUNCIONES DE FEEDBACK =====
+const loadFeedbackEventSelect = async () => {
+    try {
+        const response = await authenticatedFetch(`${apiBaseUrl}/Event/GetAll`);
+        if (!response || !response.ok) return;
+        
+        const events = await response.json();
+        const selectElement = document.getElementById('feedbackEventSelect');
+        
+        selectElement.innerHTML = '<option value="">Seleccione un evento...</option>';
+        events.forEach(event => {
+            selectElement.innerHTML += `<option value="${event.id}">${event.nombre}</option>`;
+        });
+        
+        // Cargar evento activo desde el servidor
+        const activeEventResponse = await fetch(`${apiBaseUrl}/Feedback/active-event`);
+        if (activeEventResponse && activeEventResponse.ok) {
+            const activeEvent = await activeEventResponse.json();
+            if (activeEvent && activeEvent.eventoId) {
+                selectElement.value = activeEvent.eventoId;
+                document.getElementById('currentFeedbackEvent').textContent = activeEvent.eventoNombre;
+                document.getElementById('feedbackStatsContainer').style.display = 'block';
+                loadFeedbackStats();
+            }
+        }
+    } catch (error) {
+        console.error('Error loading events for feedback:', error);
+    }
+};
+
+const setFeedbackEvent = async () => {
+    const selectedEventId = document.getElementById('feedbackEventSelect').value;
+    if (!selectedEventId) {
+        toast.warning('Por favor seleccione un evento');
+        return;
+    }
+    
+    const selectedText = document.getElementById('feedbackEventSelect').selectedOptions[0].text;
+    
+    try {
+        // Enviar al servidor para configurar evento activo
+        const response = await authenticatedFetch(`${apiBaseUrl}/Feedback/set-active-event`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ eventoId: parseInt(selectedEventId) })
+        });
+
+        if (response && response.ok) {
+            // Actualizar UI
+            document.getElementById('currentFeedbackEvent').textContent = selectedText;
+            document.getElementById('feedbackStatsContainer').style.display = 'block';
+            
+            // Cargar estadísticas
+            loadFeedbackStats();
+            
+            toast.success(`Evento "${selectedText}" activado para feedback`);
+        } else {
+            const error = await response.text();
+            toast.error(`Error al configurar evento: ${error}`);
+        }
+    } catch (error) {
+        console.error('Error setting feedback event:', error);
+        toast.error('Error al configurar el evento para feedback');
+    }
+};
+
+const loadFeedbackStats = async () => {
+    try {
+        // Obtener evento activo desde el servidor
+        const activeEventResponse = await fetch(`${apiBaseUrl}/Feedback/active-event`);
+        if (!activeEventResponse || !activeEventResponse.ok) return;
+        
+        const activeEvent = await activeEventResponse.json();
+        if (!activeEvent || !activeEvent.eventoId) return;
+        
+        const response = await fetch(`${apiBaseUrl}/Feedback/stats/${activeEvent.eventoId}`);
+        if (!response.ok) return;
+        
+        const stats = await response.json();
+        
+        document.getElementById('totalFeedbacks').textContent = stats.total || 0;
+        
+        // Mapear ratings numéricos a categorías (1=sad, 2=neutral, 3=happy)
+        document.getElementById('happyFeedbacks').textContent = stats.ratingCounts[3] || 0;
+        document.getElementById('neutralFeedbacks').textContent = stats.ratingCounts[2] || 0;
+        document.getElementById('sadFeedbacks').textContent = stats.ratingCounts[1] || 0;
+        
+    } catch (error) {
+        console.error('Error loading feedback stats:', error);
+    }
 };
 
     </script>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback del Evento</title>
+    <link rel="icon" href="./images/icon.png">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .feedback-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .event-title {
+            color: white;
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .feedback-question {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .emoji-grid {
+            display: flex;
+            gap: 60px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 50px;
+        }
+
+        .emoji-btn {
+            background: white;
+            border: none;
+            border-radius: 25px;
+            width: 280px;
+            height: 280px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            font-size: 8rem;
+            user-select: none;
+        }
+
+        .emoji-btn:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .emoji-btn:active {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+        }
+
+        .emoji-btn span {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #333;
+        }
+
+        .emoji-btn.happy {
+            border: 4px solid #28a745;
+        }
+
+        .emoji-btn.happy:hover {
+            background: #f8fff8;
+            border-color: #20c997;
+        }
+
+        .emoji-btn.neutral {
+            border: 4px solid #ffc107;
+        }
+
+        .emoji-btn.neutral:hover {
+            background: #fffef7;
+            border-color: #fd7e14;
+        }
+
+        .emoji-btn.sad {
+            border: 4px solid #dc3545;
+        }
+
+        .emoji-btn.sad:hover {
+            background: #fff7f7;
+            border-color: #e74c3c;
+        }
+
+        .stats-container {
+            background: rgba(255,255,255,0.9);
+            padding: 30px 50px;
+            border-radius: 20px;
+            color: #333;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .success-animation {
+            animation: successPulse 0.6s ease-out;
+        }
+
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .event-title {
+                font-size: 2rem;
+            }
+            
+            .feedback-question {
+                font-size: 1.8rem;
+                margin-bottom: 40px;
+            }
+            
+            .emoji-grid {
+                gap: 30px;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .emoji-btn {
+                width: 200px;
+                height: 200px;
+                font-size: 5rem;
+            }
+            
+            .emoji-btn span {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .emoji-btn {
+                width: 150px;
+                height: 150px;
+                font-size: 4rem;
+            }
+            
+            .emoji-btn span {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="feedback-container">
+        <h1 class="event-title" id="eventName">Evento</h1>
+        <h2 class="feedback-question">¿Cómo la pasaste?</h2>
+        
+        <div class="emoji-grid">
+            <button class="emoji-btn happy" onclick="sendFeedback(3)">
+                😊
+                <span>¡Excelente!</span>
+            </button>
+            <button class="emoji-btn neutral" onclick="sendFeedback(2)">
+                😐
+                <span>Regular</span>
+            </button>
+            <button class="emoji-btn sad" onclick="sendFeedback(1)">
+                😞
+                <span>Podría mejorar</span>
+            </button>
+        </div>
+        
+        <div class="stats-container">
+            <i class="bi bi-people-fill me-2"></i>
+            Total de opiniones: <span id="totalVotes">0</span>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-border text-primary mb-3" role="status"></div>
+            <div>Guardando tu opinión...</div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/toasts.js"></script>
+    
+    <script>
+        // Variables globales
+        let currentEventId = null;
+        let currentEventName = '';
+        const apiUrl = 'https://api.rafarearte.com/api';
+
+        // Cargar información del evento al iniciar
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadEventInfo();
+            if (currentEventId) {
+                loadFeedbackStats();
+            }
+        });
+
+        // Cargar información del evento desde URL o configuración del servidor
+        async function loadEventInfo() {
+            // Intentar obtener eventId de la URL (?eventId=123)
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventIdFromUrl = urlParams.get('eventId');
+            
+            if (eventIdFromUrl) {
+                currentEventId = eventIdFromUrl;
+                fetchEventName();
+            } else {
+                // Obtener evento activo configurado desde el servidor
+                await fetchActiveEvent();
+            }
+        }
+
+        // Obtener evento activo desde el servidor
+        async function fetchActiveEvent() {
+            try {
+                const response = await fetch(`${apiUrl}/Feedback/active-event`);
+                
+                if (response.ok) {
+                    const activeEvent = await response.json();
+                    if (activeEvent && activeEvent.eventoId) {
+                        currentEventId = activeEvent.eventoId;
+                        currentEventName = activeEvent.eventoNombre;
+                        document.getElementById('eventName').textContent = currentEventName;
+                    } else {
+                        // No hay evento activo configurado
+                        document.getElementById('eventName').textContent = 'Evento no configurado';
+                        alert('No hay un evento configurado para feedback. Configure uno desde el admin panel.');
+                    }
+                } else {
+                    throw new Error('Error al obtener evento activo');
+                }
+            } catch (error) {
+                console.error('Error loading active event:', error);
+                document.getElementById('eventName').textContent = 'Evento no configurado';
+                alert('Error al cargar la configuración del evento. Inténtalo más tarde.');
+            }
+        }
+
+        // Obtener nombre del evento desde la API
+        async function fetchEventName() {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch(`${apiUrl}/Event/${currentEventId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const event = await response.json();
+                    currentEventName = event.name || 'Evento';
+                    document.getElementById('eventName').textContent = currentEventName;
+                }
+            } catch (error) {
+                console.error('Error loading event name:', error);
+                document.getElementById('eventName').textContent = 'Evento';
+            }
+        }
+
+        // Cargar estadísticas de feedback
+        async function loadFeedbackStats() {
+            try {
+                const response = await fetch(`${apiUrl}/Feedback/stats/${currentEventId}`);
+                
+                if (response.ok) {
+                    const stats = await response.json();
+                    document.getElementById('totalVotes').textContent = stats.total || 0;
+                }
+            } catch (error) {
+                console.error('Error loading feedback stats:', error);
+                document.getElementById('totalVotes').textContent = '0';
+            }
+        }
+
+        // Enviar feedback
+        async function sendFeedback(rating) {
+            if (!currentEventId) {
+                toast.error('Error: No se ha seleccionado ningún evento');
+                return;
+            }
+
+            // Mostrar loading
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            try {
+                const response = await fetch(`${apiUrl}/Feedback/${currentEventId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ rating: rating })
+                });
+
+                if (response.ok) {
+                    // Éxito - animar botón y actualizar contador
+                    animateSuccess(rating);
+                    await loadFeedbackStats();
+                    toast.success('¡Gracias por tu opinión!');
+                } else {
+                    throw new Error('Error al enviar feedback');
+                }
+
+            } catch (error) {
+                console.error('Error sending feedback:', error);
+                toast.error('Error al enviar tu opinión. Inténtalo de nuevo.');
+            } finally {
+                // Ocultar loading
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        // Animación de éxito
+        function animateSuccess(rating) {
+            let className = '';
+            if (rating === 3) className = 'happy';
+            else if (rating === 2) className = 'neutral';
+            else if (rating === 1) className = 'sad';
+            
+            const button = document.querySelector(`.emoji-btn.${className}`);
+            if (button) {
+                button.classList.add('success-animation');
+                
+                setTimeout(() => {
+                    button.classList.remove('success-animation');
+                }, 600);
+            }
+        }
+
+        // Sistema de toasts simple (fallback si no existe toasts.js)
+        if (typeof window.toast === 'undefined') {
+            window.toast = {
+                success: function(message) {
+                    alert(message);
+                },
+                error: function(message) {
+                    alert(message);
+                }
+            };
+        }
+    </script>
+</body>
+</html>

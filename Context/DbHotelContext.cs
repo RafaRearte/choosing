@@ -20,6 +20,8 @@ public partial class DbHotelContext : DbContext
 
     public DbSet<User> Users { get; set; }
     public DbSet<EventModel> Events { get; set; }
+    public DbSet<FeedbackModel> Feedbacks { get; set; }
+    public DbSet<FeedbackConfigModel> FeedbackConfig { get; set; }
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -117,6 +119,29 @@ public partial class DbHotelContext : DbContext
 
             entity.Property(e => e.PermitirAccesoPostEvento)
                 .HasDefaultValue(false);
+        });
+
+        modelBuilder.Entity<FeedbackModel>(entity =>
+        {
+            entity.ToTable("Feedbacks");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EventoId).IsRequired();
+            entity.Property(e => e.Rating).IsRequired();
+            entity.HasOne<EventModel>()
+                .WithMany()
+                .HasForeignKey(f => f.EventoId);
+        });
+
+        modelBuilder.Entity<FeedbackConfigModel>(entity =>
+        {
+            entity.ToTable("FeedbackConfig");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EventoId).IsRequired();
+            entity.Property(e => e.FechaCreacion).IsRequired();
+            entity.Property(e => e.FechaActualizacion).IsRequired();
+            entity.HasOne<EventModel>()
+                .WithMany()
+                .HasForeignKey(f => f.EventoId);
         });
 
         OnModelCreatingPartial(modelBuilder);
