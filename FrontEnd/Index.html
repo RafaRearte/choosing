@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es"
+>
 
 <style>
     #invitadosList {
@@ -278,9 +279,6 @@ html, body {
     <a href="admin-panel.html" class="btn btn-primary" id="adminSection" style="display: none;">
         <i class="bi bi-shield-check me-2"></i>Panel de Administración
     </a>
-    <span id="versionBadge" class="badge bg-secondary ms-2" style="display: none; font-size: 0.7rem;">
-        v<span id="appVersion">cargando...</span>
-    </span>
     </div>
     <div class="container my-2">
     <!-- Lista de Invitados -->
@@ -579,8 +577,7 @@ html, body {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/print-js/1.6.0/print.min.js"></script>
 <!-- biblioteca qr -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-
-
+<script src="js/super-simple-cache.js"></script>
 <script src="js/toasts.js"></script>
 <script src="js/core.js"></script>
 <script src="js/data.js"></script>
@@ -593,28 +590,6 @@ html, body {
 <script src="js/pwa.js"></script>
 
 <script>
-// Obtener versión desde Service Worker
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready.then(registration => {
-        const messageChannel = new MessageChannel();
-        messageChannel.port1.onmessage = function(event) {
-            if (event.data && event.data.version) {
-                const version = event.data.version.replace('choosing-v', '');
-                document.getElementById('appVersion').textContent = version;
-            }
-        };
-        
-        if (registration.active) {
-            registration.active.postMessage({type: 'GET_VERSION'}, [messageChannel.port2]);
-        }
-    }).catch(() => {
-        // Fallback si no hay SW
-        document.getElementById('appVersion').textContent = '1.0.5';
-    });
-} else {
-    // Fallback si no soporta SW  
-    document.getElementById('appVersion').textContent = '1.0.5';
-}
 </script>
 
 <!--
@@ -638,6 +613,15 @@ if ('serviceWorker' in navigator) {
             animation: spin 1s linear infinite; margin: 0 auto 20px;
         "></div>
         <h4 id="loadingMessage" style="margin: 0 0 10px; color: #333;">Cargando...</h4>
+        
+        <!-- Barra de progreso -->
+        <div style="width: 100%; background-color: #f0f0f0; border-radius: 10px; margin: 15px 0; height: 8px; overflow: hidden;">
+            <div id="progressBar" style="height: 100%; background-color: #007bff; width: 0%; transition: width 0.3s ease; border-radius: 10px;"></div>
+        </div>
+        
+        <!-- Porcentaje -->
+        <div id="progressText" style="margin: 5px 0 10px; color: #007bff; font-weight: bold; font-size: 16px;">0%</div>
+        
         <p id="loadingSubmessage" style="margin: 0; color: #666; font-size: 14px;">Esto puede tomar unos segundos</p>
     </div>
 </div>
