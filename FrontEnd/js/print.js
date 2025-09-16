@@ -1,5 +1,5 @@
 //FUNCIÓN PRINTLABEL MEJORADA CON VALIDACIÓN DE TAMAÑO QR
-const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial) => {
+const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion, cargo, empresa, redSocial, categoria) => {
     try {
         // Si hay id, acreditar al invitado
         if (id) {
@@ -32,14 +32,16 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
 
         // 🔥 VERIFICAR CONFIG DEL QR
         const config = eventData?.configuracionJson ? JSON.parse(eventData.configuracionJson) : {};
-        if (config.mostrarQR === false) {
+        if (config.labelMostrarQR === false) {
 
             const nombreCompleto = `${nombre || ''} ${apellido || ''}`.trim();
             const etiquetaSinQR = `
             <div style="width: 90mm; height: 26mm; font-family: Arial, sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0; padding: 4mm 3mm; box-sizing: border-box;">
                 <div style="font-weight: bold; font-size: 18pt; margin-bottom: 2mm; text-align: center;">${nombreCompleto}</div>
-                ${empresa ? `<div style="font-size: 14pt; margin-bottom: 1mm; text-align: center;">${empresa.length > 45 ? empresa.substring(0, 45) + '...' : empresa}</div>` : ''}
-                ${cargo ? `<div style="font-size: 12pt; text-align: center;">${cargo.length > 35 ? cargo.substring(0, 35) + '...' : cargo}</div>` : ''}
+                ${(config.labelEmpresa !== false && empresa) ? `<div style="font-size: 14pt; margin-bottom: 1mm; text-align: center;">${empresa.length > 45 ? empresa.substring(0, 45) + '...' : empresa}</div>` : ''}
+                ${(config.labelCargo !== false && cargo) ? `<div style="font-size: 12pt; text-align: center;">${cargo.length > 35 ? cargo.substring(0, 35) + '...' : cargo}</div>` : ''}
+                ${(config.labelCategoria === true && categoria) ? `<div style="font-size: 11pt; text-align: center;">${categoria.length > 30 ? categoria.substring(0, 30) + '...' : categoria}</div>` : ''}
+                ${(config.labelProfesion === true && profesion) ? `<div style="font-size: 11pt; text-align: center;">${profesion.length > 30 ? profesion.substring(0, 30) + '...' : profesion}</div>` : ''}
             </div>`;
 
             const printWindow = window.open('', '', 'width=600,height=400');
@@ -59,7 +61,7 @@ const printLabel = async (id, nombre, apellido, telefono, email, dni, profesion,
         // ✅ Con la función simple, no debería haber problemas de tamaño
         
         // Generar etiqueta con el vCard optimizado
-        generateAndPrintLabel(vcard, nombreCompleto, empresa, cargo, version);
+        generateAndPrintLabel(vcard, nombreCompleto, empresa, cargo, profesion, categoria, version, config);
         
         // Actualizar la tabla después de acreditar
         loadCounters();
@@ -91,7 +93,8 @@ const printLabelById = async (id) => {
             guest.profesion || '',
             guest.cargo || '',
             guest.empresa || '',
-            guest.redSocial || ''
+            guest.redSocial || '',
+            guest.categoria || ''
         );
         
     } catch (error) {
@@ -168,16 +171,17 @@ const saveEditedGuestAndPrint = async () => {
             // 🔥 IMPRIMIR DESPUÉS DE GUARDAR
             setTimeout(() => {
                 printLabel(
-                    id, 
-                    nombre, 
-                    apellido, 
-                    telefono, 
-                    email, 
-                    dni, 
-                    profesion, 
-                    cargo, 
-                    empresa, 
-                    redSocial
+                    id,
+                    nombre,
+                    apellido,
+                    telefono,
+                    email,
+                    dni,
+                    profesion,
+                    cargo,
+                    empresa,
+                    redSocial,
+                    categoria
                 );
             }, 500);
             
@@ -263,16 +267,17 @@ const saveNewGuestAndPrint = async () => {
             // 3. IMPRIMIR ETIQUETA (que también va a acreditar)
             setTimeout(() => {
                 printLabel(
-                    createdGuest.id, 
-                    nombre, 
-                    apellido, 
-                    telefono, 
-                    email, 
-                    dni, 
-                    profesion, 
-                    cargo, 
-                    empresa, 
-                    redSocial
+                    createdGuest.id,
+                    nombre,
+                    apellido,
+                    telefono,
+                    email,
+                    dni,
+                    profesion,
+                    cargo,
+                    empresa,
+                    redSocial,
+                    categoria
                 );
             }, 500);
             
@@ -290,7 +295,7 @@ const saveNewGuestAndPrint = async () => {
     }
 };
 // 🏷️ FUNCIÓN CON MÁRGENES VERTICALES ARREGLADOS
-const generateAndPrintLabel = (vcard, nombreCompleto, empresa, cargo, version) => {
+const generateAndPrintLabel = (vcard, nombreCompleto, empresa, cargo, profesion, categoria, version, config = {}) => {
     try {
         // 🔥 QR BÁSICO - Mínimo posible siempre
         const qr = qrcode(0, 'L'); // Auto + baja corrección = más pequeño
@@ -335,23 +340,41 @@ const etiquetaHTML = `
             ${nombreCompleto}
         </div>
         
-        ${empresa ? `<div style="
-            font-size: 12pt; 
-            margin-bottom: 0.5mm; 
+        ${(config.labelEmpresa !== false && empresa) ? `<div style="
+            font-size: 12pt;
+            margin-bottom: 0.5mm;
             line-height: 1.1;
             color: #333;
             width: 100%;
         ">
             ${empresa.length > 35 ? empresa.substring(0, 35) + '...' : empresa}
         </div>` : ''}
-        
-        ${cargo ? `<div style="
-            font-size: 11pt; 
+
+        ${(config.labelCargo !== false && cargo) ? `<div style="
+            font-size: 11pt;
             line-height: 1.1;
             color: #555;
             width: 100%;
         ">
             ${cargo.length > 25 ? cargo.substring(0, 25) + '...' : cargo}
+        </div>` : ''}
+
+        ${(config.labelCategoria === true && categoria) ? `<div style="
+            font-size: 10pt;
+            line-height: 1.1;
+            color: #666;
+            width: 100%;
+        ">
+            ${categoria.length > 20 ? categoria.substring(0, 20) + '...' : categoria}
+        </div>` : ''}
+
+        ${(config.labelProfesion === true && profesion) ? `<div style="
+            font-size: 10pt;
+            line-height: 1.1;
+            color: #666;
+            width: 100%;
+        ">
+            ${profesion.length > 20 ? profesion.substring(0, 20) + '...' : profesion}
         </div>` : ''}
     </div>
     
@@ -467,30 +490,47 @@ const openGuestQr = (id, nombre, apellido) => {
     qrWindow.document.close();
 };
 
-// 🎯 FUNCIÓN SIMPLE - QR PEQUEÑO SIEMPRE
+// 🎯 FUNCIÓN CON CONFIGURACIÓN DEL EVENTO
 const createOptimizedVCard = (nombreCompleto, empresa, email, telefono, redSocial, cargo, eventData) => {
-    
-    console.log('🔥 CREANDO QR SIMPLE - Solo datos básicos');
 
-    // 🚨 ESTRATEGIA SIMPLE: Solo nombre + teléfono O email (máximo)
-    let vcard = `BEGIN:VCARD
-VERSION:3.0
-FN:${nombreCompleto}`;
+    console.log('🔥 CREANDO QR CON CONFIGURACIÓN DEL EVENTO');
 
-    // SOLO agregar UNA cosa más: teléfono preferido, sino email
-    if (telefono && telefono.trim()) {
+    // Obtener configuración del evento
+    const config = eventData?.configuracionJson ? JSON.parse(eventData.configuracionJson) : {};
+
+    let vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nombreCompleto}`;
+
+    // Agregar campos según configuración del QR
+    if (config.qrTelefono !== false && telefono && telefono.trim()) {
         const tel = telefono.replace(/[^\d\+\-]/g, '').substring(0, 12);
         if (tel) {
             vcard += `\nTEL:${tel}`;
         }
-    } else if (email && email.trim()) {
-        const emailCorto = email.substring(0, 20);
+    }
+
+    if (config.qrEmail !== false && email && email.trim()) {
+        const emailCorto = email.substring(0, 30);
         vcard += `\nEMAIL:${emailCorto}`;
     }
-    
+
+    if (config.qrEmpresa === true && empresa && empresa.trim()) {
+        const empresaCorta = empresa.substring(0, 25);
+        vcard += `\nORG:${empresaCorta}`;
+    }
+
+    if (config.qrCargo === true && cargo && cargo.trim()) {
+        const cargoCorto = cargo.substring(0, 20);
+        vcard += `\nTITLE:${cargoCorto}`;
+    }
+
+    if (config.qrRedSocial === true && redSocial && redSocial.trim()) {
+        const redSocialCorta = redSocial.substring(0, 25);
+        vcard += `\nURL:${redSocialCorta}`;
+    }
+
     vcard += `\nEND:VCARD`;
 
-    console.log(`🔥 QR SIMPLE generado (${vcard.length} chars):`, vcard);
-    
-    return { vcard, version: 'simple', estimatedSize: 'pequeño-garantizado' };
+    console.log(`🔥 QR CONFIGURADO generado (${vcard.length} chars):`, vcard);
+
+    return { vcard, version: 'configurado', estimatedSize: 'optimizado' };
 };

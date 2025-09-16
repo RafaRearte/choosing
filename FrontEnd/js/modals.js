@@ -1,5 +1,8 @@
 // Función para mostrar modal de configuración unificado
 function mostrarModalConfiguracion(evento) {
+    // Guardar el eventoId en el botón para usarlo después
+    document.getElementById('saveConfigBtn').setAttribute('data-event-id', evento.id);
+    
     // Cargar configuración usando la nueva función centralizada
     cargarConfiguracionModal(evento.id);
     

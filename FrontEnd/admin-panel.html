@@ -1400,27 +1400,126 @@ function configureEventColumns(eventId) {
     });
 }
 
-// Función para mostrar modal de configuración
+// Función para cargar configuración al abrir el modal (específica para admin-panel)
+function cargarConfiguracionModal(eventoId) {
+    console.log('🔍 Cargando configuración para evento:', eventoId);
+    if (!eventoId) {
+        console.log('❌ No hay eventoId');
+        aplicarConfiguracionPorDefecto();
+        return;
+    }
+
+    const url = `${apiBaseUrl}/Event/${eventoId}`;
+    console.log('📡 Fetching:', url);
+
+    // Obtener evento completo (que incluye configuracionJson)
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Error al obtener datos del evento');
+        return response.json();
+    })
+    .then(evento => {
+        console.log('✅ Evento cargado:', evento);
+
+        // Parsear configuración JSON
+        const config = evento.configuracionJson ? JSON.parse(evento.configuracionJson) : {};
+        console.log('🔧 Configuración parseada:', config);
+
+        // Aplicar configuración a los checkboxes de columnas
+        const configFields = [
+            'configDni', 'configEmail', 'configEmpresa', 'configCategoria',
+            'configProfesion', 'configCargo', 'configLugar', 'configDias',
+            'configInfoAdicional', 'configTelefono', 'configRedSocial'
+        ];
+
+        configFields.forEach(fieldId => {
+            const element = document.getElementById(fieldId);
+            const configKey = fieldId.replace('config', 'mostrar');
+            if (element) {
+                element.checked = config[configKey] !== false; // por defecto true
+                console.log(`✅ ${fieldId} = ${element.checked}`);
+            }
+        });
+
+        // Aplicar configuración a las etiquetas
+        const labelFields = [
+            'labelEmpresa', 'labelCargo', 'labelCategoria', 'labelProfesion', 'labelMostrarQR'
+        ];
+
+        labelFields.forEach(fieldId => {
+            const element = document.getElementById(fieldId);
+            if (element) {
+                element.checked = config[fieldId] !== false; // por defecto true
+                console.log(`✅ ${fieldId} = ${element.checked}`);
+            }
+        });
+
+        // Aplicar configuración al QR
+        const qrFields = [
+            'qrTelefono', 'qrEmail', 'qrEmpresa', 'qrCargo', 'qrRedSocial'
+        ];
+
+        qrFields.forEach(fieldId => {
+            const element = document.getElementById(fieldId);
+            if (element) {
+                element.checked = config[fieldId] !== false; // por defecto true para teléfono/email
+                console.log(`✅ ${fieldId} = ${element.checked}`);
+            }
+        });
+
+        // Ejecutar toggle QR para mostrar/ocultar sección
+        const qrToggle = document.getElementById('labelMostrarQR');
+        if (qrToggle) {
+            const event = new Event('change');
+            qrToggle.dispatchEvent(event);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error al cargar configuración:', error);
+        alert('Error al cargar configuración: ' + error.message);
+        aplicarConfiguracionPorDefecto();
+    });
+}
+
+// Función para aplicar configuración por defecto (específica para admin-panel)
+function aplicarConfiguracionPorDefecto() {
+    console.log('🔧 Aplicando configuración por defecto');
+    const defaultChecked = ['configDni', 'configEmail', 'configEmpresa', 'configCategoria',
+                           'configProfesion', 'configCargo', 'configLugar', 'configDias',
+                           'configInfoAdicional', 'configTelefono', 'configRedSocial',
+                           'labelEmpresa', 'labelCargo', 'labelMostrarQR', 'qrTelefono', 'qrEmail'];
+
+    defaultChecked.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.checked = true;
+            console.log(`✅ ${id} marcado`);
+        } else {
+            console.log(`❌ ${id} NO ENCONTRADO`);
+        }
+    });
+
+    // Ejecutar toggle QR
+    const qrToggle = document.getElementById('labelMostrarQR');
+    if (qrToggle) {
+        const event = new Event('change');
+        qrToggle.dispatchEvent(event);
+    }
+}
+
+// Función específica para mostrar modal de configuración (sin dependencias externas)
 function mostrarModalConfiguracion(evento) {
-    // Cargar configuración actual (si existe)
-    const configuracion = evento.configuracionJson ? JSON.parse(evento.configuracionJson) : {};
-    
-    // Asignar valores a los checkboxes
-    document.getElementById('configDni').checked = configuracion.mostrarDni !== false;
-    document.getElementById('configEmail').checked = configuracion.mostrarEmail !== false;
-    document.getElementById('configEmpresa').checked = configuracion.mostrarEmpresa !== false;
-    document.getElementById('configCategoria').checked = configuracion.mostrarCategoria !== false;
-    document.getElementById('configProfesion').checked = configuracion.mostrarProfesion !== false;
-    document.getElementById('configCargo').checked = configuracion.mostrarCargo !== false;
-    document.getElementById('configDias').checked = configuracion.mostrarDias !== false;
-    document.getElementById('configInfoAdicional').checked = configuracion.mostrarInfoAdicional !== false;
-    document.getElementById('configLugar').checked = configuracion.mostrarLugar !== false;
-    document.getElementById('configTelefono').checked = configuracion.mostrarTelefono !== false;
-    document.getElementById('configRedSocial').checked = configuracion.mostrarRedSocial !== false;
-    
     // Guardar el eventoId en el botón para usarlo después
     document.getElementById('saveConfigBtn').setAttribute('data-event-id', evento.id);
-    
+
+    // Cargar configuración usando la función local
+    cargarConfiguracionModal(evento.id);
 
     // Mostrar el modal
     const modalInstance = new bootstrap.Modal(document.getElementById('configModal'));
@@ -1430,6 +1529,7 @@ function mostrarModalConfiguracion(evento) {
 function guardarConfiguracion(eventoId) {
     // Recopilar configuración del formulario
     const configuracion = {
+        // Configuración de columnas de tabla
         mostrarDni: document.getElementById('configDni').checked,
         mostrarEmail: document.getElementById('configEmail').checked,
         mostrarEmpresa: document.getElementById('configEmpresa').checked,
@@ -1440,7 +1540,21 @@ function guardarConfiguracion(eventoId) {
         mostrarDias: document.getElementById('configDias').checked,
         mostrarInfoAdicional: document.getElementById('configInfoAdicional').checked,
         mostrarTelefono: document.getElementById('configTelefono').checked,
-        mostrarRedSocial: document.getElementById('configRedSocial').checked
+        mostrarRedSocial: document.getElementById('configRedSocial').checked,
+
+        // Configuración de etiquetas
+        labelEmpresa: document.getElementById('labelEmpresa').checked,
+        labelCargo: document.getElementById('labelCargo').checked,
+        labelCategoria: document.getElementById('labelCategoria').checked,
+        labelProfesion: document.getElementById('labelProfesion').checked,
+
+        // Configuración de QR
+        labelMostrarQR: document.getElementById('labelMostrarQR').checked,
+        qrTelefono: document.getElementById('qrTelefono').checked,
+        qrEmail: document.getElementById('qrEmail').checked,
+        qrEmpresa: document.getElementById('qrEmpresa').checked,
+        qrCargo: document.getElementById('qrCargo').checked,
+        qrRedSocial: document.getElementById('qrRedSocial').checked
     };
     
     // Guardar configuración directamente usando endpoint específico
