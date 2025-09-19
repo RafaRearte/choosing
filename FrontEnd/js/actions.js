@@ -159,45 +159,6 @@ const toggleAccreditStatus = async (id, currentStatus) => {
         toast.error('Ha ocurrido un error al intentar cambiar el estado de acreditación');
     }
 };
-// Función para configurar el evento actual
-function configurarEvento() {
-    // Verificar que se ha seleccionado un evento
-    if (!currentEventId) {
-        toast.warning("Primero debe seleccionar un evento");
-        return;
-    }
-
-    // Obtener configuración actual del evento
-    showLoading();
-    
-    // Si eventData ya está cargado, usamos esos datos directamente
-    if (eventData) {
-        mostrarModalConfiguracion(eventData);
-        hideLoading();
-        return;
-    }
-    
-    fetch(`https://api.rafarearte.com/api/Event/${currentEventId}`, {
-        headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Error al obtener datos del evento');
-        return response.json();
-    })
-    .then(evento => {
-        // Mostrar modal de configuración
-        mostrarModalConfiguracion(evento);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        toast.error('Error al cargar la configuración del evento');
-    })
-    .finally(() => {
-        hideLoading();
-    });
-}
 //scanner
 
 

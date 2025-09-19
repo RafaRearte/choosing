@@ -1442,8 +1442,8 @@ function cargarConfiguracionModal(eventoId) {
             const element = document.getElementById(fieldId);
             const configKey = fieldId.replace('config', 'mostrar');
             if (element) {
-                element.checked = config[configKey] !== false; // por defecto true
-                console.log(`✅ ${fieldId} = ${element.checked}`);
+                element.checked = config[configKey] === true;
+                console.log(`✅ ${fieldId} = ${element.checked} (config[${configKey}] = ${config[configKey]})`);
             }
         });
 
@@ -1455,8 +1455,8 @@ function cargarConfiguracionModal(eventoId) {
         labelFields.forEach(fieldId => {
             const element = document.getElementById(fieldId);
             if (element) {
-                element.checked = config[fieldId] !== false; // por defecto true
-                console.log(`✅ ${fieldId} = ${element.checked}`);
+                element.checked = config[fieldId] === true;
+                console.log(`✅ ${fieldId} = ${element.checked} (config[${fieldId}] = ${config[fieldId]})`);
             }
         });
 
@@ -1468,8 +1468,8 @@ function cargarConfiguracionModal(eventoId) {
         qrFields.forEach(fieldId => {
             const element = document.getElementById(fieldId);
             if (element) {
-                element.checked = config[fieldId] !== false; // por defecto true para teléfono/email
-                console.log(`✅ ${fieldId} = ${element.checked}`);
+                element.checked = config[fieldId] === true;
+                console.log(`✅ ${fieldId} = ${element.checked} (config[${fieldId}] = ${config[fieldId]})`);
             }
         });
 
