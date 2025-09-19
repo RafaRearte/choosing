@@ -54,6 +54,16 @@
                 padding: 0;
                 margin: 0;
             }
+            /* Forzar texto negro en impresión */
+            .nombre, .info, .dni {
+                color: black !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            /* Asegurar que todas las etiquetas tengan texto negro */
+            .etiqueta * {
+                color: black !important;
+            }
         }
         
         /* Estilos para las etiquetas */
@@ -323,55 +333,53 @@
             generateLabels(filteredGuests);
         }
         
-        // 🎯 FUNCIONES IMPORTADAS DE print.js PARA PERSONALIZACIÓN
+        // FUNCIONES DE PERSONALIZACIÓN (sin template literals anidados)
 
-        // Función para crear vCard optimizado con configuración del evento
-        const createOptimizedVCard = (nombreCompleto, empresa, email, telefono, redSocial, cargo, eventData) => {
+        // Función para crear vCard optimizado
+        function createOptimizedVCard(nombreCompleto, empresa, email, telefono, redSocial, cargo, eventData) {
             console.log('🔥 CREANDO QR CON CONFIGURACIÓN DEL EVENTO');
 
-            // Obtener configuración del evento
             const config = eventData?.configuracionJson ? JSON.parse(eventData.configuracionJson) : {};
 
-            let vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nombreCompleto}`;
+            let vcard = 'BEGIN:VCARD\nVERSION:3.0\nFN:' + nombreCompleto;
 
-            // Agregar campos según configuración del QR
             if (config.qrTelefono !== false && telefono && telefono.trim()) {
                 const tel = telefono.replace(/[^\d\+\-]/g, '').substring(0, 12);
                 if (tel) {
-                    vcard += `\nTEL:${tel}`;
+                    vcard += '\nTEL:' + tel;
                 }
             }
 
             if (config.qrEmail !== false && email && email.trim()) {
                 const emailCorto = email.substring(0, 30);
-                vcard += `\nEMAIL:${emailCorto}`;
+                vcard += '\nEMAIL:' + emailCorto;
             }
 
             if (config.qrEmpresa === true && empresa && empresa.trim()) {
                 const empresaCorta = empresa.substring(0, 25);
-                vcard += `\nORG:${empresaCorta}`;
+                vcard += '\nORG:' + empresaCorta;
             }
 
             if (config.qrCargo === true && cargo && cargo.trim()) {
                 const cargoCorto = cargo.substring(0, 20);
-                vcard += `\nTITLE:${cargoCorto}`;
+                vcard += '\nTITLE:' + cargoCorto;
             }
 
             if (config.qrRedSocial === true && redSocial && redSocial.trim()) {
                 const redSocialCorta = redSocial.substring(0, 25);
-                vcard += `\nURL:${redSocialCorta}`;
+                vcard += '\nURL:' + redSocialCorta;
             }
 
-            vcard += `\nEND:VCARD`;
+            vcard += '\nEND:VCARD';
 
-            console.log(`🔥 QR CONFIGURADO generado (${vcard.length} chars):`, vcard);
+            console.log('🔥 QR CONFIGURADO generado (' + vcard.length + ' chars):', vcard);
 
-            return { vcard, version: 'configurado', estimatedSize: 'optimizado' };
-        };
+            return { vcard: vcard, version: 'configurado', estimatedSize: 'optimizado' };
+        }
 
-        // Función para generar etiqueta individual con configuración
-        const generateSingleLabel = (guest, config) => {
-            const nombreCompleto = `${guest.nombre || ''} ${guest.apellido || ''}`.trim();
+        // Función para generar etiqueta personalizada
+        function generateSingleLabel(guest, config) {
+            const nombreCompleto = (guest.nombre || '') + ' ' + (guest.apellido || '');
             const empresa = guest.empresa || '';
             const cargo = guest.cargo || '';
             const profesion = guest.profesion || '';
@@ -380,54 +388,92 @@
             const email = guest.mail || '';
             const redSocial = guest.redSocial || '';
 
-            // 🔥 VERIFICAR CONFIG DEL QR
+            // Etiqueta sin QR
             if (config.labelMostrarQR === false) {
-                // Etiqueta sin QR
-                return `
-                <div class="etiqueta">
-                    <div class="nombre">${nombreCompleto}</div>
-                    ${(config.labelEmpresa !== false && empresa) ? `<div class="info">${empresa.length > 45 ? empresa.substring(0, 45) + '...' : empresa}</div>` : ''}
-                    ${(config.labelCargo !== false && cargo) ? `<div class="info">${cargo.length > 35 ? cargo.substring(0, 35) + '...' : cargo}</div>` : ''}
-                    ${(config.labelCategoria === true && categoria) ? `<div class="info">${categoria.length > 30 ? categoria.substring(0, 30) + '...' : categoria}</div>` : ''}
-                    ${(config.labelProfesion === true && profesion) ? `<div class="info">${profesion.length > 30 ? profesion.substring(0, 30) + '...' : profesion}</div>` : ''}
-                </div>`;
+                let html = '<div class="etiqueta" style="color: black;">';
+                html += '<div style="font-weight: bold; font-size: 16pt; color: black; text-align: center;">' + nombreCompleto + '</div>';
+
+                if (config.labelEmpresa !== false && empresa) {
+                    const empresaText = empresa.length > 45 ? empresa.substring(0, 45) + '...' : empresa;
+                    html += '<div style="font-size: 12pt; color: black; text-align: center;">' + empresaText + '</div>';
+                }
+
+                if (config.labelCargo !== false && cargo) {
+                    const cargoText = cargo.length > 35 ? cargo.substring(0, 35) + '...' : cargo;
+                    html += '<div style="font-size: 11pt; color: black; text-align: center;">' + cargoText + '</div>';
+                }
+
+                if (config.labelCategoria === true && categoria) {
+                    const categoriaText = categoria.length > 30 ? categoria.substring(0, 30) + '...' : categoria;
+                    html += '<div style="font-size: 10pt; color: black; text-align: center;">' + categoriaText + '</div>';
+                }
+
+                if (config.labelProfesion === true && profesion) {
+                    const profesionText = profesion.length > 30 ? profesion.substring(0, 30) + '...' : profesion;
+                    html += '<div style="font-size: 10pt; color: black; text-align: center;">' + profesionText + '</div>';
+                }
+
+                html += '</div>';
+                return html;
             }
 
             // Etiqueta con QR
             try {
-                const { vcard } = createOptimizedVCard(nombreCompleto, empresa, email, telefono, redSocial, cargo, eventData);
+                const vCardData = createOptimizedVCard(nombreCompleto, empresa, email, telefono, redSocial, cargo, eventData);
 
                 const qr = qrcode(0, 'L');
-                qr.addData(vcard);
+                qr.addData(vCardData.vcard);
                 qr.make();
                 const qrSvg = qr.createSvgTag(1.8, 0);
 
-                return `
-                <div class="etiqueta" style="display: flex; align-items: center; padding: 2mm;">
-                    <div style="width: 60mm; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-                        <div class="nombre">${nombreCompleto}</div>
-                        ${(config.labelEmpresa !== false && empresa) ? `<div class="info">${empresa.length > 35 ? empresa.substring(0, 35) + '...' : empresa}</div>` : ''}
-                        ${(config.labelCargo !== false && cargo) ? `<div class="info">${cargo.length > 25 ? cargo.substring(0, 25) + '...' : cargo}</div>` : ''}
-                        ${(config.labelCategoria === true && categoria) ? `<div class="info">${categoria.length > 20 ? categoria.substring(0, 20) + '...' : categoria}</div>` : ''}
-                        ${(config.labelProfesion === true && profesion) ? `<div class="info">${profesion.length > 20 ? profesion.substring(0, 20) + '...' : profesion}</div>` : ''}
-                    </div>
-                    <div style="width: 24mm; height: 20mm; display: flex; align-items: center; justify-content: center; margin-left: auto;">
-                        ${qrSvg}
-                    </div>
-                </div>`;
+                let html = '<div class="etiqueta" style="display: flex; align-items: center; padding: 2mm; color: black;">';
+                html += '<div style="width: 60mm; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">';
+                html += '<div style="font-weight: bold; font-size: 16pt; color: black;">' + nombreCompleto + '</div>';
+
+                if (config.labelEmpresa !== false && empresa) {
+                    const empresaText = empresa.length > 35 ? empresa.substring(0, 35) + '...' : empresa;
+                    html += '<div style="font-size: 12pt; color: black;">' + empresaText + '</div>';
+                }
+
+                if (config.labelCargo !== false && cargo) {
+                    const cargoText = cargo.length > 25 ? cargo.substring(0, 25) + '...' : cargo;
+                    html += '<div style="font-size: 11pt; color: black;">' + cargoText + '</div>';
+                }
+
+                if (config.labelCategoria === true && categoria) {
+                    const categoriaText = categoria.length > 20 ? categoria.substring(0, 20) + '...' : categoria;
+                    html += '<div style="font-size: 10pt; color: black;">' + categoriaText + '</div>';
+                }
+
+                if (config.labelProfesion === true && profesion) {
+                    const profesionText = profesion.length > 20 ? profesion.substring(0, 20) + '...' : profesion;
+                    html += '<div style="font-size: 10pt; color: black;">' + profesionText + '</div>';
+                }
+
+                html += '</div>';
+                html += '<div style="width: 24mm; height: 20mm; display: flex; align-items: center; justify-content: center; margin-left: auto;">';
+                html += qrSvg;
+                html += '</div>';
+                html += '</div>';
+
+                return html;
             } catch (error) {
                 console.error('Error generando QR:', error);
                 // Fallback sin QR
-                return `
-                <div class="etiqueta">
-                    <div class="nombre">${nombreCompleto}</div>
-                    ${empresa ? `<div class="info">${empresa}</div>` : ''}
-                    ${cargo ? `<div class="info">${cargo}</div>` : ''}
-                </div>`;
+                let html = '<div class="etiqueta" style="color: black;">';
+                html += '<div style="font-weight: bold; font-size: 16pt; color: black; text-align: center;">' + nombreCompleto + '</div>';
+                if (empresa) {
+                    html += '<div style="font-size: 12pt; color: black; text-align: center;">' + empresa + '</div>';
+                }
+                if (cargo) {
+                    html += '<div style="font-size: 11pt; color: black; text-align: center;">' + cargo + '</div>';
+                }
+                html += '</div>';
+                return html;
             }
-        };
+        }
 
-        // Función para generar las etiquetas CON PERSONALIZACIÓN
+        // Función para generar las etiquetas
         function generateLabels(guests) {
             const container = $('#etiquetasContainer');
             container.empty();
@@ -449,12 +495,10 @@
                 } catch (error) {
                     console.error('Error generando etiqueta para:', guest.nombre, error);
                     // Fallback básico
-                    const fallback = `
-                        <div class="etiqueta">
-                            <div class="nombre">${guest.nombre} ${guest.apellido}</div>
-                            <div class="info">${guest.empresa || ''}</div>
-                        </div>
-                    `;
+                    const fallback = '<div class="etiqueta" style="color: black;">' +
+                        '<div style="font-weight: bold; font-size: 16pt; color: black; text-align: center;">' + guest.nombre + ' ' + guest.apellido + '</div>' +
+                        '<div style="font-size: 12pt; color: black; text-align: center;">' + (guest.empresa || '') + '</div>' +
+                        '</div>';
                     container.append(fallback);
                 }
             });
