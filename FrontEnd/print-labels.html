@@ -79,14 +79,17 @@
             font-weight: bold;
             font-size: 16pt;
             text-align: center;
+            color: black;
         }
         .info {
             font-size: 12pt;
             text-align: center;
+            color: black;
         }
         .dni {
             font-size: 10pt;
             text-align: center;
+            color: black;
         }
         #etiquetasContainer {
             max-width: 800px;
@@ -158,6 +161,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     
     <script>
         // URLs para las APIs
@@ -168,6 +173,7 @@
         let events = [];
         let currentGuests = [];
         let categories = [];
+        let eventData = null; // Para guardar configuración del evento actual
         
         // Al cargar el documento
         $(document).ready(function() {
@@ -258,13 +264,21 @@
         // Función para cargar invitados de un evento
         async function loadGuests(eventId) {
             try {
-                const response = await authenticatedFetch(`${apiUrl}/GetAll?eventId=${eventId}`);
-                if (!response || !response.ok) {
+                // Cargar invitados
+                const guestsResponse = await authenticatedFetch(`${apiUrl}/GetAll?eventId=${eventId}`);
+                if (!guestsResponse || !guestsResponse.ok) {
                     throw new Error('Error al cargar invitados');
                 }
-                
-                currentGuests = await response.json();
-                
+
+                currentGuests = await guestsResponse.json();
+
+                // Cargar configuración del evento
+                const eventResponse = await authenticatedFetch(`${eventApiUrl}/${eventId}`);
+                if (eventResponse && eventResponse.ok) {
+                    eventData = await eventResponse.json();
+                    console.log('🔧 Configuración del evento cargada:', eventData.configuracionJson);
+                }
+
                 // Aplicar filtros iniciales
                 applyFilters();
             } catch (error) {
@@ -309,28 +323,140 @@
             generateLabels(filteredGuests);
         }
         
-        // Función para generar las etiquetas
+        // 🎯 FUNCIONES IMPORTADAS DE print.js PARA PERSONALIZACIÓN
+
+        // Función para crear vCard optimizado con configuración del evento
+        const createOptimizedVCard = (nombreCompleto, empresa, email, telefono, redSocial, cargo, eventData) => {
+            console.log('🔥 CREANDO QR CON CONFIGURACIÓN DEL EVENTO');
+
+            // Obtener configuración del evento
+            const config = eventData?.configuracionJson ? JSON.parse(eventData.configuracionJson) : {};
+
+            let vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nombreCompleto}`;
+
+            // Agregar campos según configuración del QR
+            if (config.qrTelefono !== false && telefono && telefono.trim()) {
+                const tel = telefono.replace(/[^\d\+\-]/g, '').substring(0, 12);
+                if (tel) {
+                    vcard += `\nTEL:${tel}`;
+                }
+            }
+
+            if (config.qrEmail !== false && email && email.trim()) {
+                const emailCorto = email.substring(0, 30);
+                vcard += `\nEMAIL:${emailCorto}`;
+            }
+
+            if (config.qrEmpresa === true && empresa && empresa.trim()) {
+                const empresaCorta = empresa.substring(0, 25);
+                vcard += `\nORG:${empresaCorta}`;
+            }
+
+            if (config.qrCargo === true && cargo && cargo.trim()) {
+                const cargoCorto = cargo.substring(0, 20);
+                vcard += `\nTITLE:${cargoCorto}`;
+            }
+
+            if (config.qrRedSocial === true && redSocial && redSocial.trim()) {
+                const redSocialCorta = redSocial.substring(0, 25);
+                vcard += `\nURL:${redSocialCorta}`;
+            }
+
+            vcard += `\nEND:VCARD`;
+
+            console.log(`🔥 QR CONFIGURADO generado (${vcard.length} chars):`, vcard);
+
+            return { vcard, version: 'configurado', estimatedSize: 'optimizado' };
+        };
+
+        // Función para generar etiqueta individual con configuración
+        const generateSingleLabel = (guest, config) => {
+            const nombreCompleto = `${guest.nombre || ''} ${guest.apellido || ''}`.trim();
+            const empresa = guest.empresa || '';
+            const cargo = guest.cargo || '';
+            const profesion = guest.profesion || '';
+            const categoria = guest.categoria || '';
+            const telefono = guest.telefono || '';
+            const email = guest.mail || '';
+            const redSocial = guest.redSocial || '';
+
+            // 🔥 VERIFICAR CONFIG DEL QR
+            if (config.labelMostrarQR === false) {
+                // Etiqueta sin QR
+                return `
+                <div class="etiqueta">
+                    <div class="nombre">${nombreCompleto}</div>
+                    ${(config.labelEmpresa !== false && empresa) ? `<div class="info">${empresa.length > 45 ? empresa.substring(0, 45) + '...' : empresa}</div>` : ''}
+                    ${(config.labelCargo !== false && cargo) ? `<div class="info">${cargo.length > 35 ? cargo.substring(0, 35) + '...' : cargo}</div>` : ''}
+                    ${(config.labelCategoria === true && categoria) ? `<div class="info">${categoria.length > 30 ? categoria.substring(0, 30) + '...' : categoria}</div>` : ''}
+                    ${(config.labelProfesion === true && profesion) ? `<div class="info">${profesion.length > 30 ? profesion.substring(0, 30) + '...' : profesion}</div>` : ''}
+                </div>`;
+            }
+
+            // Etiqueta con QR
+            try {
+                const { vcard } = createOptimizedVCard(nombreCompleto, empresa, email, telefono, redSocial, cargo, eventData);
+
+                const qr = qrcode(0, 'L');
+                qr.addData(vcard);
+                qr.make();
+                const qrSvg = qr.createSvgTag(1.8, 0);
+
+                return `
+                <div class="etiqueta" style="display: flex; align-items: center; padding: 2mm;">
+                    <div style="width: 60mm; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                        <div class="nombre">${nombreCompleto}</div>
+                        ${(config.labelEmpresa !== false && empresa) ? `<div class="info">${empresa.length > 35 ? empresa.substring(0, 35) + '...' : empresa}</div>` : ''}
+                        ${(config.labelCargo !== false && cargo) ? `<div class="info">${cargo.length > 25 ? cargo.substring(0, 25) + '...' : cargo}</div>` : ''}
+                        ${(config.labelCategoria === true && categoria) ? `<div class="info">${categoria.length > 20 ? categoria.substring(0, 20) + '...' : categoria}</div>` : ''}
+                        ${(config.labelProfesion === true && profesion) ? `<div class="info">${profesion.length > 20 ? profesion.substring(0, 20) + '...' : profesion}</div>` : ''}
+                    </div>
+                    <div style="width: 24mm; height: 20mm; display: flex; align-items: center; justify-content: center; margin-left: auto;">
+                        ${qrSvg}
+                    </div>
+                </div>`;
+            } catch (error) {
+                console.error('Error generando QR:', error);
+                // Fallback sin QR
+                return `
+                <div class="etiqueta">
+                    <div class="nombre">${nombreCompleto}</div>
+                    ${empresa ? `<div class="info">${empresa}</div>` : ''}
+                    ${cargo ? `<div class="info">${cargo}</div>` : ''}
+                </div>`;
+            }
+        };
+
+        // Función para generar las etiquetas CON PERSONALIZACIÓN
         function generateLabels(guests) {
             const container = $('#etiquetasContainer');
             container.empty();
-            
+
             if (guests.length === 0) {
                 container.html('<div class="alert alert-warning">No hay invitados que coincidan con los criterios seleccionados.</div>');
                 return;
             }
-            
-            // Generar una etiqueta para cada invitado
+
+            // Obtener configuración del evento
+            const config = eventData?.configuracionJson ? JSON.parse(eventData.configuracionJson) : {};
+            console.log('🔧 Usando configuración para etiquetas masivas:', config);
+
+            // Generar una etiqueta personalizada para cada invitado
             guests.forEach(guest => {
-                const etiqueta = `
-                    <div class="etiqueta">
-                        <div class="nombre">${guest.nombre} ${guest.apellido}</div>
-                        <div class="info">${guest.empresa || ''}</div>
-                        <div class="info">${guest.profesion || ''}</div>
-                        <div class="info">${guest.cargo || ''}</div>
-                        ${guest.dni ? `<div class="dni">DNI: ${guest.dni}</div>` : ''}
-                    </div>
-                `;
-                container.append(etiqueta);
+                try {
+                    const etiquetaHTML = generateSingleLabel(guest, config);
+                    container.append(etiquetaHTML);
+                } catch (error) {
+                    console.error('Error generando etiqueta para:', guest.nombre, error);
+                    // Fallback básico
+                    const fallback = `
+                        <div class="etiqueta">
+                            <div class="nombre">${guest.nombre} ${guest.apellido}</div>
+                            <div class="info">${guest.empresa || ''}</div>
+                        </div>
+                    `;
+                    container.append(fallback);
+                }
             });
         }
         
@@ -393,14 +519,19 @@
         
         // Función para cerrar sesión
         function logout() {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userData');
-        localStorage.removeItem('currentEventId');
-        localStorage.removeItem('currentEventName');
-        localStorage.removeItem('eventCodes');
-        localStorage.removeItem('currentEventAccess');
-        localStorage.removeItem('isGlobalAdmin');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('currentEventId');
+            localStorage.removeItem('currentEventName');
+            localStorage.removeItem('eventCodes');
+            localStorage.removeItem('currentEventAccess');
+            localStorage.removeItem('isGlobalAdmin');
             window.location.href = 'login.html';
+        }
+
+        // Helper para confirmación de acciones
+        async function showActionConfirm(title, message) {
+            return confirm(`${title}\n\n${message}`);
         }
     </script>
 <script src="js/pwa.js"></script>
