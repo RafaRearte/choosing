@@ -45,7 +45,7 @@
             border-radius: 8px;
             margin-bottom: 20px;
         }
-        
+
         @media print {
             .print-controls, .filter-section, .no-print {
                 display: none !important;
@@ -53,20 +53,40 @@
             body {
                 padding: 0;
                 margin: 0;
+                background: transparent !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
-            /* Forzar texto negro en impresión */
-            .nombre, .info, .dni {
+            /* SOLO forzar texto negro, fondo transparente */
+            * {
                 color: black !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                background: transparent !important;
+                background-color: transparent !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
-            /* Asegurar que todas las etiquetas tengan texto negro */
-            .etiqueta * {
-                color: black !important;
+            .etiqueta {
+                background: transparent !important;
+                background-color: transparent !important;
             }
         }
-        
-        /* Estilos para las etiquetas */
+
+        /* CSS específico para cuadro de diálogo de impresión */
+        @media screen {
+            /* Forzar colores cuando se está en preview de impresión */
+            html.print-preview *,
+            html[data-print-preview] *,
+            body.print-preview *,
+            body[data-print-preview] * {
+                color: black !important;
+                background: transparent !important;
+                background-color: transparent !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+
+        /* Estilos para las etiquetas - ORIGINALES */
         .etiqueta {
             width: 90mm;
             height: 26mm;
@@ -410,7 +430,7 @@
 
                 if (config.labelProfesion === true && profesion) {
                     const profesionText = profesion.length > 30 ? profesion.substring(0, 30) + '...' : profesion;
-                    html += '<div style="font-size: 10pt; color: black; text-align: center;">' + profesionText + '</div>';
+                    html += '<div style="font-size: 10pt; color: black; text-align: center;">' + categoriaText + '</div>';
                 }
 
                 html += '</div>';
@@ -513,16 +533,55 @@
         // Función para imprimir las etiquetas
         async function printLabels() {
             const etiquetasCount = $('#etiquetasContainer .etiqueta').length;
-            
+
             if (etiquetasCount === 0) {
                 toast.warning('No hay etiquetas para imprimir');
                 return;
             }
-            
+
             // Confirmar impresión
             if (await showActionConfirm('Imprimir etiquetas', `¿Está seguro que desea imprimir ${etiquetasCount} etiquetas?`)) {
+                // Forzar colores antes de imprimir
+                forceBlackTextForPrinting();
+
+                // Detectar eventos de impresión
+                window.addEventListener('beforeprint', forceBlackTextForPrinting);
+                window.addEventListener('afterprint', restoreColors);
+
                 window.print();
             }
+        }
+
+        // Función para forzar texto negro
+        function forceBlackTextForPrinting() {
+            console.log('🖨️ Forzando colores negros para impresión');
+
+            // Agregar clase especial al body
+            document.body.classList.add('print-preview');
+            document.documentElement.classList.add('print-preview');
+
+            // Forzar estilos inline en todas las etiquetas
+            const etiquetas = document.querySelectorAll('.etiqueta, .etiqueta *');
+            etiquetas.forEach(el => {
+                el.style.setProperty('color', 'black', 'important');
+                el.style.setProperty('background', 'transparent', 'important');
+                el.style.setProperty('background-color', 'transparent', 'important');
+                el.style.setProperty('-webkit-print-color-adjust', 'exact', 'important');
+                el.style.setProperty('print-color-adjust', 'exact', 'important');
+            });
+        }
+
+        // Función para restaurar colores originales
+        function restoreColors() {
+            console.log('🔄 Restaurando colores originales');
+
+            // Remover clases especiales
+            document.body.classList.remove('print-preview');
+            document.documentElement.classList.remove('print-preview');
+
+            // Remover listeners
+            window.removeEventListener('beforeprint', forceBlackTextForPrinting);
+            window.removeEventListener('afterprint', restoreColors);
         }
         
         // Función helper para hacer peticiones autenticadas

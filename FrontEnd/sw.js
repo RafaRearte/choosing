@@ -1,4 +1,4 @@
-const VERSION = '1.0.11';
+const VERSION = '1.0.12';
 const CACHE_NAME = `choosing-v${VERSION}`;
 const STATIC_CACHE = `choosing-static-v${VERSION}`;
 const API_CACHE = `choosing-api-v${VERSION}`;
