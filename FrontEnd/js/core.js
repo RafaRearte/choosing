@@ -1,6 +1,6 @@
 // URLs para las APIs
-const apiUrl = "https://api.rafarearte.com/api/List";
-const eventApiUrl = "https://api.rafarearte.com/api/Event";
+const apiUrl = CONFIG.API.LIST;
+const eventApiUrl = CONFIG.API.EVENT;
 // Inicializar DataTable
 let dataTable;
 let eventData = null;
