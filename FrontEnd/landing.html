@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choosing - Acreditación de Eventos sin Colas</title>
+    <meta name="description" content="Elimina las colas en tus eventos. Acreditación instantánea con QR, gestión completa de participantes y estadísticas en tiempo real.">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #1e3c72;
+            --secondary: #2a5298;
+            --accent: #3d5da8;
+            --success: #10b981;
+            --dark: #1a202c;
+            --light: #f7fafc;
+            --text: #2d3748;
+            --text-light: #718096;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* =================== NAVBAR =================== */
+        .navbar {
+            background: rgba(255, 255, 255, 0.98) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+            padding: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            padding: 0.5rem 0;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.12);
+        }
+
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary) !important;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .navbar-brand .logo-icon {
+            font-size: 2rem;
+        }
+
+        .nav-link {
+            color: var(--text) !important;
+            font-weight: 500;
+            margin: 0 0.8rem;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 80%;
+        }
+
+        .btn-cta {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border: none;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            color: white !important;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3);
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(30, 60, 114, 0.4);
+        }
+
+        /* =================== HERO =================== */
+        .hero {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 60%, #7e8ba3 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 120px 0 80px;
+        }
+
+        .hero::before,
+        .hero::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .hero::before {
+            width: 500px;
+            height: 500px;
+            top: -250px;
+            right: -250px;
+        }
+
+        .hero::after {
+            width: 400px;
+            height: 400px;
+            bottom: -200px;
+            left: -200px;
+            animation-delay: -4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(10deg); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 .highlight {
+            color: #fbbf24;
+            position: relative;
+        }
+
+        .hero .lead {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 3rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.8rem;
+            font-weight: 800;
+            display: block;
+            color: #fbbf24;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .hero-image {
+            position: relative;
+            z-index: 10;
+        }
+
+        .phone-mockup {
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .phone-mockup img {
+            width: 100%;
+            border-radius: 30px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+        }
+
+        /* =================== PROBLEM SECTION =================== */
+        .problem-section {
+            padding: 100px 0;
+            background: #fff;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .section-header p {
+            font-size: 1.2rem;
+            color: var(--text-light);
+        }
+
+        .problem-card {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            padding: 2.5rem;
+            border-radius: 20px;
+            border-left: 5px solid #ef4444;
+            margin-bottom: 1.5rem;
+        }
+
+        .problem-card h4 {
+            color: #991b1b;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .problem-card p {
+            color: #7f1d1d;
+            margin: 0;
+        }
+
+        .solution-card {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            padding: 2.5rem;
+            border-radius: 20px;
+            border-left: 5px solid var(--success);
+            margin-bottom: 1.5rem;
+        }
+
+        .solution-card h4 {
+            color: #065f46;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .solution-card p {
+            color: #064e3b;
+            margin: 0;
+        }
+
+        /* =================== FEATURES =================== */
+        .features {
+            padding: 100px 0;
+            background: var(--light);
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            transition: all 0.4s ease;
+            height: 100%;
+            border: 2px solid transparent;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(30, 60, 114, 0.15);
+            border-color: var(--secondary);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .feature-card p {
+            color: var(--text-light);
+            line-height: 1.8;
+        }
+
+        /* =================== SCREENSHOTS =================== */
+        .screenshots {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .screenshot-carousel {
+            position: relative;
+        }
+
+        .screenshot-item {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+            transition: all 0.4s ease;
+        }
+
+        .screenshot-item:hover {
+            transform: scale(1.03);
+            box-shadow: 0 25px 70px rgba(0,0,0,0.2);
+        }
+
+        .screenshot-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .screenshot-info {
+            padding: 2rem;
+            background: var(--light);
+        }
+
+        .screenshot-info h4 {
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            color: var(--text);
+        }
+
+        .screenshot-info p {
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        /* =================== PRICING =================== */
+        .pricing {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #f7fafc 0%, #e4e9f2 100%);
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 25px;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+            transition: all 0.4s ease;
+            height: 100%;
+            position: relative;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 30px 70px rgba(30, 60, 114, 0.2);
+        }
+
+        .pricing-card.featured {
+            border: 4px solid var(--secondary);
+            transform: scale(1.08);
+            z-index: 10;
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            box-shadow: 0 5px 20px rgba(30, 60, 114, 0.4);
+        }
+
+        .pricing-card h3 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--text);
+            text-align: center;
+        }
+
+        .pricing-price {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .price-amount {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--primary);
+        }
+
+        .price-currency {
+            font-size: 1.5rem;
+            vertical-align: super;
+        }
+
+        .price-period {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            font-weight: 400;
+        }
+
+        .pricing-features {
+            list-style: none;
+            padding: 0;
+            margin: 2rem 0;
+        }
+
+        .pricing-features li {
+            padding: 1rem 0;
+            border-bottom: 1px solid #e5e7eb;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+
+        .pricing-features li i {
+            color: var(--success);
+            font-size: 1.2rem;
+        }
+
+        /* =================== TESTIMONIALS =================== */
+        .testimonials {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .testimonial-card {
+            background: var(--light);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            height: 100%;
+            position: relative;
+        }
+
+        .quote-icon {
+            font-size: 3rem;
+            color: var(--secondary);
+            opacity: 0.3;
+            position: absolute;
+            top: 20px;
+            right: 30px;
+        }
+
+        .testimonial-text {
+            font-size: 1.1rem;
+            font-style: italic;
+            color: var(--text);
+            margin-bottom: 2rem;
+            line-height: 1.8;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .author-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .author-info h5 {
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+            color: var(--text);
+        }
+
+        .author-info p {
+            margin: 0;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .author-info .company {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+
+        /* =================== CONTACT =================== */
+        .contact {
+            padding: 100px 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .contact-form {
+            background: white;
+            padding: 3rem;
+            border-radius: 25px;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.3);
+        }
+
+        .contact-form h3 {
+            color: var(--text);
+            font-weight: 800;
+            margin-bottom: 2rem;
+        }
+
+        .form-control {
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 4px rgba(42, 82, 152, 0.1);
+            outline: none;
+        }
+
+        .contact-info {
+            padding: 2rem 0;
+        }
+
+        .contact-info h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .contact-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .btn-whatsapp {
+            background: #25d366;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-whatsapp:hover {
+            background: #128c7e;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4);
+        }
+
+        /* =================== FOOTER =================== */
+        footer {
+            background: #1a202c;
+            color: white;
+            padding: 4rem 0 2rem;
+        }
+
+        footer h5 {
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        footer a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            display: block;
+            margin-bottom: 0.8rem;
+        }
+
+        footer a:hover {
+            color: white;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-link {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: var(--secondary);
+            transform: translateY(-3px);
+            color: white;
+        }
+
+        /* =================== RESPONSIVE =================== */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero .lead {
+                font-size: 1.1rem;
+            }
+
+            .hero-stats {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .section-header h2 {
+                font-size: 2rem;
+            }
+
+            .pricing-card.featured {
+                transform: scale(1);
+            }
+        }
+
+        /* Success Alert */
+        .alert-success-custom {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 9999;
+            background: var(--success);
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- =================== NAVBAR =================== -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <span class="logo-icon">🎯</span>
+                <span>Choosing</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="#que-es">Qué es</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#caracteristicas">Características</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#capturas">Capturas</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#precios">Precios</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#testimonios">Testimonios</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#contacto">Contacto</a></li>
+                    <li class="nav-item ms-3">
+                        <a href="login.html" class="btn btn-cta">Iniciar Sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- =================== HERO =================== -->
+    <section class="hero">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 hero-content" data-aos="fade-right">
+                    <h1>Elimina las <span class="highlight">colas</span> en tus eventos</h1>
+                    <p class="lead">Acreditación instantánea con códigos QR. Gestiona miles de participantes en segundos y obtén control total en tiempo real.</p>
+
+                    <div class="d-flex gap-3 flex-wrap">
+                        <a href="#contacto" class="btn btn-light btn-lg px-4 py-3">
+                            <i class="bi bi-rocket-takeoff me-2"></i>Empezar ahora
+                        </a>
+                        <a href="#que-es" class="btn btn-outline-light btn-lg px-4 py-3">
+                            <i class="bi bi-play-circle me-2"></i>Ver cómo funciona
+                        </a>
+                    </div>
+
+                    <div class="hero-stats">
+                        <div class="stat-box">
+                            <span class="stat-number">15,000+</span>
+                            <span class="stat-label">Participantes acreditados</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-number">850+</span>
+                            <span class="stat-label">Eventos exitosos</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-number">99%</span>
+                            <span class="stat-label">Sin colas</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 hero-image" data-aos="fade-left">
+                    <div class="phone-mockup">
+                        <img src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=700&fit=crop" alt="App Choosing">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =================== PROBLEMA Y SOLUCIÓN =================== -->
+    <section class="problem-section" id="que-es">
+        <div class="container">
+            <div class="section-header" data-aos="fade-up">
+                <h2>¿Cansado de las colas interminables en la entrada?</h2>
+                <p>Choosing es la solución definitiva para acreditación masiva de eventos</p>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-6" data-aos="fade-right">
+                    <h3 class="mb-4">😫 Sin Choosing:</h3>
+                    <div class="problem-card">
+                        <h4><i class="bi bi-x-circle-fill"></i> Colas de espera eternas</h4>
+                        <p>Participantes esperando 30-45 minutos para ingresar. Primera impresión: frustración.</p>
+                    </div>
+                    <div class="problem-card">
+                        <h4><i class="bi bi-x-circle-fill"></i> Errores manuales constantes</h4>
+                        <p>Planillas en papel, nombres mal escritos, acreditaciones duplicadas, caos total.</p>
+                    </div>
+                    <div class="problem-card">
+                        <h4><i class="bi bi-x-circle-fill"></i> Sin datos en tiempo real</h4>
+                        <p>No sabes cuánta gente ingresó hasta que termina el evento. Imposible tomar decisiones.</p>
+                    </div>
+                    <div class="problem-card">
+                        <h4><i class="bi bi-x-circle-fill"></i> Personal saturado</h4>
+                        <p>Necesitas 10 personas solo para chequear listas en papel. Costo operativo altísimo.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-6" data-aos="fade-left">
+                    <h3 class="mb-4">✅ Con Choosing:</h3>
+                    <div class="solution-card">
+                        <h4><i class="bi bi-check-circle-fill"></i> Entrada instantánea</h4>
+                        <p>Escaneo de QR en 2 segundos. Miles de personas ingresan sin esperar. ¡Adiós colas!</p>
+                    </div>
+                    <div class="solution-card">
+                        <h4><i class="bi bi-check-circle-fill"></i> 100% digital y preciso</h4>
+                        <p>Base de datos centralizada, búsquedas instantáneas, cero errores, todo sincronizado.</p>
+                    </div>
+                    <div class="solution-card">
+                        <h4><i class="bi bi-check-circle-fill"></i> Dashboard en vivo</h4>
+                        <p>Ves en tiempo real quién ingresó, cuándo, estadísticas por sector. Control total.</p>
+                    </div>
+                    <div class="solution-card">
+                        <h4><i class="bi bi-check-circle-fill"></i> Equipo reducido</h4>
+                        <p>Con 2-3 tablets acreditas a todos. Ahorra costos y mejora la experiencia.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-5" data-aos="zoom-in">
+                <a href="#contacto" class="btn btn-cta btn-lg px-5 py-3">
+                    <i class="bi bi-lightning-charge-fill me-2"></i>Quiero eliminar las colas en mi evento
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- =================== CARACTERÍSTICAS =================== -->
+    <section class="features" id="caracteristicas">
+        <div class="container">
+            <div class="section-header" data-aos="fade-up">
+                <h2>Todo lo que necesitas en una sola plataforma</h2>
+                <p>Herramientas profesionales para eventos de cualquier tamaño</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-qr-code-scan"></i>
+                        </div>
+                        <h3>Acreditación QR</h3>
+                        <p>Escanea el QR del invitado y acredítalo en 2 segundos. Compatible con tablets, smartphones y lectores profesionales.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <h3>Gestión de Participantes</h3>
+                        <p>Carga masiva de invitados via Excel, edición individual, categorías personalizadas, búsqueda instantánea.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-printer-fill"></i>
+                        </div>
+                        <h3>Credenciales con QR</h3>
+                        <p>Genera e imprime credenciales personalizadas con código QR único. Compatible con impresoras térmicas.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h3>Estadísticas en Tiempo Real</h3>
+                        <p>Dashboard con métricas en vivo: total acreditados, por hora, por sector, flujo de entrada. Exporta reportes.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="500">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-wifi-off"></i>
+                        </div>
+                        <h3>Modo Offline</h3>
+                        <p>Funciona sin internet. Los datos se sincronizan automáticamente cuando recuperas conexión.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="600">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <h3>Feedback Post-Evento</h3>
+                        <p>Recopila opiniones de participantes automáticamente. NPS, comentarios y métricas de satisfacción.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="700">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-ticket-perforated"></i>
+                        </div>
+                        <h3>Sorteos Interactivos</h3>
+                        <p>Crea sorteos en vivo entre los asistentes. Ideal para sponsors y premios. Sistema anti-trampa.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="800">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h3>Gestión de Sponsors</h3>
+                        <p>Panel dedicado para gestionar sponsors, métricas de exposición, reportes personalizados para cada uno.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="900">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h3>Control de Acceso</h3>
+                        <p>Códigos únicos por evento. Define permisos de tu equipo: acreditadores, coordinadores, solo visualización.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =================== CAPTURAS =================== -->
+    <section class="screenshots" id="capturas">
+        <div class="container">
+            <div class="section-header" data-aos="fade-up">
+                <h2>Mira Choosing en acción</h2>
+                <p>Interfaz intuitiva diseñada para trabajar bajo presión</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="screenshot-item">
+                        <img src="https://images.unsplash.com/photo-1555421689-d68471e189f2?w=500&h=600&fit=crop" alt="Login">
+                        <div class="screenshot-info">
+                            <h4>🔐 Login Seguro</h4>
+                            <p>Autenticación JWT. Acceso protegido para tu equipo. Sesiones individuales.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="screenshot-item">
+                        <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&h=600&fit=crop" alt="Eventos">
+                        <div class="screenshot-info">
+                            <h4>📅 Gestión Multi-Evento</h4>
+                            <p>Maneja varios eventos simultáneamente. Cambia entre ellos con un clic.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="screenshot-item">
+                        <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=500&h=600&fit=crop" alt="Lista">
+                        <div class="screenshot-info">
+                            <h4>📋 Lista de Invitados</h4>
+                            <p>Búsqueda ultra rápida por nombre, DNI, empresa. Filtros avanzados.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="zoom-in" data-aos-delay="400">
+                    <div class="screenshot-item">
+                        <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=500&h=600&fit=crop" alt="QR">
+                        <div class="screenshot-info">
+                            <h4>📱 Escaneo QR Instantáneo</h4>
+                            <p>Acredita en 2 segundos. Confirmación visual y sonora. Sin errores.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="zoom-in" data-aos-delay="500">
+                    <div class="screenshot-item">
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=500&h=600&fit=crop" alt="Stats">
+                        <div class="screenshot-info">
+                            <h4>📊 Dashboard en Vivo</h4>
+                            <p>Métricas en tiempo real. Gráficos interactivos. Exporta a Excel.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="zoom-in" data-aos-delay="600">
+                    <div class="screenshot-item">
+                        <img src="https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=500&h=600&fit=crop" alt="Print">
+                        <div class="screenshot-info">
+                            <h4>🖨️ Impresión de Credenciales</h4>
+                            <p>Diseño personalizado con tu marca. Impresión masiva o individual.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =================== PRECIOS =================== -->
+    <section class="pricing" id="precios">
+        <div class="container">
+            <div class="section-header" data-aos="fade-up">
+                <h2>Planes diseñados para cada tipo de evento</h2>
+                <p>Sin costos ocultos. Cancela cuando quieras.</p>
+            </div>
+
+            <div class="row g-4 justify-content-center">
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="pricing-card">
+                        <h3>Básico</h3>
+                        <div class="pricing-price">
+                            <span class="price-currency">$</span><span class="price-amount">12,990</span>
+                            <span class="price-period">/mes</span>
+                        </div>
+                        <p class="text-center text-muted mb-4">Perfecto para eventos pequeños y ocasionales</p>
+                        <ul class="pricing-features">
+                            <li><i class="bi bi-check-circle-fill"></i> 1 Evento activo</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Hasta 300 participantes</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Acreditación QR ilimitada</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Dashboard con estadísticas básicas</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Impresión de credenciales</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Soporte por email</li>
+                        </ul>
+                        <a href="#contacto" class="btn btn-outline-primary w-100 py-3 mt-3">Comenzar</a>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="pricing-card featured">
+                        <span class="pricing-badge">⭐ Más Popular</span>
+                        <h3>Profesional</h3>
+                        <div class="pricing-price">
+                            <span class="price-currency">$</span><span class="price-amount">24,990</span>
+                            <span class="price-period">/mes</span>
+                        </div>
+                        <p class="text-center text-muted mb-4">Para organizadores frecuentes y empresas</p>
+                        <ul class="pricing-features">
+                            <li><i class="bi bi-check-circle-fill"></i> 5 Eventos simultáneos</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Hasta 2,000 participantes</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Todo del plan Básico</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Estadísticas avanzadas + gráficos</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Modo offline completo</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Feedback post-evento</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Sorteos interactivos</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Gestión de sponsors</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Soporte prioritario (24h)</li>
+                        </ul>
+                        <a href="#contacto" class="btn btn-cta w-100 py-3 mt-3">Contratar ahora</a>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="pricing-card">
+                        <h3>Enterprise</h3>
+                        <div class="pricing-price">
+                            <span class="price-currency">$</span><span class="price-amount">49,990</span>
+                            <span class="price-period">/mes</span>
+                        </div>
+                        <p class="text-center text-muted mb-4">Para grandes organizaciones y festivales</p>
+                        <ul class="pricing-features">
+                            <li><i class="bi bi-check-circle-fill"></i> Eventos ilimitados</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Participantes ilimitados</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Todo del plan Profesional</li>
+                            <li><i class="bi bi-check-circle-fill"></i> API REST personalizada</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Branding white-label</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Integraciones personalizadas</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Capacitación presencial incluida</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Account Manager dedicado</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Soporte 24/7 vía WhatsApp</li>
+                        </ul>
+                        <a href="#contacto" class="btn btn-outline-primary w-100 py-3 mt-3">Contactar</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-5" data-aos="fade-up">
+                <p class="text-muted fs-5">💳 Aceptamos Mercado Pago, transferencia y tarjetas de crédito/débito</p>
+                <p class="text-muted">🎁 <strong>14 días de prueba gratis</strong> en todos los planes. No se requiere tarjeta.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- =================== TESTIMONIOS =================== -->
+    <section class="testimonials" id="testimonios">
+        <div class="container">
+            <div class="section-header" data-aos="fade-up">
+                <h2>Lo que dicen nuestros clientes</h2>
+                <p>Casos de éxito reales de organizadores que confían en Choosing</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="testimonial-card">
+                        <i class="bi bi-quote quote-icon"></i>
+                        <p class="testimonial-text">"Antes tardábamos 1 hora acreditando a 200 personas. Con Choosing lo hacemos en 10 minutos. Las colas desaparecieron por completo y la experiencia de los asistentes mejoró drásticamente."</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">MG</div>
+                            <div class="author-info">
+                                <h5>María González</h5>
+                                <p class="company">TechConf Argentina</p>
+                                <p>Organizadora de conferencias</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="testimonial-card">
+                        <i class="bi bi-quote quote-icon"></i>
+                        <p class="testimonial-text">"El dashboard en tiempo real es espectacular. Puedo ver desde mi oficina cuánta gente ingresó, a qué hora, y tomar decisiones al instante. Choosing es indispensable para mis eventos corporativos."</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">JR</div>
+                            <div class="author-info">
+                                <h5>Juan Ramírez</h5>
+                                <p class="company">Eventos Corporativos SA</p>
+                                <p>Director de operaciones</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="testimonial-card">
+                        <i class="bi bi-quote quote-icon"></i>
+                        <p class="testimonial-text">"Organizamos un festival con 5,000 asistentes. Choosing manejó todo sin problemas. El modo offline fue clave cuando fallaba el internet. Soporte técnico excepcional, respondieron al instante."</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">LP</div>
+                            <div class="author-info">
+                                <h5>Laura Pérez</h5>
+                                <p class="company">Festival Cultura Viva</p>
+                                <p>Coordinadora general</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="testimonial-card">
+                        <i class="bi bi-quote quote-icon"></i>
+                        <p class="testimonial-text">"La impresión de credenciales con QR es perfecta. Antes imprimíamos manualmente y pegábamos etiquetas. Ahora todo es automático. Ahorramos horas de trabajo y se ve mucho más profesional."</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">CS</div>
+                            <div class="author-info">
+                                <h5>Carlos Sánchez</h5>
+                                <p class="company">Universidad Nacional</p>
+                                <p>Coordinador de eventos académicos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="500">
+                    <div class="testimonial-card">
+                        <i class="bi bi-quote quote-icon"></i>
+                        <p class="testimonial-text">"El sistema de feedback post-evento es oro puro. Antes mandábamos encuestas por email y nadie respondía. Con Choosing obtuvimos 85% de respuestas. Datos valiosos para mejorar."</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">AF</div>
+                            <div class="author-info">
+                                <h5>Ana Fernández</h5>
+                                <p class="company">Expo Negocios</p>
+                                <p>Gerente de marketing</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="600">
+                    <div class="testimonial-card">
+                        <i class="bi bi-quote quote-icon"></i>
+                        <p class="testimonial-text">"Los sorteos interactivos fueron un éxito total. Nuestros sponsors quedaron encantados con el engagement. La función de gestión de sponsors nos ayudó a mostrarles métricas reales de exposición."</p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">DR</div>
+                            <div class="author-info">
+                                <h5>Diego Rojas</h5>
+                                <p class="company">Summit Innovación</p>
+                                <p>Productor ejecutivo</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =================== CONTACTO =================== -->
+    <section class="contact" id="contacto">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-5" data-aos="fade-right">
+                    <div class="contact-info">
+                        <h2>¿Listo para revolucionar tus eventos?</h2>
+                        <p class="lead mb-4">Hablemos de cómo Choosing puede transformar la gestión de tus eventos. Sin compromiso.</p>
+
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="bi bi-whatsapp"></i>
+                            </div>
+                            <div>
+                                <h5>WhatsApp Directo</h5>
+                                <p>+54 9 11 5555-1234</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="bi bi-envelope-fill"></i>
+                            </div>
+                            <div>
+                                <h5>Email</h5>
+                                <p>contacto@choosing.com.ar</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </div>
+                            <div>
+                                <h5>Ubicación</h5>
+                                <p>Buenos Aires, Argentina</p>
+                            </div>
+                        </div>
+
+                        <a href="https://wa.me/5491155551234?text=Hola!%20Quiero%20saber%20más%20sobre%20Choosing"
+                           class="btn-whatsapp" target="_blank">
+                            <i class="bi bi-whatsapp"></i>
+                            Contactar por WhatsApp
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-lg-7" data-aos="fade-left">
+                    <div class="contact-form">
+                        <h3>Envíanos un mensaje</h3>
+                        <form id="contactForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="name" class="form-label">Nombre completo *</label>
+                                    <input type="text" class="form-control" id="name" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Email *</label>
+                                    <input type="email" class="form-control" id="email" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="phone" class="form-label">Teléfono</label>
+                                    <input type="tel" class="form-control" id="phone">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="eventType" class="form-label">Tipo de evento</label>
+                                    <select class="form-control" id="eventType">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="corporativo">Evento Corporativo</option>
+                                        <option value="conferencia">Conferencia/Summit</option>
+                                        <option value="festival">Festival/Masivo</option>
+                                        <option value="academico">Académico</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="message" class="form-label">Mensaje *</label>
+                                <textarea class="form-control" id="message" rows="4" required placeholder="Cuéntanos sobre tu evento y cuántos participantes esperas..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-cta w-100 py-3">
+                                <i class="bi bi-send-fill me-2"></i>Enviar mensaje
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =================== FOOTER =================== -->
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5><span style="font-size: 2rem;">🎯</span> Choosing</h5>
+                    <p class="mt-3">Sistema profesional de acreditación masiva para eventos. Elimina las colas, aumenta el control y mejora la experiencia de tus participantes.</p>
+                    <div class="social-links mt-4">
+                        <a href="#" class="social-link"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="social-link"><i class="bi bi-twitter-x"></i></a>
+                        <a href="#" class="social-link"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="social-link"><i class="bi bi-linkedin"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h5>Producto</h5>
+                    <a href="#caracteristicas">Características</a>
+                    <a href="#capturas">Capturas</a>
+                    <a href="#precios">Precios</a>
+                    <a href="login.html">Iniciar Sesión</a>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h5>Empresa</h5>
+                    <a href="#que-es">Sobre Choosing</a>
+                    <a href="#testimonios">Testimonios</a>
+                    <a href="#contacto">Contacto</a>
+                    <a href="#">Blog</a>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h5>Soporte</h5>
+                    <a href="#">Centro de ayuda</a>
+                    <a href="#">Documentación</a>
+                    <a href="#">Tutoriales</a>
+                    <a href="#">Estado del sistema</a>
+                </div>
+
+                <div class="col-lg-2 col-md-4 mb-4">
+                    <h5>Legal</h5>
+                    <a href="#">Términos de Servicio</a>
+                    <a href="#">Privacidad</a>
+                    <a href="#">Cookies</a>
+                </div>
+            </div>
+
+            <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
+
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-0">&copy; 2024 Choosing. Todos los derechos reservados.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p class="mb-0">Desarrollado con ❤️ en Argentina | Proyecto de Tesis</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- AOS Animation -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100,
+            easing: 'ease-out-cubic'
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Contact form submission
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                eventType: document.getElementById('eventType').value,
+                message: document.getElementById('message').value,
+                timestamp: new Date().toISOString()
+            };
+
+            // Save to localStorage
+            const contacts = JSON.parse(localStorage.getItem('choosingContacts') || '[]');
+            contacts.push(formData);
+            localStorage.setItem('choosingContacts', JSON.stringify(contacts));
+
+            // Show success message
+            showSuccessAlert();
+
+            // Reset form
+            this.reset();
+        });
+
+        function showSuccessAlert() {
+            const alert = document.createElement('div');
+            alert.className = 'alert-success-custom';
+            alert.innerHTML = `
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-check-circle-fill" style="font-size: 2rem;"></i>
+                    <div>
+                        <strong>¡Mensaje enviado!</strong><br>
+                        <small>Te contactaremos pronto.</small>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(alert);
+
+            setTimeout(() => {
+                alert.style.animation = 'slideIn 0.5s ease-out reverse';
+                setTimeout(() => alert.remove(), 500);
+            }, 4000);
+        }
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const navHeight = document.querySelector('.navbar').offsetHeight;
+                    const targetPosition = target.offsetTop - navHeight;
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Counter animation on scroll
+        const observerOptions = {
+            threshold: 0.5,
+            rootMargin: '0px'
+        };
+
+        const animateNumber = (element, target) => {
+            let current = 0;
+            const increment = target / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target.toLocaleString();
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current).toLocaleString();
+                }
+            }, 30);
+        };
+
+        const statsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const statNumbers = entry.target.querySelectorAll('.stat-number');
+                    statNumbers.forEach(stat => {
+                        const text = stat.textContent;
+                        const number = parseInt(text.replace(/[^0-9]/g, ''));
+                        if (!isNaN(number)) {
+                            animateNumber(stat, number);
+                        }
+                    });
+                    statsObserver.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        const heroStats = document.querySelector('.hero-stats');
+        if (heroStats) {
+            statsObserver.observe(heroStats);
+        }
+    </script>
+</body>
+</html>
