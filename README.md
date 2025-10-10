@@ -1,5 +1,5 @@
 # choosing
- App web para acreditación de eventos con control de ingresos, roles de usuario, y generación de etiquetas. Deploy en VPS con Docker + SQL Server.
+ App web para acreditación de eventos con control de ingresos, roles de usuario, y generación de etiquetas. Deploy en VPS Windows con iis + SQL Server.
 
  # Sistema de Acreditación de Eventos
 
