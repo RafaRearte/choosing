@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Compra - Choosing</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .navbar-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .checkout-container {
+            max-width: 900px;
+            margin: 40px auto;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 0;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+        }
+        .step.active .step-circle {
+            background: #667eea;
+            color: white;
+        }
+        .step.completed .step-circle {
+            background: #28a745;
+            color: white;
+        }
+        .card-custom {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .attendee-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .attendee-card.is-user {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-color: #28a745;
+        }
+        .attendee-number {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .summary-card {
+            position: sticky;
+            top: 20px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+        .total-row {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            padding-top: 15px;
+        }
+        .checkbox-custom {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="/eventos-publicos.html">
+                <h4 class="mb-0">🎟️ Choosing</h4>
+            </a>
+            <div id="user-info"></div>
+        </div>
+    </nav>
+
+    <div class="container checkout-container">
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step completed">
+                <div class="step-circle">1</div>
+                <small>Seleccionar evento</small>
+            </div>
+            <div class="step active">
+                <div class="step-circle">2</div>
+                <small>Datos de asistentes</small>
+            </div>
+            <div class="step">
+                <div class="step-circle">3</div>
+                <small>Confirmar compra</small>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Formulario de Asistentes -->
+            <div class="col-lg-8">
+                <div class="card card-custom">
+                    <div class="card-body p-4">
+                        <h3 class="mb-4">Datos de los Asistentes</h3>
+
+                        <div id="loadingSpinner" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+
+                        <div id="attendeesForm" style="display: none;">
+                            <div class="alert alert-info">
+                                <strong>📝 Importante:</strong> Necesitamos los datos de cada persona que asistirá al evento.
+                                Si marcás "Yo voy a asistir", se usarán tus datos para la primera entrada.
+                            </div>
+
+                            <div id="attendeesContainer">
+                                <!-- Los formularios de asistentes se generan dinámicamente -->
+                            </div>
+
+                            <div class="alert alert-danger d-none" id="errorMessage"></div>
+
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-primary btn-lg" onclick="procesarCompra()">
+                                    Confirmar y Continuar →
+                                </button>
+                                <a href="/eventos-publicos.html" class="btn btn-outline-secondary">
+                                    Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="col-lg-4">
+                <div class="card card-custom summary-card">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3">Resumen de Compra</h5>
+
+                        <div class="mb-3">
+                            <strong id="eventoNombre">Evento</strong><br>
+                            <small class="text-muted" id="eventoUbicacion"></small>
+                        </div>
+
+                        <hr>
+
+                        <div class="summary-row">
+                            <span>Cantidad de entradas</span>
+                            <strong id="cantidadEntradas">0</strong>
+                        </div>
+
+                        <div class="summary-row">
+                            <span>Precio por entrada</span>
+                            <strong id="precioUnitario">$0</strong>
+                        </div>
+
+                        <hr>
+
+                        <div class="summary-row total-row">
+                            <span>Total</span>
+                            <span id="totalAmount">$0</span>
+                        </div>
+
+                        <div class="alert alert-warning mt-3 small">
+                            ⚠️ En la siguiente pantalla podrás realizar el pago
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        // Proteger página - solo compradores
+        Auth.requireRole(['comprador']);
+        Auth.displayUserInfo('user-info');
+
+        let compraData = null;
+        let currentEvent = null;
+        let userData = null;
+
+        // Cargar datos al inicio
+        document.addEventListener('DOMContentLoaded', async () => {
+            userData = Auth.getUser();
+
+            // Obtener datos de compra desde localStorage
+            const compraPendiente = localStorage.getItem('compra_pendiente');
+            if (!compraPendiente) {
+                alert('No hay compra pendiente');
+                window.location.href = '/eventos-publicos.html';
+                return;
+            }
+
+            compraData = JSON.parse(compraPendiente);
+
+            // Cargar evento
+            await cargarEvento();
+
+            // Generar formularios
+            generarFormularios();
+
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('attendeesForm').style.display = 'block';
+        });
+
+        async function cargarEvento() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/Event/${compraData.eventoId}`, {
+                    headers: Auth.getAuthHeaders()
+                });
+
+                if (!response.ok) throw new Error('Error al cargar evento');
+
+                currentEvent = await response.json();
+
+                // Actualizar resumen
+                document.getElementById('eventoNombre').textContent = currentEvent.nombre;
+                document.getElementById('eventoUbicacion').textContent = currentEvent.ubicacion || '';
+                document.getElementById('cantidadEntradas').textContent = compraData.cantidad;
+
+                const precioUnitario = compraData.precioUnitario || 0;
+                document.getElementById('precioUnitario').textContent =
+                    precioUnitario > 0 ? `$${precioUnitario.toLocaleString('es-AR')}` : 'Gratis';
+
+                document.getElementById('totalAmount').textContent =
+                    compraData.total > 0 ? `$${compraData.total.toLocaleString('es-AR')}` : 'Gratis';
+
+            } catch (error) {
+                alert('Error al cargar el evento');
+                window.location.href = '/eventos-publicos.html';
+            }
+        }
+
+        function generarFormularios() {
+            const container = document.getElementById('attendeesContainer');
+            const cantidad = compraData.cantidad;
+
+            for (let i = 0; i < cantidad; i++) {
+                const isFirst = i === 0;
+                const attendeeHtml = crearFormularioAsistente(i, isFirst);
+                container.innerHTML += attendeeHtml;
+            }
+
+            // Si es el primero, agregar listener al checkbox
+            if (cantidad > 0) {
+                const checkbox = document.getElementById('usarDatosUsuario_0');
+                if (checkbox) {
+                    checkbox.addEventListener('change', (e) => {
+                        toggleUserData(0, e.target.checked);
+                    });
+                }
+            }
+        }
+
+        function crearFormularioAsistente(index, isFirst) {
+            const number = index + 1;
+
+            return `
+                <div class="attendee-card" id="attendee_${index}">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="attendee-number">${number}</span>
+                        <h5 class="mb-0">Asistente ${number}</h5>
+                    </div>
+
+                    ${isFirst ? `
+                        <div class="form-check mb-3">
+                            <input class="form-check-input checkbox-custom" type="checkbox" id="usarDatosUsuario_${index}">
+                            <label class="form-check-label" for="usarDatosUsuario_${index}">
+                                <strong>✅ Yo voy a asistir</strong> (usar mis datos)
+                            </label>
+                        </div>
+                    ` : ''}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" id="nombre_${index}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Apellido *</label>
+                            <input type="text" class="form-control" id="apellido_${index}" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email_${index}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">DNI</label>
+                            <input type="number" class="form-control" id="dni_${index}" placeholder="12345678">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="telefono_${index}" placeholder="+54911123456">
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleUserData(index, useUserData) {
+            const card = document.getElementById(`attendee_${index}`);
+
+            if (useUserData) {
+                // Rellenar con datos del usuario
+                document.getElementById(`nombre_${index}`).value = userData.nombre || '';
+                document.getElementById(`apellido_${index}`).value = userData.apellido || '';
+                document.getElementById(`email_${index}`).value = userData.email || '';
+                document.getElementById(`dni_${index}`).value = userData.dni || '';
+                document.getElementById(`telefono_${index}`).value = userData.telefono || '';
+
+                // Deshabilitar campos
+                document.getElementById(`nombre_${index}`).disabled = true;
+                document.getElementById(`apellido_${index}`).disabled = true;
+                document.getElementById(`email_${index}`).disabled = true;
+                document.getElementById(`dni_${index}`).disabled = true;
+                document.getElementById(`telefono_${index}`).disabled = true;
+
+                card.classList.add('is-user');
+            } else {
+                // Limpiar y habilitar campos
+                document.getElementById(`nombre_${index}`).value = '';
+                document.getElementById(`apellido_${index}`).value = '';
+                document.getElementById(`email_${index}`).value = '';
+                document.getElementById(`dni_${index}`).value = '';
+                document.getElementById(`telefono_${index}`).value = '';
+
+                document.getElementById(`nombre_${index}`).disabled = false;
+                document.getElementById(`apellido_${index}`).disabled = false;
+                document.getElementById(`email_${index}`).disabled = false;
+                document.getElementById(`dni_${index}`).disabled = false;
+                document.getElementById(`telefono_${index}`).disabled = false;
+
+                card.classList.remove('is-user');
+            }
+        }
+
+        async function procesarCompra() {
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.classList.add('d-none');
+
+            // Recolectar datos de asistentes
+            const invitados = [];
+            const cantidad = compraData.cantidad;
+
+            for (let i = 0; i < cantidad; i++) {
+                const nombre = document.getElementById(`nombre_${i}`).value.trim();
+                const apellido = document.getElementById(`apellido_${i}`).value.trim();
+                const email = document.getElementById(`email_${i}`).value.trim();
+                const dni = document.getElementById(`dni_${i}`).value;
+                const telefono = document.getElementById(`telefono_${i}`).value;
+
+                if (!nombre || !apellido || !email) {
+                    errorMsg.textContent = `Por favor completa todos los campos obligatorios del asistente ${i + 1}`;
+                    errorMsg.classList.remove('d-none');
+                    document.getElementById(`nombre_${i}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+
+                // Verificar si usa datos del usuario
+                const checkbox = document.getElementById(`usarDatosUsuario_${i}`);
+                const usarDatosUsuario = checkbox ? checkbox.checked : false;
+
+                invitados.push({
+                    nombre,
+                    apellido,
+                    email,
+                    dni: dni ? parseInt(dni) : null,
+                    telefono,
+                    usarDatosUsuario
+                });
+            }
+
+            // Crear la compra
+            try {
+                const compraPayload = {
+                    eventoId: compraData.eventoId,
+                    cantidadEntradas: compraData.cantidad,
+                    montoTotal: compraData.total,
+                    invitados: invitados
+                };
+
+                const response = await fetch(`${API_BASE_URL}/Compra/crear`, {
+                    method: 'POST',
+                    headers: Auth.getAuthHeaders(),
+                    body: JSON.stringify(compraPayload)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Error al crear la compra');
+                }
+
+                const compraCreada = await response.json();
+
+                // Guardar compra creada
+                localStorage.setItem('compra_creada', JSON.stringify(compraCreada));
+                localStorage.removeItem('compra_pendiente');
+
+                // Redirigir a confirmación (o pago si está implementado)
+                alert(`¡Compra creada exitosamente! ID: ${compraCreada.id}\n\nEstado: ${compraCreada.estado}`);
+                window.location.href = '/mis-entradas.html';
+
+            } catch (error) {
+                errorMsg.textContent = error.message;
+                errorMsg.classList.remove('d-none');
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

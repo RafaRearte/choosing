@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Entradas - Choosing</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .navbar-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .purchase-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .purchase-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .event-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+            margin-right: 20px;
+        }
+        .status-badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-pendiente {
+            background: #ffc107;
+            color: #000;
+        }
+        .status-pagado {
+            background: #28a745;
+            color: white;
+        }
+        .status-cancelado {
+            background: #dc3545;
+            color: white;
+        }
+        .status-reembolsado {
+            background: #6c757d;
+            color: white;
+        }
+        .attendee-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .attendee-item.confirmed {
+            background: #e8f5e9;
+            border-left: 4px solid #28a745;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+        }
+        .empty-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #666;
+        }
+        .info-icon {
+            font-size: 18px;
+            width: 30px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="/eventos-publicos.html">
+                <h4 class="mb-0">🎟️ Choosing</h4>
+            </a>
+            <div id="user-info"></div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1>Mis Entradas</h1>
+                    <a href="/eventos-publicos.html" class="btn btn-primary">
+                        Explorar Eventos
+                    </a>
+                </div>
+
+                <!-- Loading -->
+                <div id="loadingSpinner" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+
+                <!-- Error -->
+                <div id="errorMessage" class="alert alert-danger" style="display: none;"></div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <div class="empty-icon">🎫</div>
+                    <h3>No tienes entradas todavía</h3>
+                    <p class="text-muted">Explora eventos y compra tus primeras entradas</p>
+                    <a href="/eventos-publicos.html" class="btn btn-primary btn-lg mt-3">
+                        Ver Eventos Disponibles
+                    </a>
+                </div>
+
+                <!-- Purchases List -->
+                <div id="purchasesList">
+                    <!-- Las compras se cargan dinámicamente aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalles -->
+    <div class="modal fade" id="detailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles de la Compra</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="modalContent">
+                        <!-- El contenido se carga dinámicamente -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/config.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        // Proteger página - solo compradores
+        Auth.requireRole(['comprador']);
+        Auth.displayUserInfo('user-info');
+
+        let compras = [];
+
+        // Cargar compras al inicio
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarCompras();
+        });
+
+        async function cargarCompras() {
+            const spinner = document.getElementById('loadingSpinner');
+            const list = document.getElementById('purchasesList');
+            const emptyState = document.getElementById('emptyState');
+            const errorMsg = document.getElementById('errorMessage');
+
+            spinner.style.display = 'block';
+            list.innerHTML = '';
+            emptyState.style.display = 'none';
+            errorMsg.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/Compra/mis-compras`, {
+                    headers: Auth.getAuthHeaders()
+                });
+
+                if (!response.ok) throw new Error('Error al cargar compras');
+
+                compras = await response.json();
+
+                spinner.style.display = 'none';
+
+                if (compras.length === 0) {
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                // Ordenar por fecha más reciente
+                compras.sort((a, b) => new Date(b.fechaCompra) - new Date(a.fechaCompra));
+
+                // Renderizar compras
+                compras.forEach(compra => {
+                    list.innerHTML += crearCardCompra(compra);
+                });
+
+            } catch (error) {
+                spinner.style.display = 'none';
+                errorMsg.textContent = error.message || 'Error al cargar tus compras';
+                errorMsg.style.display = 'block';
+                console.error('Error:', error);
+            }
+        }
+
+        function crearCardCompra(compra) {
+            const fecha = new Date(compra.fechaCompra).toLocaleDateString('es-AR', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            const statusClass = `status-${compra.estado.toLowerCase()}`;
+            const statusText = {
+                'pendiente': 'Pendiente',
+                'pagado': 'Pagado',
+                'cancelado': 'Cancelado',
+                'reembolsado': 'Reembolsado'
+            }[compra.estado.toLowerCase()] || compra.estado;
+
+            const monto = compra.montoTotal > 0
+                ? `$${compra.montoTotal.toLocaleString('es-AR')}`
+                : 'Gratis';
+
+            return `
+                <div class="purchase-card">
+                    <div class="d-flex">
+                        <div class="event-icon">🎭</div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h4 class="mb-1">${compra.eventoNombre || 'Evento'}</h4>
+                                    <span class="status-badge ${statusClass}">${statusText}</span>
+                                </div>
+                                <div class="text-end">
+                                    <div class="h4 mb-0 text-primary">${monto}</div>
+                                    <small class="text-muted">${compra.cantidadEntradas} entrada${compra.cantidadEntradas > 1 ? 's' : ''}</small>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <span class="info-icon">📅</span>
+                                <span>Comprado el ${fecha}</span>
+                            </div>
+
+                            ${compra.fechaPago ? `
+                                <div class="info-item">
+                                    <span class="info-icon">✅</span>
+                                    <span>Pagado el ${new Date(compra.fechaPago).toLocaleDateString('es-AR')}</span>
+                                </div>
+                            ` : ''}
+
+                            ${compra.transaccionId ? `
+                                <div class="info-item">
+                                    <span class="info-icon">🔖</span>
+                                    <span>ID Transacción: <code>${compra.transaccionId}</code></span>
+                                </div>
+                            ` : ''}
+
+                            <div class="mt-3">
+                                <button class="btn btn-outline-primary btn-sm" onclick="verDetalles(${compra.id})">
+                                    Ver Detalles
+                                </button>
+                                ${compra.estado.toLowerCase() === 'pagado' ? `
+                                    <button class="btn btn-success btn-sm" onclick="descargarQR(${compra.id})">
+                                        📥 Descargar QR
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function verDetalles(compraId) {
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = '<div class="text-center"><div class="spinner-border"></div></div>';
+
+            const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+            modal.show();
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/Compra/${compraId}`, {
+                    headers: Auth.getAuthHeaders()
+                });
+
+                if (!response.ok) throw new Error('Error al cargar detalles');
+
+                const compra = await response.json();
+
+                modalContent.innerHTML = `
+                    <h5>Evento: ${compra.eventoNombre || 'Sin nombre'}</h5>
+                    <p class="text-muted">Compra #${compra.id}</p>
+
+                    <hr>
+
+                    <h6>Información de la Compra</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Estado:</strong> ${compra.estado}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Monto Total:</strong> $${compra.montoTotal.toLocaleString('es-AR')}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Fecha de Compra:</strong> ${new Date(compra.fechaCompra).toLocaleString('es-AR')}
+                        </div>
+                        ${compra.fechaPago ? `
+                            <div class="col-md-6">
+                                <strong>Fecha de Pago:</strong> ${new Date(compra.fechaPago).toLocaleString('es-AR')}
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <hr>
+
+                    <h6>Asistentes (${compra.cantidadEntradas})</h6>
+                    <div id="attendeesList">
+                        <p class="text-muted">Cargando asistentes...</p>
+                    </div>
+                `;
+
+                // Cargar invitados
+                await cargarInvitados(compraId);
+
+            } catch (error) {
+                modalContent.innerHTML = `
+                    <div class="alert alert-danger">
+                        Error al cargar detalles: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function cargarInvitados(compraId) {
+            const compra = compras.find(c => c.id === compraId);
+            if (!compra) return;
+
+            try {
+                // Obtener guests del evento
+                const response = await fetch(`${API_BASE_URL}/List/evento/${compra.eventoId}`, {
+                    headers: Auth.getAuthHeaders()
+                });
+
+                if (!response.ok) throw new Error('Error al cargar invitados');
+
+                const allGuests = await response.json();
+
+                // Filtrar solo los guests de esta compra
+                const compraGuests = allGuests.filter(g => g.compraId === compraId);
+
+                const attendeesList = document.getElementById('attendeesList');
+
+                if (compraGuests.length === 0) {
+                    attendeesList.innerHTML = '<p class="text-muted">No hay invitados registrados</p>';
+                    return;
+                }
+
+                attendeesList.innerHTML = compraGuests.map((guest, index) => `
+                    <div class="attendee-item ${guest.confirmado ? 'confirmed' : ''}">
+                        <div>
+                            <strong>${index + 1}. ${guest.nombre} ${guest.apellido}</strong><br>
+                            <small class="text-muted">${guest.email}</small>
+                            ${guest.dni ? `<br><small>DNI: ${guest.dni}</small>` : ''}
+                        </div>
+                        <div>
+                            ${guest.confirmado
+                                ? '<span class="badge bg-success">✓ Confirmado</span>'
+                                : '<span class="badge bg-warning">Pendiente</span>'
+                            }
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                const attendeesList = document.getElementById('attendeesList');
+                attendeesList.innerHTML = `
+                    <div class="alert alert-warning">
+                        No se pudieron cargar los invitados
+                    </div>
+                `;
+            }
+        }
+
+        async function descargarQR(compraId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/Compra/${compraId}/qr-codes`, {
+                    headers: Auth.getAuthHeaders()
+                });
+
+                if (!response.ok) throw new Error('Error al obtener códigos QR');
+
+                const data = await response.json();
+
+                // Abrir modal con los QR codes
+                mostrarModalQR(data);
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cargar códigos QR: ' + error.message);
+            }
+        }
+
+        function mostrarModalQR(data) {
+            const modalContent = document.getElementById('modalContent');
+
+            let html = `
+                <h5>Códigos QR - Compra #${data.compraId}</h5>
+                <p class="text-muted">${data.cantidadEntradas} entrada${data.cantidadEntradas > 1 ? 's' : ''}</p>
+                <hr>
+            `;
+
+            data.entradas.forEach((entrada, index) => {
+                html += `
+                    <div class="mb-4 p-3" style="background: #f8f9fa; border-radius: 10px;">
+                        <h6>Entrada ${index + 1}: ${entrada.nombreCompleto}</h6>
+                        <div class="text-center my-3">
+                            <img src="${entrada.qrUrl}" alt="QR Code" style="width: 250px; height: 250px; border: 2px solid #dee2e6; border-radius: 10px;">
+                        </div>
+                        <p class="text-center mb-2"><strong>Código:</strong> <code>${entrada.idCode}</code></p>
+                        <p class="text-center mb-2"><strong>Email:</strong> ${entrada.email}</p>
+                        ${entrada.estaAcreditado ?
+                            `<p class="text-center text-success"><strong>✅ Acreditado</strong> el ${new Date(entrada.fechaAcreditacion).toLocaleDateString('es-AR')}</p>` :
+                            `<p class="text-center text-warning"><strong>⏳ Pendiente de acreditación</strong></p>`
+                        }
+                        <div class="text-center">
+                            <a href="${entrada.qrUrl}" download="QR_${entrada.idCode}.png" class="btn btn-primary btn-sm">
+                                📥 Descargar QR
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+
+            modalContent.innerHTML = html;
+
+            const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+            modal.show();
+        }
+    </script>
+</body>
+</html>
