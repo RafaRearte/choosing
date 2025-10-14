@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace choosing.Domain
 {
-    public class PublicGuestRegistration
+    public class PublicGuestRegistrationDTO
     {
         [Required(ErrorMessage = "El nombre es obligatorio")]
         public string Nombre { get; set; } = "";
@@ -14,7 +14,7 @@ namespace choosing.Domain
         [EmailAddress(ErrorMessage = "Formato de email inválido")]
         public string Email { get; set; } = "";
 
-        public int? Dni { get; set; }
+        public string? Dni { get; set; }
         public string? Empresa { get; set; }
         public string? Cargo { get; set; }
         public string? Telefono { get; set; }
