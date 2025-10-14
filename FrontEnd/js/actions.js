@@ -26,9 +26,6 @@ const saveNewGuest = async () => {
     const lugar = document.getElementById("newGuestLugar").value;
     const telefono = document.getElementById("newGuestTelefono").value;
     const redSocial = document.getElementById("newGuestRedSocial").value; // 🆕 NUEVO CAMPO
-    const dayOne = document.getElementById("newGuestDayOne").checked ? "SI" : "NO";
-    const dayTwo = document.getElementById("newGuestDayTwo").checked ? "SI" : "NO";
-    const dayThree = document.getElementById("newGuestDayThree").checked ? "SI" : "NO";
     const infoAdicional = document.getElementById("newGuestInfoAdicional").value;
 
     // Validación básica
@@ -39,10 +36,10 @@ const saveNewGuest = async () => {
 
     // Crear objeto con los datos del nuevo invitado
     const newGuest = {
-        dni: dni ? parseInt(dni) : null,
+        dni: dni || null,  // DNI ahora es string
         nombre,
         apellido,
-        mail: email,
+        email: email,
         empresa,
         categoria,
         profesion,
@@ -50,11 +47,8 @@ const saveNewGuest = async () => {
         lugar,
         telefono,
         redSocial,
-        dayOne,
-        dayTwo,
-        dayThree,
         infoAdicional,
-        acreditado: 0,
+        estaAcreditado: false,  // Ahora es booleano
         eventoId: parseInt(currentEventId),
         esNuevo: true
     };
@@ -133,16 +127,16 @@ const toggleAccreditStatus = async (id, currentStatus) => {
     try {
         // Convertir el estado actual a un valor booleano
         const isCurrentlyAccredited = currentStatus === 'true' || currentStatus === true;
-        
+
         // Llamar al endpoint con el nuevo estado (opuesto al actual)
-        const newStatus = isCurrentlyAccredited ? 0 : 1;
-        
+        const newStatus = !isCurrentlyAccredited;
+
         const response = await authenticatedFetch(`${apiUrl}/updateAccreditStatusById/${id}?eventId=${currentEventId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ acreditado: newStatus })
+            body: JSON.stringify({ estaAcreditado: newStatus })
         });
         
         if (!response) return; // Si hay redirección por token inválido
@@ -194,7 +188,7 @@ const quickAccreditByIdCode = async (idCode) => {
             // ✅ OPTIMIZACIÓN: Actualizar solo localmente
             // Necesitamos obtener el ID del invitado desde la respuesta
             const result = await response.json();
-            updateGuestLocallyAndTable(result.id || result.guestId, 1); // 1 = acreditado
+            updateGuestLocallyAndTable(result.id || result.guestId, true); // true = acreditado
             closeScanModal();
         } else {
             toast.error('Error al acreditar invitado');
@@ -226,25 +220,22 @@ const saveEditedGuest = async () => {
     const lugar = document.getElementById('editGuestLugar').value;
     const telefono = document.getElementById('editGuestTelefono').value;
     const redSocial = document.getElementById('editGuestRedSocial').value; // 🆕 NUEVO CAMPO
-    const dayOne = document.getElementById('editGuestDayOne').checked ? 'SI' : 'NO';
-    const dayTwo = document.getElementById('editGuestDayTwo').checked ? 'SI' : 'NO';
-    const dayThree = document.getElementById('editGuestDayThree').checked ? 'SI' : 'NO';
     const infoAdicional = document.getElementById('editGuestInfoAdicional').value;
-    const acreditado = document.getElementById('editGuestAcreditado').checked ? 1 : 0;
-    
+    const estaAcreditado = document.getElementById('editGuestAcreditado').checked;
+
     // Validación básica
     if (!nombre || !apellido) {
         toast.warning('Por favor complete los campos obligatorios: Nombre y Apellido');
         return;
     }
-    
+
     // Crear objeto con los datos actualizados
     const updatedGuest = {
         id: parseInt(id),
-        dni: dni ? parseInt(dni) : null,
+        dni: dni || null,  // DNI ahora es string
         nombre: nombre,
         apellido: apellido,
-        mail: email,
+        email: email,
         empresa: empresa,
         categoria: categoria,
         profesion: profesion,
@@ -252,11 +243,8 @@ const saveEditedGuest = async () => {
         lugar: lugar,
         telefono: telefono,
         redSocial: redSocial,
-        dayOne: dayOne,
-        dayTwo: dayTwo,
-        dayThree: dayThree,
         infoAdicional: infoAdicional,
-        acreditado: acreditado,
+        estaAcreditado: estaAcreditado,  // Ahora es booleano
         eventoId: parseInt(currentEventId)
     };
     
@@ -333,7 +321,7 @@ const quickAccredit = async (guestId) => {
         
         if (response && response.ok) {
             // ✅ OPTIMIZACIÓN: Actualizar solo localmente
-            updateGuestLocallyAndTable(guestId, 1); // 1 = acreditado
+            updateGuestLocallyAndTable(guestId, true); // true = acreditado
             closeScanModal();
         } else {
             toast.error('Error al acreditar invitado');
@@ -355,8 +343,8 @@ const updateGuestLocallyAndTable = (guestId, newStatus) => {
         // 1. Actualizar en cache local allGuests
         const guest = allGuests.find(g => g.id === id);
         if (guest) {
-            guest.acreditado = newStatus;
-            guest.horaAcreditacion = newStatus > 0 ? new Date().toISOString() : null;
+            guest.estaAcreditado = newStatus;
+            guest.fechaAcreditacion = newStatus ? new Date().toISOString() : null;
             
             // 2. Actualizar localStorage
             localStorage.setItem(`allGuests_${currentEventId}`, JSON.stringify(allGuests));
@@ -367,8 +355,8 @@ const updateGuestLocallyAndTable = (guestId, newStatus) => {
             
             if (rowNode.length) {
                 const rowData = table.row(rowNode).data();
-                rowData.acreditado = newStatus;
-                rowData.horaAcreditacion = guest.horaAcreditacion;
+                rowData.estaAcreditado = newStatus;
+                rowData.fechaAcreditacion = guest.fechaAcreditacion;
                 table.row(rowNode).data(rowData).draw(false);
             }
             
@@ -387,7 +375,7 @@ const updateCountersFromCache = () => {
     if (!allGuests || allGuests.length === 0) return;
     
     const totalGuests = allGuests.length;
-    const accreditedGuests = allGuests.filter(guest => guest.acreditado > 0).length;
+    const accreditedGuests = allGuests.filter(guest => guest.estaAcreditado > 0).length;
     const notAccreditedGuests = totalGuests - accreditedGuests;
     
     document.getElementById("totalGuests").textContent = `Invitados: ${totalGuests}`;

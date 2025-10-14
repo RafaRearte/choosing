@@ -341,7 +341,7 @@
             if (accreditedStatus !== 'all') {
                 const status = parseInt(accreditedStatus);
                 filteredGuests = filteredGuests.filter(guest => {
-                    const isAccredited = guest.acreditado > 0;
+                    const isAccredited = guest.estaAcreditado > 0;
                     return status === 1 ? isAccredited : !isAccredited;
                 });
             }
@@ -406,7 +406,7 @@
             const profesion = guest.profesion || '';
             const categoria = guest.categoria || '';
             const telefono = guest.telefono || '';
-            const email = guest.mail || '';
+            const email = guest.email || '';
             const redSocial = guest.redSocial || '';
 
             // Etiqueta sin QR

@@ -494,8 +494,8 @@
             
             // Contar acreditaciones por hora
             acreditados.forEach(guest => {
-                if (guest.horaAcreditacion) {
-                    const hora = new Date(guest.horaAcreditacion).getHours();
+                if (guest.fechaAcreditacion) {
+                    const hora = new Date(guest.fechaAcreditacion).getHours();
                     hourlyData[hora]++;
                 }
             });

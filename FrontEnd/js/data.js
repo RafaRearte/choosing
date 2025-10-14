@@ -2,7 +2,7 @@
 // Actualizar Contadores
 const updateCounters = (guests, newCount = null) => {
     const totalGuests = guests.length;
-    const accreditedGuests = guests.filter(guest => guest.acreditado > 0).length;
+    const accreditedGuests = guests.filter(guest => guest.estaAcreditado > 0).length;
     const notAccreditedGuests = totalGuests - accreditedGuests;
 
     document.getElementById("totalGuests").textContent = `Invitados: ${totalGuests}`;
@@ -250,7 +250,7 @@ const loadCounters = async () => {
 // Función para actualizar contadores desde la respuesta del servidor
 const updateCountersFromResponse = (counters) => {
     document.getElementById("totalGuests").textContent = `Invitados: ${counters.total}`;
-    document.getElementById("accredited").textContent = `Acreditados: ${counters.acreditados}`;
+    document.getElementById("accredited").textContent = `Acreditados: ${counters.estaAcreditados}`;
     document.getElementById("notAccredited").textContent = `No acreditados: ${counters.ausentes}`;
     document.getElementById("new").textContent = `Nuevos: ${counters.nuevos}`;
 };

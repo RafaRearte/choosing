@@ -65,7 +65,7 @@ const closeScanModal = () => {
 
 // Mostrar invitado encontrado
 const showGuestFound = (guest) => {
-    const isAccredited = guest.acreditado > 0;
+    const isAccredited = guest.estaAcreditado > 0;
     const statusBadge = isAccredited ? 
         '<span class="badge bg-success">YA ACREDITADO</span>' : 
         '<span class="badge bg-danger">NO ACREDITADO</span>';
@@ -90,8 +90,8 @@ const showGuestFound = (guest) => {
             <div class="row mt-4">
                 <div class="col-12 text-center mb-3">
                     <h4>${statusBadge}</h4>
-                    ${isAccredited && guest.horaAcreditacion ? 
-                        `<small class="text-muted">Acreditado: ${new Date(guest.horaAcreditacion).toLocaleString()}</small>` : 
+                    ${isAccredited && guest.fechaAcreditacion ? 
+                        `<small class="text-muted">Acreditado: ${new Date(guest.fechaAcreditacion).toLocaleString()}</small>` : 
                         ''}
                 </div>
                 <div class="col-12 text-center">

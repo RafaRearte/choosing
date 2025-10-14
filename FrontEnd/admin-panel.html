@@ -832,7 +832,7 @@
                     
                     // Calcular total de invitados y acreditados
                     const totalGuests = events.reduce((sum, event) => sum + (event.stats?.totalInvitados || 0), 0);
-                    const totalAccredited = events.reduce((sum, event) => sum + (event.stats?.acreditados || 0), 0);
+                    const totalAccredited = events.reduce((sum, event) => sum + (event.stats?.estaAcreditados || 0), 0);
                     
                     document.getElementById('totalGuests').textContent = totalGuests;
                     document.getElementById('totalAccredited').textContent = totalAccredited;
@@ -887,7 +887,7 @@
                                 </div>
                             </td>
                             <td><span class="badge bg-primary">${event.stats?.totalInvitados || 0}</span></td>
-                            <td><span class="badge bg-success">${event.stats?.acreditados || 0}</span></td>
+                            <td><span class="badge bg-success">${event.stats?.estaAcreditados || 0}</span></td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary" onclick="editEventData(${event.id})" title="Editar Evento">
                                     <i class="bi bi-pencil"></i>

@@ -88,7 +88,7 @@ const printLabelById = async (id) => {
             guest.nombre || '',
             guest.apellido || '',
             guest.telefono || '',
-            guest.mail || '',
+            guest.email || '',
             guest.dni || '',
             guest.profesion || '',
             guest.cargo || '',

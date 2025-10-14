@@ -129,7 +129,7 @@ const accionesColumn = {
     data: null,
     title: 'Acción',
     render: function (data) {
-        const isAccredited = data.acreditado > 0;
+        const isAccredited = data.estaAcreditado > 0;
         let actions = '<div class="d-flex gap-1">';
         
         // Botón de información (siempre visible)
@@ -231,7 +231,7 @@ const openEditModal = async (id) => {
         document.getElementById('editGuestDni').value = guest.dni || '';
         document.getElementById('editGuestNombre').value = guest.nombre || '';
         document.getElementById('editGuestApellido').value = guest.apellido || '';
-        document.getElementById('editGuestEmail').value = guest.mail || '';
+        document.getElementById('editGuestEmail').value = guest.email || '';
         document.getElementById('editGuestEmpresa').value = guest.empresa || '';
         document.getElementById('editGuestCategoria').value = guest.categoria || '';
         document.getElementById('editGuestProfesion').value = guest.profesion || '';
@@ -246,10 +246,10 @@ const openEditModal = async (id) => {
         document.getElementById('editGuestDayThree').checked = guest.dayThree === 'SI';
         
         document.getElementById('editGuestInfoAdicional').value = guest.infoAdicional || '';
-        document.getElementById('editGuestAcreditado').checked = guest.acreditado > 0;
+        document.getElementById('editGuestAcreditado').checked = guest.estaAcreditado > 0;
         
-        if (guest.horaAcreditacion) {
-            const fecha = new Date(guest.horaAcreditacion);
+        if (guest.fechaAcreditacion) {
+            const fecha = new Date(guest.fechaAcreditacion);
             const horaFormateada = `${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}`;
             document.getElementById('editGuestHoraAcreditacion').innerHTML = `<strong>Hora de acreditación:</strong> ${horaFormateada}`;
         } else {
