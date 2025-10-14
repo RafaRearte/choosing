@@ -25,7 +25,7 @@ public partial class DbHotelContext : DbContext
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Name=ConnectionStrings:DefaultConnectionMacToVps");
+        => optionsBuilder.UseSqlServer("Name=ConnectionStrings:DefaultConnectionLocalMac");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -44,16 +44,6 @@ public partial class DbHotelContext : DbContext
             entity.Property(e => e.Apellido)
                 .HasMaxLength(255)
                 .HasColumnName("apellido");
-            entity.Property(e => e.CantEntradas).HasColumnName("cant_entradas");
-            entity.Property(e => e.DayOne)
-                .HasMaxLength(255)
-                .HasColumnName("day_one");
-            entity.Property(e => e.DayTwo)
-                .HasMaxLength(255)
-                .HasColumnName("day_two");
-            entity.Property(e => e.DayThree)
-                .HasMaxLength(255)
-                .HasColumnName("day_three");
             entity.Property(e => e.InfoAdicional)
                 .HasMaxLength(255)
                 .HasColumnName("info_adicional");
@@ -90,8 +80,6 @@ public partial class DbHotelContext : DbContext
                 .HasMaxLength(255) 
                 .HasColumnName("profesion");
 
-            entity.Property(e => e.CantEntradas)
-                .HasColumnName("cant_entradas");
             entity.Property(e => e.HoraAcreditacion)
                 .HasColumnName("horaAcreditacion");
 
