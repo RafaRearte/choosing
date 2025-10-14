@@ -278,6 +278,25 @@ namespace choosing.Controllers
             }
         }
 
+        // GET: api/Event/publicos - Eventos con venta pública habilitada
+        [HttpGet("publicos")]
+        public async Task<IActionResult> GetPublicEvents()
+        {
+            try
+            {
+                var events = await _context.Events
+                    .Where(e => e.VentaPublica && e.Activo && e.FechaInicio > DateTime.Now)
+                    .OrderBy(e => e.FechaInicio)
+                    .ToListAsync();
+
+                return Ok(events);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
+        }
+
         // GET: api/Event/search
         [HttpGet("search")]
         public async Task<IActionResult> SearchEvents([FromQuery] string query)
