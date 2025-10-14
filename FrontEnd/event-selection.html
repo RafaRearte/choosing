@@ -27,52 +27,185 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/images/icon.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/images/icon-512.png">
     <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .container.my-5 {
+            padding-top: 3rem;
+        }
+
         .event-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
             height: 100%;
+            border: none;
+            border-radius: 20px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
         }
+
+        .event-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .event-card:hover::before {
+            transform: scaleX(1);
+        }
+
         .event-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(42, 82, 152, 0.3);
         }
+
+        .event-card .card-body {
+            padding: 25px;
+        }
+
+        .event-card .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .event-card .card-text {
+            color: #718096;
+            line-height: 1.6;
+        }
+
         .event-date {
-            font-size: 0.9rem;
-            color: #666;
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+            color: #4a5568;
+            margin-top: 15px;
+            padding: 10px;
+            background: #f7fafc;
+            border-radius: 10px;
         }
+
+        .event-date i {
+            color: #2a5298;
+            font-size: 1.2rem;
+        }
+
         .event-badge {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 15px;
+            right: 15px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
+
         .event-location {
             display: flex;
             align-items: center;
             font-size: 0.9rem;
-            color: #666;
-            margin-top: 0.5rem;
+            color: #4a5568;
+            margin-top: 12px;
+            padding: 8px;
+            background: #edf2f7;
+            border-radius: 8px;
         }
+
+        .event-location i {
+            color: #ed8936;
+            font-size: 1.1rem;
+        }
+
         .event-attendees {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             font-size: 0.9rem;
-            margin-top: 0.5rem;
+            margin-top: 15px;
+            padding: 12px;
+            background: linear-gradient(135deg, #f6f8fb 0%, #e9ecf5 100%);
+            border-radius: 10px;
         }
+
         .event-attendees .badge {
+            padding: 8px 12px;
+            font-size: 0.9rem;
             margin-left: 5px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
+
         #loadingIndicator {
             display: none;
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 20px 40px;
+            border-radius: 15px;
             z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         }
+
+        h2 {
+            color: #2d3748;
+            font-weight: 700;
+            font-size: 2.5rem;
+        }
+
+        .text-muted {
+            color: #718096 !important;
+            font-size: 1.1rem;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        footer {
+            margin-top: 5rem;
+        }
+
+        /* Animación para las cards al cargar */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .col-md-4 {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .col-md-4:nth-child(1) { animation-delay: 0.1s; }
+        .col-md-4:nth-child(2) { animation-delay: 0.2s; }
+        .col-md-4:nth-child(3) { animation-delay: 0.3s; }
+        .col-md-4:nth-child(4) { animation-delay: 0.4s; }
     </style>
 </head>
 <body>
@@ -121,12 +254,7 @@
     <!-- Footer -->
     <footer class="bg-dark text-white text-center py-3 mt-5">
         <p>&copy; 2025 - Acreditación de Eventos</p>
-        <a href="acreditacion-offline.html" class="btn btn-warning">
-    <i class="bi bi-hdd me-2"></i>Sistema Local
-</a>
-        <a href="offline.html" class="btn btn-warning">
-    <i class="bi bi-hdd me-2"></i>Sistema offline
-</a>
+
     </footer>
 
     <!-- jQuery -->
