@@ -32,60 +32,52 @@ public partial class DbHotelContext : DbContext
     {
         modelBuilder.Entity<Guest>(entity =>
         {
-            entity.HasKey(e => e.Id);  // Nueva clave primaria
+            entity.ToTable("Invitados");
+            entity.HasKey(e => e.Id);
 
-            entity.HasIndex(e => e.Dni);  // Índice único en DNI
+            // Propiedades básicas
+            entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Apellido).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Dni).HasMaxLength(20);
+            entity.Property(e => e.Telefono).HasMaxLength(50);
 
-            entity.ToTable("invitados");
+            // Propiedades adicionales
+            entity.Property(e => e.InfoAdicional).HasMaxLength(255);
+            entity.Property(e => e.Profesion).HasMaxLength(255);
+            entity.Property(e => e.Cargo).HasMaxLength(255);
+            entity.Property(e => e.Empresa).HasMaxLength(255);
+            entity.Property(e => e.Lugar).HasMaxLength(255);
+            entity.Property(e => e.Categoria).HasMaxLength(100);
+            entity.Property(e => e.IdCode).HasMaxLength(100);
+            entity.Property(e => e.RedSocial).HasMaxLength(255);
 
-            entity.Property(e => e.Dni)
-                .ValueGeneratedNever()
-                .HasColumnName("dni");
-            entity.Property(e => e.Acreditado).HasColumnName("acreditado");
-            entity.Property(e => e.Apellido)
-                .HasMaxLength(255)
-                .HasColumnName("apellido");
-            entity.Property(e => e.InfoAdicional)
-                .HasMaxLength(255)
-                .HasColumnName("info_adicional");
-            entity.Property(e => e.Mail)
-                .HasMaxLength(255)
-                .HasColumnName("mail");
-            entity.Property(e => e.Nombre)
-                .HasMaxLength(255)
-                .HasColumnName("nombre");
-            entity.HasOne<EventModel>()
-                        .WithMany()
-                        .HasForeignKey(d => d.EventoId);
-            entity.Property(e => e.Categoria)
-                        .HasMaxLength(100)
-                        .HasColumnName("categoria");
-            entity.Property(e => e.Empresa)
-                        .HasMaxLength(255)
-                        .HasColumnName("empresa");
-            entity.Property(e => e.Lugar)
-                        .HasMaxLength(255)
-                        .HasColumnName("lugar");
-            entity.Property(e => e.Telefono).HasMaxLength(50).HasColumnName("telefono");
-            entity.Property(e => e.IdCode)
-            .HasMaxLength(100)
-            .HasColumnName("id_code");
-            entity.Property(e => e.RedSocial)
-            .HasMaxLength(255)
-            .HasColumnName("red_social");
-            entity.Property(e => e.Cargo)
-                .HasMaxLength(255)
-                .HasColumnName("cargo");
+            // Estado
+            entity.Property(e => e.Confirmado).HasDefaultValue(false);
+            entity.Property(e => e.EstaAcreditado).HasDefaultValue(false);
+            entity.Property(e => e.EsNuevo).HasDefaultValue(false);
+            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("GETDATE()");
 
-            entity.Property(e => e.Profesion)
-                .HasMaxLength(255) 
-                .HasColumnName("profesion");
+            // Relaciones
+            entity.HasOne(g => g.Evento)
+                .WithMany()
+                .HasForeignKey(g => g.EventoId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            entity.Property(e => e.HoraAcreditacion)
-                .HasColumnName("horaAcreditacion");
+            entity.HasOne(g => g.CompradoPor)
+                .WithMany()
+                .HasForeignKey(g => g.CompradoPorUsuarioId)
+                .OnDelete(DeleteBehavior.SetNull);
 
-            entity.Property(e => e.EsNuevo)
-                .HasColumnName("EsNuevo");  
+            entity.HasOne(g => g.Compra)
+                .WithMany(c => c.Invitados)
+                .HasForeignKey(g => g.CompraId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Índices
+            entity.HasIndex(e => e.EventoId);
+            entity.HasIndex(e => e.Email);
+            entity.HasIndex(e => e.CompraId);
         });
 
         modelBuilder.Entity<EventModel>(entity =>

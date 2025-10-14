@@ -20,10 +20,10 @@ namespace choosing.Services.Impl
         public async Task SendInvitationEmailAsync(Guest guest, EventModel evento)
         {
             var subject = $"Invitación a {evento.Nombre} - Confirmación de Registro";
-            
+
             var body = GenerateInvitationHtml(guest, evento);
 
-            await SendEmailAsync(guest.Mail!, subject, body);
+            await SendEmailAsync(guest.Email!, subject, body);
         }
 
         public async Task SendEmailAsync(string toEmail, string subject, string body)

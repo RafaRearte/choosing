@@ -6,13 +6,13 @@ namespace choosing.Repository.Interfaces
     {
         Task<List<Guest>> GetAllAsync();
         Task<List<Guest>> GetByEventIdAsync(int eventId);
-        Task<Guest?> GetByDNIAsync(int Dni);
-        Task<Guest?> GetByDniAndEventIdAsync(int dni, int eventId);
+        Task<Guest?> GetByDNIAsync(string Dni);
+        Task<Guest?> GetByDniAndEventIdAsync(string dni, int eventId);
         Task<List<Guest>> SearchByNameAsync(string query);
         Task<List<Guest>> SearchByNameAndEventIdAsync(string query, int eventId);
         Task UpdateAsync(Guest guest);
         Task<Guest> AddAsync(Guest guest);
-        Task DeleteAsync(int dni);
+        Task DeleteAsync(string dni);
         Task<List<Guest>> GetAcreditadosAsync();
         Task<List<Guest>> GetAcreditadosByEventIdAsync(int eventId);
         Task<List<Guest>> GetNotAcreditadosAsync();

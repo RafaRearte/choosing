@@ -23,10 +23,10 @@ namespace choosing.Controllers
             _emailService = emailService;
         }
 
-        // ✅ ENDPOINT PÚBLICO PARA REGISTRO DE INVITADOS
+        //ENDPOINT PÚBLICO PARA REGISTRO DE INVITADOS
         [HttpPost("register-public")]
         [AllowAnonymous] // Sin autenticación para registro público
-        public async Task<IActionResult> RegisterPublicGuest([FromBody] PublicGuestRegistration request)
+        public async Task<IActionResult> RegisterPublicGuest([FromBody] PublicGuestRegistrationDTO request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -43,13 +43,13 @@ namespace choosing.Controllers
 
                 // 2. Validar que no existe un invitado con el mismo email en este evento
                 var existingGuests = await _listService.GetInvitadosByEventIdAsync(request.EventId);
-                if (existingGuests.Any(g => g.Mail?.ToLower() == request.Email.ToLower()))
+                if (existingGuests.Any(g => g.Email?.ToLower() == request.Email.ToLower()))
                     return Conflict("Ya existe un registro con este email para este evento");
 
                 // 3. Si tiene DNI, validar que no exista
-                if (request.Dni.HasValue)
+                if (!string.IsNullOrWhiteSpace(request.Dni))
                 {
-                    var existingByDni = await _listService.GetInvitadoByDniAndEventIdAsync(request.Dni.Value, request.EventId);
+                    var existingByDni = await _listService.GetInvitadoByDniAndEventIdAsync(request.Dni, request.EventId);
                     if (existingByDni != null)
                         return Conflict("Ya existe un registro con este DNI para este evento");
                 }
@@ -59,7 +59,7 @@ namespace choosing.Controllers
                 {
                     Nombre = request.Nombre.Trim(),
                     Apellido = request.Apellido.Trim(),
-                    Mail = request.Email.Trim().ToLower(),
+                    Email = request.Email.Trim().ToLower(),
                     Dni = request.Dni,
                     Empresa = request.Empresa?.Trim(),
                     Cargo = request.Cargo?.Trim(),
@@ -71,7 +71,7 @@ namespace choosing.Controllers
                     InfoAdicional = request.InfoAdicional?.Trim(),
                     EventoId = request.EventId,
                     EsNuevo = true,
-                    Acreditado = 0,
+                    EstaAcreditado = false,
                     IdCode = Guid.NewGuid().ToString("N")[..12].ToUpper() // Código único para QR
                 };
 
@@ -167,7 +167,7 @@ namespace choosing.Controllers
         }
 
         [HttpGet("searchByDni")]
-        public async Task<IActionResult> GetInvitadoByDni([FromQuery] int dni, [FromQuery] int eventId)
+        public async Task<IActionResult> GetInvitadoByDni([FromQuery] string dni, [FromQuery] int eventId)
         {
             if (eventId <= 0)
                 return BadRequest("Se requiere un ID de evento válido");
@@ -181,7 +181,7 @@ namespace choosing.Controllers
 
         // Acreditar un invitado
         [HttpPut("acreditar/{dni}")]
-        public async Task<IActionResult> AcreditarInvitado(int dni, [FromQuery] int eventId)
+        public async Task<IActionResult> AcreditarInvitado(string dni, [FromQuery] int eventId)
         {
             if (eventId <= 0)
                 return BadRequest("Se requiere un ID de evento válido");
@@ -194,7 +194,7 @@ namespace choosing.Controllers
             return Ok(invitado);
         }
         [HttpDelete("delete/{dni}")]
-        public async Task<IActionResult> DeleteInvitado(int dni, [FromQuery] int eventId)
+        public async Task<IActionResult> DeleteInvitado(string dni, [FromQuery] int eventId)
         {
             if (eventId <= 0)
                 return BadRequest("Se requiere un ID de evento válido");
@@ -241,24 +241,23 @@ namespace choosing.Controllers
                 return BadRequest("Datos de invitado inválidos");
 
             // Validar el ID del evento (debe ser no-nulo y mayor que 0)
-            if (newGuest.EventoId == null || newGuest.EventoId <= 0)
+            if (newGuest.EventoId <= 0)
                 return BadRequest("Se requiere un ID de evento válido");
 
-            // Ahora que sabemos que EventoId tiene un valor válido, podemos convertirlo a int
-            int eventoId = newGuest.EventoId.Value;
+            int eventoId = newGuest.EventoId;
 
             try
             {
                 // Si se proporcionó un DNI, validar que no exista ya en este evento
-                if (newGuest.Dni.HasValue)
+                if (!string.IsNullOrWhiteSpace(newGuest.Dni))
                 {
-                    var existingGuest = await _listService.GetInvitadoByDniAndEventIdAsync(newGuest.Dni.Value, eventoId);
+                    var existingGuest = await _listService.GetInvitadoByDniAndEventIdAsync(newGuest.Dni, eventoId);
                     if (existingGuest != null)
                         return Conflict($"Ya existe un invitado con el DNI {newGuest.Dni} en este evento");
                 }
 
                 // Inicializar campos para un nuevo invitado
-                newGuest.Acreditado = 0; // No acreditado inicialmente
+                newGuest.EstaAcreditado = false; // No acreditado inicialmente
                 newGuest.EsNuevo = true; // Nuevo invitado
 
                 var createdGuest = await _listService.CreateInvitadoAsync(newGuest);
@@ -274,7 +273,7 @@ namespace choosing.Controllers
 
         // Actualizar un invitado
         [HttpPut("update/{originalDni}")]
-        public async Task<IActionResult> UpdateInvitado(int originalDni, [FromBody] Guest updatedGuest, [FromQuery] int eventId)
+        public async Task<IActionResult> UpdateInvitado(string originalDni, [FromBody] Guest updatedGuest, [FromQuery] int eventId)
         {
             if (updatedGuest == null)
                 return BadRequest("Datos de invitado inválidos");
@@ -293,11 +292,11 @@ namespace choosing.Controllers
                     return NotFound($"No se encontró un invitado con el DNI {originalDni} en el evento especificado");
 
                 // Si el DNI cambió, verificar que el nuevo DNI no exista en este evento
-                if (updatedGuest.Dni.HasValue && originalDni != updatedGuest.Dni.Value)
+                if (!string.IsNullOrWhiteSpace(updatedGuest.Dni) && originalDni != updatedGuest.Dni)
                 {
-                    var existingWithNewDni = await _listService.GetInvitadoByDniAndEventIdAsync(updatedGuest.Dni.Value, eventId);
+                    var existingWithNewDni = await _listService.GetInvitadoByDniAndEventIdAsync(updatedGuest.Dni, eventId);
                     if (existingWithNewDni != null && existingWithNewDni.Id != existingGuest.Id)
-                        return Conflict($"Ya existe otro invitado con el DNI {updatedGuest.Dni.Value} en este evento");
+                        return Conflict($"Ya existe otro invitado con el DNI {updatedGuest.Dni} en este evento");
                 }
 
                 // Actualizar el invitado usando su ID
@@ -313,7 +312,7 @@ namespace choosing.Controllers
 
         // Actualizar solo el estado de acreditación (endpoint específico para el toggle)
         [HttpPut("updateAccreditStatus/{dni}")]
-        public async Task<IActionResult> UpdateAccreditStatus(int dni, [FromBody] AccreditStatusDto status, [FromQuery] int eventId)
+        public async Task<IActionResult> UpdateAccreditStatus(string dni, [FromBody] AccreditStatusDTO status, [FromQuery] int eventId)
         {
             if (eventId <= 0)
                 return BadRequest("Se requiere un ID de evento válido");
@@ -325,11 +324,11 @@ namespace choosing.Controllers
                     return NotFound($"No se encontró un invitado con el DNI {dni} en el evento especificado");
 
                 // Actualizar solo el estado de acreditación
-                invitado.Acreditado = status.Acreditado;
+                invitado.EstaAcreditado = status.EstaAcreditado;
                 // Si está siendo acreditado, guardar la hora actual
-                if (status.Acreditado > 0)
+                if (status.EstaAcreditado)
                 {
-                    invitado.HoraAcreditacion = DateTime.Now;
+                    invitado.FechaAcreditacion = DateTime.Now;
                 }
 
                 await _listService.UpdateAccreditStatusAsync(invitado);
@@ -364,9 +363,9 @@ namespace choosing.Controllers
                     return NotFound($"No se encontró un invitado con el ID {id} en el evento especificado");
 
                 // Si el DNI cambió, verificar que el nuevo DNI no exista en este evento
-                if (updatedGuest.Dni.HasValue && existingGuest.Dni != updatedGuest.Dni)
+                if (!string.IsNullOrWhiteSpace(updatedGuest.Dni) && existingGuest.Dni != updatedGuest.Dni)
                 {
-                    var existingWithNewDni = await _listService.GetInvitadoByDniAndEventIdAsync(updatedGuest.Dni.Value, eventId);
+                    var existingWithNewDni = await _listService.GetInvitadoByDniAndEventIdAsync(updatedGuest.Dni, eventId);
                     if (existingWithNewDni != null && existingWithNewDni.Id != id)
                         return Conflict($"Ya existe otro invitado con el DNI {updatedGuest.Dni} en este evento");
                 }
@@ -397,7 +396,7 @@ namespace choosing.Controllers
 
         // Actualizar estado de acreditación por ID
         [HttpPut("updateAccreditStatusById/{id}")]
-        public async Task<IActionResult> UpdateAccreditStatusById(int id, [FromBody] AccreditStatusDto status, [FromQuery] int eventId)
+        public async Task<IActionResult> UpdateAccreditStatusById(int id, [FromBody] AccreditStatusDTO status, [FromQuery] int eventId)
         {
             if (eventId <= 0)
                 return BadRequest("Se requiere un ID de evento válido");
@@ -409,11 +408,11 @@ namespace choosing.Controllers
                     return NotFound($"No se encontró un invitado con el ID {id} en el evento especificado");
 
                 // Actualizar solo el estado de acreditación
-                invitado.Acreditado = status.Acreditado;
+                invitado.EstaAcreditado = status.EstaAcreditado;
                 // Si está siendo acreditado, guardar la hora actual
-                if (status.Acreditado > 0)
+                if (status.EstaAcreditado)
                 {
-                    invitado.HoraAcreditacion = DateTime.Now;
+                    invitado.FechaAcreditacion = DateTime.Now;
                 }
 
                 await _listService.UpdateAccreditStatusAsync(invitado);
@@ -460,7 +459,7 @@ namespace choosing.Controllers
 
         // Actualizar estado de acreditación por IdCode
         [HttpPut("updateAccreditStatusByIdCode/{idCode}")]
-        public async Task<IActionResult> UpdateAccreditStatusByIdCode(string idCode, [FromBody] AccreditStatusDto status, [FromQuery] int eventId)
+        public async Task<IActionResult> UpdateAccreditStatusByIdCode(string idCode, [FromBody] AccreditStatusDTO status, [FromQuery] int eventId)
         {
             if (string.IsNullOrWhiteSpace(idCode))
                 return BadRequest("Se requiere un código válido");
@@ -475,11 +474,11 @@ namespace choosing.Controllers
                     return NotFound($"No se encontró un invitado con el código {idCode} en el evento especificado");
 
                 // Actualizar solo el estado de acreditación
-                invitado.Acreditado = status.Acreditado;
+                invitado.EstaAcreditado = status.EstaAcreditado;
                 // Si está siendo acreditado, guardar la hora actual
-                if (status.Acreditado > 0)
+                if (status.EstaAcreditado)
                 {
-                    invitado.HoraAcreditacion = DateTime.Now;
+                    invitado.FechaAcreditacion = DateTime.Now;
                 }
 
                 await _listService.UpdateAccreditStatusAsync(invitado);
@@ -490,60 +489,6 @@ namespace choosing.Controllers
                 return StatusCode(500, $"Error interno al actualizar estado de acreditación: {ex.Message}");
             }
         }
-        
-        [HttpGet("GetPaginated")]
-        public async Task<IActionResult> GetPaginatedGuests(
-            int eventId, 
-            int draw = 1,
-            int start = 0, 
-            int length = 100,
-            string search = "",
-            string filter = "",
-            string orderColumn = "id",
-            string orderDirection = "asc")
-        {
-            try 
-            {
-                var result = await _listService.GetPaginatedGuestsAsync(eventId, start, length, search, filter, orderColumn, orderDirection);
-                
-                // RESPUESTA EN FORMATO DATATABLES
-                var response = new
-                {
-                    draw = draw,
-                    recordsTotal = result.totalCount,
-                    recordsFiltered = result.filteredCount,
-                    data = result.guests.Select(g => new {
-                        id = g.Id,
-                        nombre = g.Nombre,
-                        apellido = g.Apellido,
-                        dni = g.Dni,
-                        mail = g.Mail,
-                        telefono = g.Telefono,
-                        empresa = g.Empresa,
-                        cargo = g.Cargo,
-                        categoria = g.Categoria,
-                        profesion = g.Profesion,
-                        lugar = g.Lugar,
-                        redSocial = g.RedSocial,
-                        dayOne = g.DayOne,
-                        dayTwo = g.DayTwo,
-                        dayThree = g.DayThree,
-                        infoAdicional = g.InfoAdicional,
-                        acreditado = g.Acreditado,
-                        horaAcreditacion = g.HoraAcreditacion,
-                        idCode = g.IdCode,
-                        esNuevo = g.EsNuevo 
-                    })
-                };
-                
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error: {ex.Message}");
-            }
-        }
-        
         [HttpGet("GetCounters")]
         public async Task<IActionResult> GetEventCounters(int eventId)
         {
@@ -567,40 +512,38 @@ namespace choosing.Controllers
 [HttpGet("ExportCsv")]
 public async Task<IActionResult> ExportCsv(int eventId)
 {
-    // ¡FALTABA EL AWAIT! Esta era la línea con el error
     var guests = await _listService.ExportCsvAsync(eventId);
-    
-    // Armar el CSV con todos los campos relevantes
+
     var sb = new StringBuilder();
-    
-    // Header del CSV con todos los campos - USANDO PUNTO Y COMA para Excel en español
-    sb.AppendLine("ID;Nombre;Apellido;DNI;Mail;Telefono;Empresa;Cargo;Profesion;Categoria;Lugar;Red Social;Info Adicional;Cant Entradas;Day One;Day Two;Day Three;Estado;Hora Acreditacion;Tipo de Registro");
+
+    // Header del CSV - sin DayOne/Two/Three/CantEntradas
+    sb.AppendLine("ID;Nombre;Apellido;DNI;Email;Telefono;Empresa;Cargo;Profesion;Categoria;Lugar;Red Social;Info Adicional;Estado;Fecha Acreditacion;Tipo de Registro");
 
     foreach (var g in guests)
     {
         // Estado basado en acreditado
-        string estado = g.Acreditado > 0 ? "Asistio" : "No asistio";
-        
-        // Formatear hora de acreditación
-        string horaAcreditacion = "";
-        if (g.HoraAcreditacion.HasValue)
+        string estado = g.EstaAcreditado ? "Asistio" : "No asistio";
+
+        // Formatear fecha de acreditación
+        string fechaAcreditacion = "";
+        if (g.FechaAcreditacion.HasValue)
         {
-            var fecha = g.HoraAcreditacion.Value;
+            var fecha = g.FechaAcreditacion.Value;
             string diaSemana = fecha.ToString("dddd", new System.Globalization.CultureInfo("es-ES"));
-            horaAcreditacion = $"{diaSemana} {fecha:dd/MM/yyyy HH:mm}";
+            fechaAcreditacion = $"{diaSemana} {fecha:dd/MM/yyyy HH:mm}";
         }
-        
+
         // Tipo de registro
         string tipoRegistro = g.EsNuevo ? "Invitado Nuevo" : "Invitado Pre-registrado";
-        
+
         // Escapar comillas dobles en los strings y manejar nulls - SIN comillas externas porque usamos ;
         string EscapeForCsv(string? value) => value == null ? "" : value.Replace("\"", "\"\"").Replace(";", ",");
-        
+
         sb.AppendLine($"{g.Id};" +
                      $"{EscapeForCsv(g.Nombre)};" +
                      $"{EscapeForCsv(g.Apellido)};" +
                      $"{g.Dni};" +
-                     $"{EscapeForCsv(g.Mail)};" +
+                     $"{EscapeForCsv(g.Email)};" +
                      $"{EscapeForCsv(g.Telefono)};" +
                      $"{EscapeForCsv(g.Empresa)};" +
                      $"{EscapeForCsv(g.Cargo)};" +
@@ -609,12 +552,8 @@ public async Task<IActionResult> ExportCsv(int eventId)
                      $"{EscapeForCsv(g.Lugar)};" +
                      $"{EscapeForCsv(g.RedSocial)};" +
                      $"{EscapeForCsv(g.InfoAdicional)};" +
-                     $"{g.CantEntradas};" +
-                     $"{EscapeForCsv(g.DayOne)};" +
-                     $"{EscapeForCsv(g.DayTwo)};" +
-                     $"{EscapeForCsv(g.DayThree)};" +
                      $"{EscapeForCsv(estado)};" +
-                     $"{EscapeForCsv(horaAcreditacion)};" +
+                     $"{EscapeForCsv(fechaAcreditacion)};" +
                      $"{EscapeForCsv(tipoRegistro)}");
     }
 

@@ -43,11 +43,11 @@ namespace choosing.Repository.Impl
             }
         }
 
-        public async Task<Guest?> GetByDNIAsync(int Dni)
+        public async Task<Guest?> GetByDNIAsync(string Dni)
         {
             try
             {
-                return await _context.Guests.FindAsync(Dni);
+                return await _context.Guests.FirstOrDefaultAsync(g => g.Dni == Dni);
             }
             catch (Exception ex)
             {
@@ -56,7 +56,7 @@ namespace choosing.Repository.Impl
             }
         }
 
-        public async Task<Guest?> GetByDniAndEventIdAsync(int dni, int eventId)
+        public async Task<Guest?> GetByDniAndEventIdAsync(string dni, int eventId)
         {
             try
             {
@@ -127,11 +127,11 @@ namespace choosing.Repository.Impl
             }
         }
 
-        public async Task DeleteAsync(int dni)
+        public async Task DeleteAsync(string dni)
         {
             try
             {
-                var guest = await _context.Guests.FindAsync(dni);
+                var guest = await _context.Guests.FirstOrDefaultAsync(g => g.Dni == dni);
                 if (guest != null)
                 {
                     _context.Guests.Remove(guest);
@@ -148,28 +148,28 @@ namespace choosing.Repository.Impl
         public async Task<List<Guest>> GetAcreditadosAsync()
         {
             return await _context.Guests
-                .Where(g => g.Acreditado == 1)
+                .Where(g => g.EstaAcreditado == true)
                 .ToListAsync();
         }
 
         public async Task<List<Guest>> GetAcreditadosByEventIdAsync(int eventId)
         {
             return await _context.Guests
-                .Where(g => g.EventoId == eventId && g.Acreditado == 1)
+                .Where(g => g.EventoId == eventId && g.EstaAcreditado == true)
                 .ToListAsync();
         }
 
         public async Task<List<Guest>> GetNotAcreditadosAsync()
         {
             return await _context.Guests
-                .Where(g => g.Acreditado == 0)
+                .Where(g => g.EstaAcreditado == false)
                 .ToListAsync();
         }
 
         public async Task<List<Guest>> GetNotAcreditadosByEventIdAsync(int eventId)
         {
             return await _context.Guests
-                .Where(g => g.EventoId == eventId && g.Acreditado == 0)
+                .Where(g => g.EventoId == eventId && g.EstaAcreditado == false)
                 .ToListAsync();
         }
 
@@ -279,10 +279,10 @@ namespace choosing.Repository.Impl
                     switch (filter)
                     {
                         case "acreditados":
-                            query = query.Where(x => x.Acreditado > 0);
+                            query = query.Where(x => x.EstaAcreditado == true);
                             break;
                         case "no-acreditados":
-                            query = query.Where(x => x.Acreditado == 0);
+                            query = query.Where(x => x.EstaAcreditado == false);
                             break;
                         case "nuevos":
                             query = query.Where(x => x.EsNuevo == true);
@@ -311,14 +311,14 @@ namespace choosing.Repository.Impl
                     );
                 }
                 
-                // 🔥 ORDENAMIENTO DINÁMICO PARA TODAS LAS COLUMNAS:
+                //  ORDENAMIENTO DINÁMICO PARA TODAS LAS COLUMNAS:
                 query = orderColumn.ToLower() switch
                 {
                     "id" => orderDirection == "desc" ? query.OrderByDescending(x => x.Id) : query.OrderBy(x => x.Id),
                     "nombre" => orderDirection == "desc" ? query.OrderByDescending(x => x.Nombre) : query.OrderBy(x => x.Nombre),
                     "apellido" => orderDirection == "desc" ? query.OrderByDescending(x => x.Apellido) : query.OrderBy(x => x.Apellido),
                     "dni" => orderDirection == "desc" ? query.OrderByDescending(x => x.Dni) : query.OrderBy(x => x.Dni),
-                    "mail" => orderDirection == "desc" ? query.OrderByDescending(x => x.Mail) : query.OrderBy(x => x.Mail),
+                    "email" => orderDirection == "desc" ? query.OrderByDescending(x => x.Email) : query.OrderBy(x => x.Email),
                     "telefono" => orderDirection == "desc" ? query.OrderByDescending(x => x.Telefono) : query.OrderBy(x => x.Telefono),
                     "empresa" => orderDirection == "desc" ? query.OrderByDescending(x => x.Empresa) : query.OrderBy(x => x.Empresa),
                     "cargo" => orderDirection == "desc" ? query.OrderByDescending(x => x.Cargo) : query.OrderBy(x => x.Cargo),
@@ -326,12 +326,9 @@ namespace choosing.Repository.Impl
                     "categoria" => orderDirection == "desc" ? query.OrderByDescending(x => x.Categoria) : query.OrderBy(x => x.Categoria),
                     "lugar" => orderDirection == "desc" ? query.OrderByDescending(x => x.Lugar) : query.OrderBy(x => x.Lugar),
                     "redsocial" => orderDirection == "desc" ? query.OrderByDescending(x => x.RedSocial) : query.OrderBy(x => x.RedSocial),
-                    "dayone" => orderDirection == "desc" ? query.OrderByDescending(x => x.DayOne) : query.OrderBy(x => x.DayOne),
-                    "daytwo" => orderDirection == "desc" ? query.OrderByDescending(x => x.DayTwo) : query.OrderBy(x => x.DayTwo),
-                    "daythree" => orderDirection == "desc" ? query.OrderByDescending(x => x.DayThree) : query.OrderBy(x => x.DayThree),
                     "infoadicional" => orderDirection == "desc" ? query.OrderByDescending(x => x.InfoAdicional) : query.OrderBy(x => x.InfoAdicional),
-                    "acreditado" => orderDirection == "desc" ? query.OrderByDescending(x => x.Acreditado) : query.OrderBy(x => x.Acreditado),
-                    "horaacreditacion" => orderDirection == "desc" ? query.OrderByDescending(x => x.HoraAcreditacion) : query.OrderBy(x => x.HoraAcreditacion),
+                    "estaacreditado" => orderDirection == "desc" ? query.OrderByDescending(x => x.EstaAcreditado) : query.OrderBy(x => x.EstaAcreditado),
+                    "fechaacreditacion" => orderDirection == "desc" ? query.OrderByDescending(x => x.FechaAcreditacion) : query.OrderBy(x => x.FechaAcreditacion),
                     _ => query.OrderBy(x => x.Id) // Default
                 };
                 
@@ -362,7 +359,7 @@ namespace choosing.Repository.Impl
                     
                 // Acreditados para este evento
                 var acreditados = await _context.Guests
-                    .CountAsync(g => g.EventoId == eventId && g.Acreditado > 0);
+                    .CountAsync(g => g.EventoId == eventId && g.EstaAcreditado == true);
                     
                 // Nuevos (usando tu campo EsNuevo)
                 var nuevos = await _context.Guests
@@ -379,15 +376,15 @@ namespace choosing.Repository.Impl
         public async Task<List<Guest>> ExportCsvAsync(int eventId)
         {
             var query = _context.Guests.Where(g => g.EventoId == eventId);
-            
+
             var guests = await query
-                .OrderBy(g => g.HoraAcreditacion == null ? 1 : 0)  // NULL al final (los que no se acreditaron)
-                .ThenByDescending(g => g.Acreditado)                // Acreditados primero dentro de cada grupo
-                .ThenBy(g => g.HoraAcreditacion)                    // Por orden de acreditación (los que llegaron primero)
-                .ThenBy(g => g.Apellido)                            // Y después por apellido
-                .ThenBy(g => g.Nombre)                              // Y por nombre
+                .OrderBy(g => g.FechaAcreditacion == null ? 1 : 0)  // NULL al final (los que no se acreditaron)
+                .ThenByDescending(g => g.EstaAcreditado)             // Acreditados primero dentro de cada grupo
+                .ThenBy(g => g.FechaAcreditacion)                    // Por orden de acreditación (los que llegaron primero)
+                .ThenBy(g => g.Apellido)                             // Y después por apellido
+                .ThenBy(g => g.Nombre)                               // Y por nombre
                 .ToListAsync();
-            
+
             return guests;
         }
 

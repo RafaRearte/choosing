@@ -130,7 +130,7 @@ namespace choosing.Controllers
                 foreach (var evt in events)
                 {
                     var totalGuests = await _context.Guests.CountAsync(g => g.EventoId == evt.Id);
-                    var accreditedGuests = await _context.Guests.CountAsync(g => g.EventoId == evt.Id && g.Acreditado > 0);
+                    var accreditedGuests = await _context.Guests.CountAsync(g => g.EventoId == evt.Id && g.EstaAcreditado);
 
                     eventsWithStats.Add(new
                     {

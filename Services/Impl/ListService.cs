@@ -15,8 +15,8 @@ namespace choosing.Services.Impl
 
         public async Task AcreditarInvitadoAsync(Guest guest)
         {
-            guest.Acreditado = 1;
-            guest.HoraAcreditacion = DateTime.Now;
+            guest.EstaAcreditado = true;
+            guest.FechaAcreditacion = DateTime.Now;
             await _listRepository.UpdateAsync(guest);
         }
 
@@ -30,12 +30,12 @@ namespace choosing.Services.Impl
             return await _listRepository.GetByEventIdAsync(eventId);
         }
 
-        public async Task<Guest?> GetInvitadoByDniAsync(int dni)
+        public async Task<Guest?> GetInvitadoByDniAsync(string dni)
         {
             return await _listRepository.GetByDNIAsync(dni);
         }
 
-        public async Task<Guest?> GetInvitadoByDniAndEventIdAsync(int dni, int eventId)
+        public async Task<Guest?> GetInvitadoByDniAndEventIdAsync(string dni, int eventId)
         {
             return await _listRepository.GetByDniAndEventIdAsync(dni, eventId);
         }
@@ -55,7 +55,7 @@ namespace choosing.Services.Impl
             return await _listRepository.AddAsync(newGuest);
         }
 
-        public async Task UpdateInvitadoAsync(int originalDni, Guest updatedGuest)
+        public async Task UpdateInvitadoAsync(string originalDni, Guest updatedGuest)
         {
             // Obtener el invitado original
             var invitado = await _listRepository.GetByDNIAsync(originalDni);
@@ -73,20 +73,19 @@ namespace choosing.Services.Impl
                 // Actualizar todos los campos
                 invitado.Nombre = updatedGuest.Nombre;
                 invitado.Apellido = updatedGuest.Apellido;
-                invitado.Mail = updatedGuest.Mail;
-                invitado.DayOne = updatedGuest.DayOne;
-                invitado.DayTwo = updatedGuest.DayTwo;
+                invitado.Email = updatedGuest.Email;
                 invitado.InfoAdicional = updatedGuest.InfoAdicional;
-                invitado.Acreditado = updatedGuest.Acreditado;
-                invitado.CantEntradas = updatedGuest.CantEntradas;
+                invitado.EstaAcreditado = updatedGuest.EstaAcreditado;
                 invitado.Empresa = updatedGuest.Empresa;
                 invitado.Categoria = updatedGuest.Categoria;
                 invitado.EventoId = updatedGuest.EventoId;
                 invitado.Lugar = updatedGuest.Lugar;
                 invitado.Telefono = updatedGuest.Telefono;
-                invitado.DayThree = updatedGuest.DayThree;
                 invitado.RedSocial = updatedGuest.RedSocial;
-
+                invitado.Profesion = updatedGuest.Profesion;
+                invitado.Cargo = updatedGuest.Cargo;
+                invitado.IdCode = updatedGuest.IdCode;
+                invitado.EsNuevo = updatedGuest.EsNuevo;
 
                 await _listRepository.UpdateAsync(invitado);
             }
@@ -97,7 +96,7 @@ namespace choosing.Services.Impl
             await _listRepository.UpdateAsync(invitado);
         }
 
-        public async Task DeleteInvitadoAsync(int dni)
+        public async Task DeleteInvitadoAsync(string dni)
         {
             await _listRepository.DeleteAsync(dni);
         }
@@ -159,19 +158,19 @@ namespace choosing.Services.Impl
             invitado.Dni = updatedGuest.Dni;
             invitado.Nombre = updatedGuest.Nombre;
             invitado.Apellido = updatedGuest.Apellido;
-            invitado.Mail = updatedGuest.Mail;
-            invitado.DayOne = updatedGuest.DayOne;
-            invitado.DayTwo = updatedGuest.DayTwo;
-            invitado.DayThree = updatedGuest.DayThree;
+            invitado.Email = updatedGuest.Email;
             invitado.InfoAdicional = updatedGuest.InfoAdicional;
-            invitado.Acreditado = updatedGuest.Acreditado;
-            invitado.CantEntradas = updatedGuest.CantEntradas;
+            invitado.EstaAcreditado = updatedGuest.EstaAcreditado;
             invitado.Empresa = updatedGuest.Empresa;
             invitado.Categoria = updatedGuest.Categoria;
             invitado.EventoId = updatedGuest.EventoId;
             invitado.Lugar = updatedGuest.Lugar;
             invitado.Telefono = updatedGuest.Telefono;
             invitado.RedSocial = updatedGuest.RedSocial;
+            invitado.Profesion = updatedGuest.Profesion;
+            invitado.Cargo = updatedGuest.Cargo;
+            invitado.IdCode = updatedGuest.IdCode;
+            invitado.EsNuevo = updatedGuest.EsNuevo;
 
             await _listRepository.UpdateAsync(invitado);
         }
