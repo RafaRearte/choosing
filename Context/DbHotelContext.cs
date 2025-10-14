@@ -133,6 +133,58 @@ public partial class DbHotelContext : DbContext
                 .HasForeignKey(f => f.EventoId);
         });
 
+        // Configuración de User
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.ToTable("Usuarios");
+            entity.HasKey(e => e.Id);
+
+            // Autenticación
+            entity.Property(e => e.Username).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(500);
+
+            // Tipo y datos básicos
+            entity.Property(e => e.TipoUsuario).IsRequired().HasMaxLength(20).HasDefaultValue("comprador");
+            entity.Property(e => e.Nombre).HasMaxLength(100);
+            entity.Property(e => e.Apellido).HasMaxLength(100);
+            entity.Property(e => e.Telefono).HasMaxLength(20);
+            entity.Property(e => e.FechaRegistro).IsRequired().HasDefaultValueSql("GETDATE()");
+            entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
+
+            // Perfil extendido
+            entity.Property(e => e.Dni).HasMaxLength(20);
+            entity.Property(e => e.Direccion).HasMaxLength(200);
+            entity.Property(e => e.Ciudad).HasMaxLength(100);
+            entity.Property(e => e.Provincia).HasMaxLength(100);
+            entity.Property(e => e.CodigoPostal).HasMaxLength(10);
+
+            // Campos organizador
+            entity.Property(e => e.NombreEmpresa).HasMaxLength(200);
+            entity.Property(e => e.CuitCuil).HasMaxLength(20);
+            entity.Property(e => e.PlanSuscripcion).HasMaxLength(20);
+
+            // Campos comprador
+            entity.Property(e => e.RazonSocial).HasMaxLength(100);
+            entity.Property(e => e.TipoDocumento).HasMaxLength(20);
+            entity.Property(e => e.NumeroDocumento).HasMaxLength(20);
+            entity.Property(e => e.Pais).HasMaxLength(50).HasDefaultValue("Argentina");
+            entity.Property(e => e.TelefonoAlternativo).HasMaxLength(20);
+            entity.Property(e => e.RecibirPromociones).HasDefaultValue(true);
+            entity.Property(e => e.RecibirNotificaciones).HasDefaultValue(true);
+
+            // Índices
+            entity.HasIndex(e => e.Username).IsUnique();
+            entity.HasIndex(e => e.Email).IsUnique();
+            entity.HasIndex(e => e.TipoUsuario);
+
+            // Relación inversa con Compras
+            entity.HasMany(u => u.Compras)
+                .WithOne(c => c.Usuario)
+                .HasForeignKey(c => c.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         // Configuración de Compra
         modelBuilder.Entity<Compra>(entity =>
         {

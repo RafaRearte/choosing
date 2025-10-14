@@ -23,12 +23,24 @@ namespace choosing.Services.Impl
             var key = Encoding.ASCII.GetBytes(_jwtConfig.Secret);
 
             var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Email, user.Email),
-            //new Claim(ClaimTypes.Role, user.Rol)
-        };
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.TipoUsuario), // Agregar rol del usuario
+                new Claim("tipo_usuario", user.TipoUsuario), // Claim custom adicional
+            };
+
+            // Si tiene nombre y apellido, agregarlos
+            if (!string.IsNullOrEmpty(user.Nombre))
+            {
+                claims.Add(new Claim(ClaimTypes.GivenName, user.Nombre));
+            }
+
+            if (!string.IsNullOrEmpty(user.Apellido))
+            {
+                claims.Add(new Claim(ClaimTypes.Surname, user.Apellido));
+            }
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
