@@ -48,10 +48,12 @@ builder.Services.AddScoped<IListService, ListService>();
 builder.Services.AddScoped<IListRepository, ListRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<ICompraRepository, CompraRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+builder.Services.AddScoped<ICompraService, CompraService>();
 builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("JwtConfig"));
 builder.Services.Configure<EmailConfig>(builder.Configuration.GetSection("EmailConfig"));
 

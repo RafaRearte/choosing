@@ -22,6 +22,7 @@ public partial class DbHotelContext : DbContext
     public DbSet<EventModel> Events { get; set; }
     public DbSet<FeedbackModel> Feedbacks { get; set; }
     public DbSet<FeedbackConfigModel> FeedbackConfig { get; set; }
+    public DbSet<Compra> Compras { get; set; }
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -130,6 +131,45 @@ public partial class DbHotelContext : DbContext
             entity.HasOne<EventModel>()
                 .WithMany()
                 .HasForeignKey(f => f.EventoId);
+        });
+
+        // Configuración de Compra
+        modelBuilder.Entity<Compra>(entity =>
+        {
+            entity.ToTable("Compras");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.UsuarioId).IsRequired();
+            entity.Property(e => e.EventoId).IsRequired();
+            entity.Property(e => e.FechaCompra).IsRequired().HasDefaultValueSql("GETDATE()");
+            entity.Property(e => e.CantidadEntradas).IsRequired();
+            entity.Property(e => e.MontoTotal).IsRequired().HasColumnType("decimal(10,2)");
+            entity.Property(e => e.Estado).IsRequired().HasMaxLength(50).HasDefaultValue("pendiente");
+            entity.Property(e => e.MetodoPago).HasMaxLength(100);
+            entity.Property(e => e.TransaccionId).HasMaxLength(200);
+
+            // Relación con User
+            entity.HasOne(c => c.Usuario)
+                .WithMany(u => u.Compras)
+                .HasForeignKey(c => c.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Relación con Evento
+            entity.HasOne(c => c.Evento)
+                .WithMany()
+                .HasForeignKey(c => c.EventoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Relación inversa con Invitados
+            entity.HasMany(c => c.Invitados)
+                .WithOne(g => g.Compra)
+                .HasForeignKey(g => g.CompraId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Índices
+            entity.HasIndex(e => e.UsuarioId);
+            entity.HasIndex(e => e.EventoId);
+            entity.HasIndex(e => e.Estado);
+            entity.HasIndex(e => e.FechaCompra);
         });
 
         OnModelCreatingPartial(modelBuilder);
