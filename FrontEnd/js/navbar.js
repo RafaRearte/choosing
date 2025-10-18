@@ -57,8 +57,8 @@ const Navbar = {
         return `
             <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
                 <div class="container-fluid">
-                    <a class="navbar-brand" href="/admin-panel.html" style="cursor: pointer;">
-                        <i class="bi bi-shield-check me-2"></i>Panel Admin
+                    <a class="navbar-brand" href="/landing.html" style="cursor: pointer;">
+                        <i class="bi bi-star me-2"></i>Choosing
                     </a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                         <span class="navbar-toggler-icon"></span>
@@ -67,7 +67,7 @@ const Navbar = {
                         <ul class="navbar-nav me-auto">
                             <li class="nav-item">
                                 <a class="nav-link ${currentPage === 'admin-panel' ? 'active' : ''}" href="/admin-panel.html">
-                                    <i class="bi bi-speedometer2"></i> Dashboard
+                                    <i class="bi bi-speedometer2"></i> Admin Panel
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -103,8 +103,8 @@ const Navbar = {
         return `
             <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);">
                 <div class="container-fluid">
-                    <a class="navbar-brand" href="/organizador-dashboard.html" style="cursor: pointer;">
-                        <i class="bi bi-calendar-check me-2"></i>Choosing
+                    <a class="navbar-brand" href="/landing.html" style="cursor: pointer;">
+                        <i class="bi bi-star me-2"></i>Choosing
                     </a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                         <span class="navbar-toggler-icon"></span>
@@ -172,8 +172,8 @@ const Navbar = {
         return `
             <nav class="navbar navbar-expand-lg navbar-dark bg-success">
                 <div class="container-fluid">
-                    <a class="navbar-brand" href="/eventos-publicos.html" style="cursor: pointer;">
-                        <i class="bi bi-ticket-perforated me-2"></i>Choosing
+                    <a class="navbar-brand" href="/landing.html" style="cursor: pointer;">
+                        <i class="bi bi-star me-2"></i>Choosing
                     </a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                         <span class="navbar-toggler-icon"></span>
