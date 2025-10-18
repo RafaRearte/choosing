@@ -104,25 +104,6 @@ namespace choosing.Controllers
             return Ok(guests);
         }
 
-        // ENDPOINT RÁPIDO (sin stored procedure)
-        [HttpGet("GetAllFast")]
-        public async Task<IActionResult> GetAllInvitadosFast([FromQuery] int eventId)
-        {
-            if (eventId <= 0)
-                return BadRequest("Se requiere un ID de evento válido");
-
-            try
-            {
-                // Usar método normal de EF en lugar de stored procedure
-                var guests = await _listService.GetInvitadosByEventIdAsync(eventId);
-                return Ok(guests);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error retrieving guests: {ex.Message}");
-            }
-        }
-
         // Para invitados acreditados
         [HttpGet("GetAcreditados")]
         public async Task<IActionResult> GetInvitadosAcreditados([FromQuery] int eventId)

@@ -93,7 +93,7 @@ const fetchGuests = async (forceRefresh = false) => {
         console.log('📡 Cargando desde servidor...');
         updateProgress(30, 'Conectando al servidor...');
         
-        const response = await authenticatedFetch(`${apiUrl}/GetAllFast?eventId=${currentEventId}`);
+        const response = await authenticatedFetch(`${apiUrl}/GetAll?eventId=${currentEventId}`);
         if (!response) {
             hideLoading();
             return;
@@ -141,7 +141,7 @@ const fetchGuestsFiltered = async () => {
             url = `${apiUrl}/GetNuevos?eventId=${currentEventId}`;
             break;
         default:
-            url = `${apiUrl}/GetAllFast?eventId=${currentEventId}`;
+            url = `${apiUrl}/GetAll?eventId=${currentEventId}`;
     }
     
     const response = await authenticatedFetch(url);
@@ -198,7 +198,7 @@ const refreshInBackground = async () => {
     try {
         console.log('🔄 Sincronizando en background...');
         
-        const response = await authenticatedFetch(`${apiUrl}/GetAllFast?eventId=${currentEventId}`);
+        const response = await authenticatedFetch(`${apiUrl}/GetAll?eventId=${currentEventId}`);
         if (!response || !response.ok) return;
         
         const serverGuests = await response.json();
