@@ -104,7 +104,7 @@ namespace choosing.Controllers
             return Ok(guests);
         }
 
-        // ENDPOINT SÚPER RÁPIDO CON STORED PROCEDURE
+        // ENDPOINT RÁPIDO (sin stored procedure)
         [HttpGet("GetAllFast")]
         public async Task<IActionResult> GetAllInvitadosFast([FromQuery] int eventId)
         {
@@ -113,8 +113,8 @@ namespace choosing.Controllers
 
             try
             {
-                var guests = await _listService.GetAllByEventIdViaSPAsync(eventId);
-                // Devolver el mismo formato que el endpoint original para compatibilidad
+                // Usar método normal de EF en lugar de stored procedure
+                var guests = await _listService.GetInvitadosByEventIdAsync(eventId);
                 return Ok(guests);
             }
             catch (Exception ex)
