@@ -15,6 +15,22 @@ const eventIdFromUrl = urlParams.get('eventId');
 if (eventIdFromUrl) {
     localStorage.setItem('currentEventId', eventIdFromUrl);
     // El nombre lo obtendremos de la API
+
+    // Si el usuario es organizador o admin, darle acceso completo
+    if (typeof Auth !== 'undefined' && Auth.isAuthenticated()) {
+        const user = Auth.getUser();
+        if (user && (user.tipoUsuario === 'organizador' || user.tipoUsuario === 'admin')) {
+            localStorage.setItem('currentEventAccess', JSON.stringify({
+                tipoAcceso: user.tipoUsuario === 'admin' ? 'Admin' : 'Organizador',
+                permisos: {
+                    puedeAcreditar: true,
+                    puedeEditarInvitados: true,
+                    puedeVerEstadisticas: true,
+                    puedeConfigurar: true
+                }
+            }));
+        }
+    }
 }
 
 // Verificar que se ha seleccionado un evento
