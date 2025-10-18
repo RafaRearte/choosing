@@ -24,7 +24,7 @@ const initializeDataTable = () => {
     
     // Si el evento tiene email configurado, mostramos la columna
     if (config.mostrarEmail !== false) {
-        optionalColumns.push({ data: 'mail', title: 'Email' ,
+        optionalColumns.push({ data: 'email', title: 'Email' ,
         defaultContent: '', // 🔥 AGREGAR ESTO
         render: function(data, type, row) {
             return data || ''; // 🔥 MANEJAR NULLS
@@ -113,13 +113,13 @@ const initializeDataTable = () => {
     
     // Columna de estado de acreditación (siempre presente)
     const acreditadoColumn = {
-        data: 'acreditado',
+        data: 'estaAcreditado',
         title: 'Estado',
         render: function (data) {
-            // Verificar si el valor es mayor que 0 para considerarlo acreditado
-            const isAccredited = data > 0;
-            return isAccredited ? 
-                '<span class="badge bg-success">Ingreso</span>' : 
+            // EstaAcreditado es ahora un boolean
+            const isAccredited = data === true;
+            return isAccredited ?
+                '<span class="badge bg-success">Ingreso</span>' :
                 '<span class="badge bg-danger">No ingreso</span>';
         }
     };
@@ -129,7 +129,7 @@ const accionesColumn = {
     data: null,
     title: 'Acción',
     render: function (data) {
-        const isAccredited = data.estaAcreditado > 0;
+        const isAccredited = data.estaAcreditado === true;
         let actions = '<div class="d-flex gap-1">';
         
         // Botón de información (siempre visible)
@@ -246,8 +246,8 @@ const openEditModal = async (id) => {
         document.getElementById('editGuestDayThree').checked = guest.dayThree === 'SI';
         
         document.getElementById('editGuestInfoAdicional').value = guest.infoAdicional || '';
-        document.getElementById('editGuestAcreditado').checked = guest.estaAcreditado > 0;
-        
+        document.getElementById('editGuestAcreditado').checked = guest.estaAcreditado === true;
+
         if (guest.fechaAcreditacion) {
             const fecha = new Date(guest.fechaAcreditacion);
             const horaFormateada = `${fecha.toLocaleDateString()} ${fecha.toLocaleTimeString()}`;

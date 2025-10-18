@@ -245,7 +245,7 @@
                         <div class="flex-grow-1">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div>
-                                    <h4 class="mb-1">${compra.eventoNombre || 'Evento'}</h4>
+                                    <h4 class="mb-1">${compra.evento?.nombre || 'Evento'}</h4>
                                     <span class="status-badge ${statusClass}">${statusText}</span>
                                 </div>
                                 <div class="text-end">
@@ -306,7 +306,7 @@
                 const compra = await response.json();
 
                 modalContent.innerHTML = `
-                    <h5>Evento: ${compra.eventoNombre || 'Sin nombre'}</h5>
+                    <h5>Evento: ${compra.evento?.nombre || 'Sin nombre'}</h5>
                     <p class="text-muted">Compra #${compra.id}</p>
 
                     <hr>

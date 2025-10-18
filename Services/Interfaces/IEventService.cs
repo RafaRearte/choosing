@@ -9,5 +9,9 @@ namespace choosing.Services.Interfaces
         Task<EventModel> CreateEventAsync(EventModel newEvent);
         Task UpdateEventAsync(EventModel updatedEvent);
         Task DeleteEventAsync(int id);
+
+        // Nuevos métodos para multi-tenancy
+        Task<List<EventModel>> GetEventsByOrganizadorIdAsync(int organizadorId);
+        Task<bool> CanUserModifyEventAsync(int eventoId, int usuarioId, string userRole);
     }
 }

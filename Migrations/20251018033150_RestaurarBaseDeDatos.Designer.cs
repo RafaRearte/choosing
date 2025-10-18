@@ -12,8 +12,8 @@ using choosing.Context;
 namespace choosing.Migrations
 {
     [DbContext(typeof(DbChoosingContext))]
-    [Migration("20251011150923_CompletarConfiguracionUser")]
-    partial class CompletarConfiguracionUser
+    [Migration("20251018033150_RestaurarBaseDeDatos")]
+    partial class RestaurarBaseDeDatos
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -97,21 +97,6 @@ namespace choosing.Migrations
 
                     b.Property<int?>("CapacidadMaxima")
                         .HasColumnType("int");
-
-                    b.Property<string>("CodigoAcceso")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasDefaultValue("");
-
-                    b.Property<string>("CodigoAdmin")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("CodigoStats")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("ConfigEtiqueta")
                         .HasColumnType("nvarchar(max)");

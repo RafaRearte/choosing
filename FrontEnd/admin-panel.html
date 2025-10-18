@@ -69,21 +69,7 @@
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="bi bi-shield-check me-2"></i>Panel de Administración
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="event-selection.html">
-                    <i class="bi bi-arrow-left me-1"></i>Volver a Eventos
-                </a>
-                <button type="button" id="logoutButton" class="btn btn-outline-light ms-2">
-                    <i class="bi bi-box-arrow-right me-1"></i>Cerrar Sesión
-                </button>
-            </div>
-        </div>
-    </nav>
+    <div id="navbar-container"></div>
 
     <!-- Loading Indicator -->
     <div id="loadingIndicator">Cargando...</div>
@@ -771,6 +757,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
     <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/navbar.js"></script>
 
     <script>
         // Constantes
@@ -782,22 +770,21 @@
         const hideLoading = () => document.getElementById('loadingIndicator').style.display = 'none';
 
         const authenticatedFetch = async (url, options = {}) => {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
+            if (!Auth.isAuthenticated()) {
                 window.location.href = 'login.html';
                 return null;
             }
-            
+
             const headers = {
                 ...options.headers,
-                'Authorization': `Bearer ${token}`
+                ...Auth.getAuthHeaders()
             };
-            
+
             try {
                 const response = await fetch(url, { ...options, headers });
                 if (response.status === 401) {
                     toast.error('Sesión expirada. Por favor inicie sesión nuevamente');
-                    logout();
+                    Auth.logout();
                     return null;
                 }
                 return response;
@@ -808,11 +795,7 @@
         };
 
         const logout = () => {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userData');
-            localStorage.removeItem('currentEventId');
-            localStorage.removeItem('currentEventName');
-            window.location.href = 'login.html';
+            Auth.logout();
         };
 
         // Generar código aleatorio
@@ -973,9 +956,6 @@
                 fechaInicio: new Date(document.getElementById('eventStartDate').value).toISOString(),
                 fechaFin: new Date(document.getElementById('eventEndDate').value).toISOString(),
                 activo: document.getElementById('eventActive').checked,
-                codigoAcceso: document.getElementById('eventCodeAccess').value,
-                codigoAdmin: document.getElementById('eventCodeAdmin').value,
-                codigoStats: document.getElementById('eventCodeStats').value,
                 permitirAccesoPostEvento: false
             };
 
@@ -1032,9 +1012,6 @@
                 document.getElementById('editEventEndDate').value = endFormatted;
                 
                 document.getElementById('editEventActive').checked = event.activo;
-                document.getElementById('editEventCodeAccess').value = event.codigoAcceso || '';
-                document.getElementById('editEventCodeAdmin').value = event.codigoAdmin || '';
-                document.getElementById('editEventCodeStats').value = event.codigoStats || '';
                 
                 $('#editEventModal').modal('show');
             } catch (error) {
@@ -1057,9 +1034,6 @@
                 fechaInicio: new Date(document.getElementById('editEventStartDate').value).toISOString(),
                 fechaFin: new Date(document.getElementById('editEventEndDate').value).toISOString(),
                 activo: document.getElementById('editEventActive').checked,
-                codigoAcceso: document.getElementById('editEventCodeAccess').value,
-                codigoAdmin: document.getElementById('editEventCodeAdmin').value,
-                codigoStats: document.getElementById('editEventCodeStats').value,
                 permitirAccesoPostEvento: false,
                 configuracionJson: existingEvent?.configuracionJson || "{}"
             };
@@ -1320,12 +1294,13 @@
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
-            // Verificar autenticación
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                window.location.href = 'login.html';
+            // Verificar autenticación - solo admin
+            if (!Auth.requireRole(['admin'])) {
                 return;
             }
+
+            // Renderizar navbar
+            Navbar.render('navbar-container', { currentPage: 'admin-panel' });
 
             // Generar códigos iniciales
             generateCode('eventCodeAccess');
@@ -1336,9 +1311,6 @@
             loadDashboardStats();
             loadEvents();
             loadUsers();
-
-            // Event listeners
-            document.getElementById('logoutButton').addEventListener('click', logout);
 
             // Actualizar fecha del sistema
             document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
@@ -1380,9 +1352,7 @@ function configureEventColumns(eventId) {
     
     // Obtener configuración del evento específico
     fetch(`${apiBaseUrl}/Event/${eventId}`, {
-        headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
+        headers: Auth.getAuthHeaders()
     })
     .then(response => {
         if (!response.ok) throw new Error('Error al obtener datos del evento');
@@ -1416,10 +1386,7 @@ function cargarConfiguracionModal(eventoId) {
     // Obtener evento completo (que incluye configuracionJson)
     fetch(url, {
         method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-            'Content-Type': 'application/json'
-        }
+        headers: Auth.getAuthHeaders()
     })
     .then(response => {
         if (!response.ok) throw new Error('Error al obtener datos del evento');
@@ -1563,10 +1530,7 @@ function guardarConfiguracion(eventoId) {
     
     fetch(`${apiBaseUrl}/Event/update-config/${eventoId}`, {
         method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
+        headers: Auth.getAuthHeaders(),
         body: JSON.stringify(JSON.stringify(configuracion))
     })
     .then(response => {

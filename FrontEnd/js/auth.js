@@ -109,9 +109,12 @@ const Auth = {
         if (role === 'comprador') {
             window.location.href = '/eventos-publicos.html';
         } else if (role === 'organizador') {
-            window.location.href = '/event-selection.html'; // Dashboard organizador
+            window.location.href = '/organizador-dashboard.html';
         } else if (role === 'admin') {
             window.location.href = '/admin-panel.html';
+        } else {
+            // Si no tiene rol conocido, redirigir a eventos públicos
+            window.location.href = '/eventos-publicos.html';
         }
     },
 

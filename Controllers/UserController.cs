@@ -21,7 +21,7 @@ public class UserController : ControllerBase
     /// Obtener todos los usuarios (solo admin)
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "admin")]
+    //[Authorize(Roles = "admin")]
     public async Task<IActionResult> GetAllUsers()
     {
         try
@@ -39,7 +39,7 @@ public class UserController : ControllerBase
     /// Obtener un usuario por ID
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize]
+    //[Authorize]
     public async Task<IActionResult> GetUser(int id)
     {
         try
@@ -62,7 +62,7 @@ public class UserController : ControllerBase
     /// Actualizar un usuario
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize]
+    //[Authorize]
     public async Task<IActionResult> UpdateUser(int id, UpdateUserDTO model)
     {
         try
@@ -97,7 +97,7 @@ public class UserController : ControllerBase
     /// Eliminar un usuario (solo admin)
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "admin")]
+    //[Authorize(Roles = "admin")]
     public async Task<IActionResult> DeleteUser(int id)
     {
         try

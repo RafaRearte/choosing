@@ -10,17 +10,17 @@ namespace choosing.Repository.Impl
 {
     public class ListRepository : IListRepository
     {
-        private readonly DbHotelContext _context;
-        public ListRepository(DbHotelContext context)
+        private readonly DbChoosingContext _choosingContext;
+        public ListRepository(DbChoosingContext choosingContext)
         {
-            _context = context;
+            _choosingContext = choosingContext;
         }
 
         public async Task<List<Guest>> GetAllAsync()
         {
             try
             {
-                return await _context.Guests.ToListAsync();
+                return await _choosingContext.Guests.ToListAsync();
             }
             catch (Exception ex)
             {
@@ -33,7 +33,7 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                return await _context.Guests
+                return await _choosingContext.Guests
                     .Where(g => g.EventoId == eventId)
                     .ToListAsync();
             }
@@ -47,7 +47,7 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                return await _context.Guests.FirstOrDefaultAsync(g => g.Dni == Dni);
+                return await _choosingContext.Guests.FirstOrDefaultAsync(g => g.Dni == Dni);
             }
             catch (Exception ex)
             {
@@ -60,7 +60,7 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                return await _context.Guests
+                return await _choosingContext.Guests
                     .FirstOrDefaultAsync(g => g.Dni == dni && g.EventoId == eventId);
             }
             catch (Exception ex)
@@ -73,7 +73,7 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                return await _context.Guests
+                return await _choosingContext.Guests
                        .Where(i => i.Apellido.Contains(query) || i.Nombre.Contains(query))
                        .ToListAsync();
             }
@@ -88,7 +88,7 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                return await _context.Guests
+                return await _choosingContext.Guests
                        .Where(i => (i.Apellido.Contains(query) || i.Nombre.Contains(query)) && i.EventoId == eventId)
                        .ToListAsync();
             }
@@ -102,8 +102,8 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                _context.Guests.Update(guest);
-                await _context.SaveChangesAsync();
+                _choosingContext.Guests.Update(guest);
+                await _choosingContext.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -116,8 +116,8 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                await _context.Guests.AddAsync(guest);
-                await _context.SaveChangesAsync();
+                await _choosingContext.Guests.AddAsync(guest);
+                await _choosingContext.SaveChangesAsync();
                 return guest;
             }
             catch (Exception ex)
@@ -131,11 +131,11 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                var guest = await _context.Guests.FirstOrDefaultAsync(g => g.Dni == dni);
+                var guest = await _choosingContext.Guests.FirstOrDefaultAsync(g => g.Dni == dni);
                 if (guest != null)
                 {
-                    _context.Guests.Remove(guest);
-                    await _context.SaveChangesAsync();
+                    _choosingContext.Guests.Remove(guest);
+                    await _choosingContext.SaveChangesAsync();
                 }
             }
             catch (Exception ex)
@@ -147,42 +147,42 @@ namespace choosing.Repository.Impl
 
         public async Task<List<Guest>> GetAcreditadosAsync()
         {
-            return await _context.Guests
+            return await _choosingContext.Guests
                 .Where(g => g.EstaAcreditado == true)
                 .ToListAsync();
         }
 
         public async Task<List<Guest>> GetAcreditadosByEventIdAsync(int eventId)
         {
-            return await _context.Guests
+            return await _choosingContext.Guests
                 .Where(g => g.EventoId == eventId && g.EstaAcreditado == true)
                 .ToListAsync();
         }
 
         public async Task<List<Guest>> GetNotAcreditadosAsync()
         {
-            return await _context.Guests
+            return await _choosingContext.Guests
                 .Where(g => g.EstaAcreditado == false)
                 .ToListAsync();
         }
 
         public async Task<List<Guest>> GetNotAcreditadosByEventIdAsync(int eventId)
         {
-            return await _context.Guests
+            return await _choosingContext.Guests
                 .Where(g => g.EventoId == eventId && g.EstaAcreditado == false)
                 .ToListAsync();
         }
 
         public async Task<List<Guest>> GetInvitadosNuevosAsync()
         {
-            return await _context.Guests
+            return await _choosingContext.Guests
                 .Where(g => g.EsNuevo == true)
                 .ToListAsync();
         }
 
         public async Task<List<Guest>> GetInvitadosNuevosByEventIdAsync(int eventId)
         {
-            return await _context.Guests
+            return await _choosingContext.Guests
                 .Where(g => g.EventoId == eventId && g.EsNuevo == true)
                 .ToListAsync();
         }
@@ -191,7 +191,7 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                return await _context.Guests.FindAsync(id);
+                return await _choosingContext.Guests.FindAsync(id);
             }
             catch (Exception ex)
             {
@@ -203,7 +203,7 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                return await _context.Guests
+                return await _choosingContext.Guests
                     .FirstOrDefaultAsync(g => g.Id == id && g.EventoId == eventId);
             }
             catch (Exception ex)
@@ -216,11 +216,11 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                var guest = await _context.Guests.FindAsync(id);
+                var guest = await _choosingContext.Guests.FindAsync(id);
                 if (guest != null)
                 {
-                    _context.Guests.Remove(guest);
-                    await _context.SaveChangesAsync();
+                    _choosingContext.Guests.Remove(guest);
+                    await _choosingContext.SaveChangesAsync();
                 }
             }
             catch (Exception ex)
@@ -233,7 +233,7 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                return await _context.Guests
+                return await _choosingContext.Guests
                     .FirstOrDefaultAsync(g => g.IdCode == idCode);
             }
             catch (Exception ex)
@@ -246,7 +246,7 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                return await _context.Guests
+                return await _choosingContext.Guests
                     .FirstOrDefaultAsync(g => g.IdCode == idCode && g.EventoId == eventId);
             }
             catch (Exception ex)
@@ -268,10 +268,10 @@ namespace choosing.Repository.Impl
             try
             {
                 // Query base: SOLO invitados de este evento
-                var query = _context.Guests.Where(g => g.EventoId == eventId);
+                var query = _choosingContext.Guests.Where(g => g.EventoId == eventId);
                 
                 // Total sin filtros para este evento
-                var totalCount = await _context.Guests.CountAsync(g => g.EventoId == eventId);
+                var totalCount = await _choosingContext.Guests.CountAsync(g => g.EventoId == eventId);
                 
                 //Filtro acreditados/noacreditados/nuevos o todos
                 if (!string.IsNullOrEmpty(filter))
@@ -354,15 +354,15 @@ namespace choosing.Repository.Impl
             try
             {
                 // Total de invitados para este evento
-                var total = await _context.Guests
+                var total = await _choosingContext.Guests
                     .CountAsync(g => g.EventoId == eventId);
                     
                 // Acreditados para este evento
-                var acreditados = await _context.Guests
+                var acreditados = await _choosingContext.Guests
                     .CountAsync(g => g.EventoId == eventId && g.EstaAcreditado == true);
                     
                 // Nuevos (usando tu campo EsNuevo)
-                var nuevos = await _context.Guests
+                var nuevos = await _choosingContext.Guests
                     .CountAsync(g => g.EventoId == eventId && g.EsNuevo == true);
                 
                 return (total, acreditados, nuevos);
@@ -375,7 +375,7 @@ namespace choosing.Repository.Impl
 
         public async Task<List<Guest>> ExportCsvAsync(int eventId)
         {
-            var query = _context.Guests.Where(g => g.EventoId == eventId);
+            var query = _choosingContext.Guests.Where(g => g.EventoId == eventId);
 
             var guests = await query
                 .OrderBy(g => g.FechaAcreditacion == null ? 1 : 0)  // NULL al final (los que no se acreditaron)
@@ -394,7 +394,7 @@ namespace choosing.Repository.Impl
             try
             {
                 var parameter = new SqlParameter("@EventoId", eventId);
-                var guests = await _context.Guests
+                var guests = await _choosingContext.Guests
                     .FromSqlRaw("EXEC sp_GetAllInvitados @EventoId", parameter)
                     .ToListAsync();
                 

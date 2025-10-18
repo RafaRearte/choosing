@@ -9,6 +9,9 @@ namespace choosing.Repository.Interfaces
         Task<EventModel> AddAsync(EventModel newEvent);
         Task UpdateAsync(EventModel updatedEvent);
         Task DeleteAsync(int id);
+
+        // Nuevos métodos para multi-tenancy
+        Task<List<EventModel>> GetByOrganizadorIdAsync(int organizadorId);
     }
 
 }

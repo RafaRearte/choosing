@@ -288,9 +288,10 @@
     <script src="/js/config.js"></script>
     <script src="/js/auth.js"></script>
     <script>
-        // Proteger página - solo compradores
-        Auth.requireRole(['comprador']);
-        Auth.displayUserInfo('user-info');
+        // Mostrar info del usuario si está logueado (pero no requerir login)
+        if (Auth.isAuthenticated()) {
+            Auth.displayUserInfo('user-info');
+        }
 
         let currentEvent = null;
         let quantity = 1;
@@ -455,6 +456,13 @@
         }
 
         function comprarEntradas() {
+            // Verificar autenticación
+            if (!Auth.isAuthenticated()) {
+                alert('Debes iniciar sesión para comprar entradas');
+                window.location.href = `/login.html?redirect=/evento-detalle.html?id=${currentEvent.id}`;
+                return;
+            }
+
             // Guardar en localStorage para usar en checkout
             const compraData = {
                 eventoId: currentEvent.id,

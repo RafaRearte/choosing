@@ -194,6 +194,7 @@
     <!-- QR Code Library -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
 
     <script>
         // URLs para las APIs
@@ -587,18 +588,16 @@
         
         // Función helper para hacer peticiones autenticadas
         async function authenticatedFetch(url, options = {}) {
-            const token = localStorage.getItem('authToken');
-            
             // Si no hay token, redirigir al login
-            if (!token) {
+            if (!Auth.isAuthenticated()) {
                 window.location.href = 'login.html';
                 return null;
             }
-            
+
             // Configurar headers con autenticación
             const headers = {
                 ...options.headers,
-                'Authorization': `Bearer ${token}`
+                ...Auth.getAuthHeaders()
             };
             
             try {
@@ -623,14 +622,7 @@
         
         // Función para cerrar sesión
         function logout() {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userData');
-            localStorage.removeItem('currentEventId');
-            localStorage.removeItem('currentEventName');
-            localStorage.removeItem('eventCodes');
-            localStorage.removeItem('currentEventAccess');
-            localStorage.removeItem('isGlobalAdmin');
-            window.location.href = 'login.html';
+            Auth.logout();
         }
 
         // Helper para confirmación de acciones

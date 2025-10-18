@@ -39,7 +39,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 
-builder.Services.AddDbContext<DbHotelContext>(options =>
+builder.Services.AddDbContext<DbChoosingContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 

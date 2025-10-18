@@ -7,19 +7,19 @@ namespace choosing.Repository.Impl
 {
     public class FeedbackRepository : IFeedbackRepository
     {
-        private readonly DbHotelContext _context;
+        private readonly DbChoosingContext _choosingContext;
 
-        public FeedbackRepository(DbHotelContext context)
+        public FeedbackRepository(DbChoosingContext choosingContext)
         {
-            _context = context;
+            _choosingContext = choosingContext;
         }
 
         public async Task<FeedbackModel> AddAsync(FeedbackModel feedback)
         {
             try
             {
-                await _context.Feedbacks.AddAsync(feedback);
-                await _context.SaveChangesAsync();
+                await _choosingContext.Feedbacks.AddAsync(feedback);
+                await _choosingContext.SaveChangesAsync();
                 return feedback;
             }
             catch (Exception ex)
@@ -32,7 +32,7 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                return await _context.Feedbacks
+                return await _choosingContext.Feedbacks
                     .Where(f => f.EventoId == eventoId)
                     .OrderBy(f => f.Id)
                     .ToListAsync();
@@ -47,7 +47,7 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                var feedbacks = await _context.Feedbacks
+                var feedbacks = await _choosingContext.Feedbacks
                     .Where(f => f.EventoId == eventoId)
                     .GroupBy(f => f.Rating)
                     .Select(g => new { Rating = g.Key, Count = g.Count() })
@@ -76,11 +76,11 @@ namespace choosing.Repository.Impl
             try
             {
                 // Eliminar cualquier configuración anterior (solo puede haber una activa)
-                var existingConfigs = await _context.FeedbackConfig.ToListAsync();
+                var existingConfigs = await _choosingContext.FeedbackConfig.ToListAsync();
                 if (existingConfigs.Any())
                 {
-                    _context.FeedbackConfig.RemoveRange(existingConfigs);
-                    await _context.SaveChangesAsync(); // Guardar eliminación primero
+                    _choosingContext.FeedbackConfig.RemoveRange(existingConfigs);
+                    await _choosingContext.SaveChangesAsync(); // Guardar eliminación primero
                 }
 
                 // Crear nueva configuración
@@ -91,8 +91,8 @@ namespace choosing.Repository.Impl
                     FechaActualizacion = DateTime.UtcNow
                 };
 
-                await _context.FeedbackConfig.AddAsync(newConfig);
-                await _context.SaveChangesAsync();
+                await _choosingContext.FeedbackConfig.AddAsync(newConfig);
+                await _choosingContext.SaveChangesAsync();
 
                 return newConfig;
             }
@@ -107,7 +107,7 @@ namespace choosing.Repository.Impl
             try
             {
                 // Usar SQL directo para debuggear
-                var result = await _context.Database.SqlQueryRaw<FeedbackConfigModel>(
+                var result = await _choosingContext.Database.SqlQueryRaw<FeedbackConfigModel>(
                     "SELECT Id, EventoId, FechaCreacion, FechaActualizacion FROM FeedbackConfig"
                 ).FirstOrDefaultAsync();
                 

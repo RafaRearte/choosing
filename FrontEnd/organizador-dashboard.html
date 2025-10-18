@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Organizador - Choosing</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .navbar-custom {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        }
+        .metrics-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .metrics-card:hover {
+            transform: translateY(-5px);
+        }
+        .metric-value {
+            font-size: 48px;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .metric-label {
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .event-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .event-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .event-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: white;
+            margin-right: 15px;
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-active {
+            background: #28a745;
+            color: white;
+        }
+        .status-inactive {
+            background: #6c757d;
+            color: white;
+        }
+        .create-event-card {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .create-event-card:hover {
+            transform: scale(1.02);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navbar -->
+    <div id="navbar-container"></div>
+
+    <div class="container my-5">
+        <!-- Welcome Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 id="welcomeMessage">Bienvenido</h2>
+                <p class="text-muted">Gestiona tus eventos y estadísticas</p>
+            </div>
+        </div>
+
+        <!-- Metrics Row -->
+        <div class="row mb-4" id="metricsRow">
+            <div class="col-md-4 mb-3">
+                <div class="metrics-card">
+                    <div class="metric-value" id="totalEventos">0</div>
+                    <div class="metric-label">Total Eventos</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="metrics-card">
+                    <div class="metric-value" id="eventosActivos">0</div>
+                    <div class="metric-label">Eventos Activos</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="metrics-card">
+                    <div class="metric-value" id="totalInvitados">0</div>
+                    <div class="metric-label">Total Invitados</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Event Card -->
+        <div class="create-event-card" onclick="window.location.href='/organizador-crear-evento.html'">
+            <h3>➕ Crear Nuevo Evento</h3>
+            <p class="mb-0">Haz clic aquí para crear un nuevo evento</p>
+        </div>
+
+        <!-- Loading -->
+        <div id="loadingSpinner" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+
+        <!-- Error -->
+        <div id="errorMessage" class="alert alert-danger" style="display: none;"></div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div style="font-size: 80px; margin-bottom: 20px;">🎭</div>
+            <h3>No tienes eventos creados todavía</h3>
+            <p>Comienza creando tu primer evento</p>
+            <a href="/organizador-crear-evento.html" class="btn btn-primary btn-lg mt-3">
+                Crear Mi Primer Evento
+            </a>
+        </div>
+
+        <!-- Events List -->
+        <div id="eventsList">
+            <h4 class="mb-3">Mis Eventos</h4>
+            <div id="eventsContainer"></div>
+        </div>
+    </div>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script>
+        // Proteger página - solo organizadores
+        Auth.requireRole(['organizador']);
+        const user = Auth.getUser();
+
+        // Welcome message
+        document.getElementById('welcomeMessage').textContent = `Bienvenido, ${user.nombre || user.username}!`;
+
+        let eventos = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Renderizar navbar
+            Navbar.render('navbar-container', { currentPage: 'dashboard' });
+
+            cargarEventos();
+        });
+
+        async function cargarEventos() {
+            const spinner = document.getElementById('loadingSpinner');
+            const container = document.getElementById('eventsContainer');
+            const emptyState = document.getElementById('emptyState');
+            const errorMsg = document.getElementById('errorMessage');
+            const eventsList = document.getElementById('eventsList');
+
+            spinner.style.display = 'block';
+            container.innerHTML = '';
+            emptyState.style.display = 'none';
+            errorMsg.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/Event/mis-eventos`, {
+                    headers: Auth.getAuthHeaders()
+                });
+
+                if (!response.ok) throw new Error('Error al cargar eventos');
+
+                eventos = await response.json();
+
+                spinner.style.display = 'none';
+
+                if (eventos.length === 0) {
+                    emptyState.style.display = 'block';
+                    eventsList.style.display = 'none';
+                    return;
+                }
+
+                eventsList.style.display = 'block';
+
+                // Calcular métricas
+                const totalEventos = eventos.length;
+                const eventosActivos = eventos.filter(e => e.activo).length;
+                const totalInvitados = eventos.reduce((sum, e) => sum + (e.entradasVendidas || 0), 0);
+
+                document.getElementById('totalEventos').textContent = totalEventos;
+                document.getElementById('eventosActivos').textContent = eventosActivos;
+                document.getElementById('totalInvitados').textContent = totalInvitados;
+
+                // Renderizar eventos
+                eventos.forEach(evento => {
+                    container.innerHTML += crearCardEvento(evento);
+                });
+
+            } catch (error) {
+                spinner.style.display = 'none';
+                errorMsg.textContent = error.message || 'Error al cargar tus eventos';
+                errorMsg.style.display = 'block';
+                console.error('Error:', error);
+            }
+        }
+
+        function crearCardEvento(evento) {
+            const fechaInicio = new Date(evento.fechaInicio);
+            const fechaFormateada = fechaInicio.toLocaleDateString('es-AR', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            const statusClass = evento.activo ? 'status-active' : 'status-inactive';
+            const statusText = evento.activo ? 'Activo' : 'Inactivo';
+
+            const precio = evento.precioEntrada > 0
+                ? `$${evento.precioEntrada.toLocaleString('es-AR')}`
+                : 'Gratis';
+
+            const capacidad = evento.capacidadMaxima
+                ? `${evento.entradasVendidas || 0} / ${evento.capacidadMaxima}`
+                : `${evento.entradasVendidas || 0} / ∞`;
+
+            return `
+                <div class="event-card">
+                    <div class="d-flex">
+                        <div class="event-icon">🎭</div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h5 class="mb-1">${evento.nombre}</h5>
+                                    <span class="status-badge ${statusClass}">${statusText}</span>
+                                    ${evento.ventaPublica ? '<span class="status-badge ms-2" style="background: #17a2b8; color: white;">Venta Pública</span>' : ''}
+                                </div>
+                                <div class="text-end">
+                                    <div class="h5 mb-0 text-primary">${precio}</div>
+                                    <small class="text-muted">${capacidad} entradas</small>
+                                </div>
+                            </div>
+
+                            <p class="text-muted mb-2">${evento.descripcion || 'Sin descripción'}</p>
+
+                            <div class="mb-3">
+                                <small class="d-block"><strong>📅</strong> ${fechaFormateada}</small>
+                                <small class="d-block"><strong>📍</strong> ${evento.ubicacion || 'Sin ubicación'}</small>
+                            </div>
+
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="/Index.html?eventId=${evento.id}" class="btn btn-primary btn-sm">
+                                    ✅ Acreditar
+                                </a>
+                                <a href="/stats.html?eventId=${evento.id}" class="btn btn-info btn-sm text-white">
+                                    📊 Estadísticas
+                                </a>
+                                <a href="/admin-panel.html?eventId=${evento.id}" class="btn btn-secondary btn-sm">
+                                    ⚙️ Configurar
+                                </a>
+                                <button class="btn btn-outline-${evento.activo ? 'danger' : 'success'} btn-sm" onclick="toggleEventoActivo(${evento.id}, ${evento.activo})">
+                                    ${evento.activo ? '⏸️ Desactivar' : '▶️ Activar'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function toggleEventoActivo(eventoId, estadoActual) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/Event/toggle-active/${eventoId}`, {
+                    method: 'PUT',
+                    headers: Auth.getAuthHeaders()
+                });
+
+                if (!response.ok) throw new Error('Error al cambiar estado');
+
+                const result = await response.json();
+                alert(result.mensaje);
+
+                // Recargar eventos
+                cargarEventos();
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+                console.error('Error:', error);
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

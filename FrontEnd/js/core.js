@@ -9,10 +9,12 @@ let currentFilter = ""; // "" = todos
 // Verificar que se ha seleccionado un evento
 const currentEventId = localStorage.getItem('currentEventId');
 const currentEventName = localStorage.getItem('currentEventName');
-const token = localStorage.getItem('authToken');
-if (!token) {
+
+// Verificar autenticación usando Auth.js
+if (typeof Auth !== 'undefined' && !Auth.isAuthenticated()) {
     window.location.href = 'login.html';
 }
+
 if (!currentEventId) {
     window.location.href = 'event-selection.html';
 }
@@ -20,49 +22,76 @@ if (!currentEventId) {
 const fetchInterval = 30000; 
 // Función para cerrar sesión
 const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
-    localStorage.removeItem('currentEventId');
-    localStorage.removeItem('currentEventName');
-    localStorage.removeItem('isGlobalAdmin');
-    localStorage.removeItem('eventCodes');
-    localStorage.removeItem('currentEventAccess');
-
-    window.location.href = 'login.html';
+    if (typeof Auth !== 'undefined') {
+        Auth.logout();
+    } else {
+        // Fallback si Auth.js no está disponible
+        localStorage.removeItem('choosing_token');
+        localStorage.removeItem('choosing_user');
+        localStorage.removeItem('currentEventId');
+        localStorage.removeItem('currentEventName');
+        localStorage.removeItem('isGlobalAdmin');
+        localStorage.removeItem('eventCodes');
+        localStorage.removeItem('currentEventAccess');
+        window.location.href = 'login.html';
+    }
 };
 // Función helper para hacer peticiones autenticadas
 const authenticatedFetch = async (url, options = {}) => {
-    const token = localStorage.getItem('authToken');
-    
-    // Si no hay token, redirigir al login
-    if (!token) {
-        window.location.href = 'login.html';
-        return null;
-    }
-    
-    // Configurar headers con autenticación
-    const headers = {
-        ...options.headers,
-        'Authorization': `Bearer ${token}`
-    };
-    
-    try {
-        const response = await fetch(url, {
-            ...options,
-            headers
-        });
-        
-        // Si hay error de autenticación, redirigir al login
-        if (response.status === 401) {
-            toast.error('Sesión expirada. Por favor inicie sesión nuevamente');
-            logout();
+    // Si Auth.js está disponible, usarlo
+    if (typeof Auth !== 'undefined') {
+        if (!Auth.isAuthenticated()) {
+            window.location.href = 'login.html';
             return null;
         }
-        
-        return response;
-    } catch (error) {
-        console.error('Error en la petición:', error);
-        throw error;
+
+        const headers = {
+            ...options.headers,
+            ...Auth.getAuthHeaders()
+        };
+
+        try {
+            const response = await fetch(url, { ...options, headers });
+
+            if (response.status === 401) {
+                toast.error('Sesión expirada. Por favor inicie sesión nuevamente');
+                Auth.logout();
+                return null;
+            }
+
+            return response;
+        } catch (error) {
+            console.error('Error en la petición:', error);
+            throw error;
+        }
+    } else {
+        // Fallback si Auth.js no está disponible (compatible con código viejo)
+        const token = localStorage.getItem('choosing_token');
+
+        if (!token) {
+            window.location.href = 'login.html';
+            return null;
+        }
+
+        const headers = {
+            ...options.headers,
+            'Authorization': `Bearer ${token}`
+        };
+
+        try {
+            const response = await fetch(url, { ...options, headers });
+
+            if (response.status === 401) {
+                toast.error('Sesión expirada. Por favor inicie sesión nuevamente');
+                logout();
+                return null;
+            }
+
+            return response;
+        } catch (error) {
+            console.error('Error en la petición:', error);
+            throw error;
+        }
     }
 };
 // Función para mostrar/ocultar el indicador de carga

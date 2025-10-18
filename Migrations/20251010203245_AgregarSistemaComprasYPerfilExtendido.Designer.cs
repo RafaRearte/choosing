@@ -11,7 +11,7 @@ using choosing.Context;
 
 namespace choosing.Migrations
 {
-    [DbContext(typeof(DbHotelContext))]
+    [DbContext(typeof(DbChoosingContext))]
     [Migration("20251010203245_AgregarSistemaComprasYPerfilExtendido")]
     partial class AgregarSistemaComprasYPerfilExtendido
     {

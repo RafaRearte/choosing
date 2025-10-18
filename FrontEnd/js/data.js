@@ -2,7 +2,7 @@
 // Actualizar Contadores
 const updateCounters = (guests, newCount = null) => {
     const totalGuests = guests.length;
-    const accreditedGuests = guests.filter(guest => guest.estaAcreditado > 0).length;
+    const accreditedGuests = guests.filter(guest => guest.estaAcreditado === true).length;
     const notAccreditedGuests = totalGuests - accreditedGuests;
 
     document.getElementById("totalGuests").textContent = `Invitados: ${totalGuests}`;

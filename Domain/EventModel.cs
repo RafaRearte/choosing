@@ -30,16 +30,6 @@ namespace choosing.Domain
         [Column("ConfiguracionJson")]
         public string? ConfiguracionJson { get; set; }
 
-        // CÓDIGOS DE ACCESO
-        [MaxLength(100)]
-        public string CodigoAcceso { get; set; } = "";
-
-        [MaxLength(100)]
-        public string? CodigoAdmin { get; set; } = "";
-
-        [MaxLength(100)]
-        public string? CodigoStats { get; set; } = "";
-
         public bool PermitirAccesoPostEvento { get; set; } = false;
 
         // NUEVOS CAMPOS PARA MARKETPLACE Y VENTA DE ENTRADAS

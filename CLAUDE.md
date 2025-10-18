@@ -2,6 +2,136 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🔐 Sistema de Autenticación Unificado (15 Oct 2025)
+
+### Problema Resuelto
+
+**Síntoma**: Los usuarios con rol `admin` u `organizador` eran redirigidos al login inmediatamente después de autenticarse exitosamente. Las páginas antiguas (`Index.html`, `event-selection.html`) también expulsaban usuarios autenticados.
+
+**Causa raíz**: Inconsistencia en las claves de `localStorage` usadas para guardar el JWT:
+- **Auth.js (módulo nuevo)** guardaba como: `choosing_token`
+- **Código legacy** (admin-panel.html, event-selection.html, core.js) buscaba: `authToken`
+- Resultado: Las páginas no encontraban el token → redirigían a login
+
+### Solución Implementada
+
+Se estandarizó el uso de `auth.js` como **módulo único de autenticación** en todo el frontend:
+
+#### Archivos Modificados
+
+| Archivo | Cambios Aplicados |
+|---------|-------------------|
+| `FrontEnd/js/auth.js` | ✅ Línea 112: Corregido redirect organizador → `/organizador-dashboard.html` |
+| `FrontEnd/admin-panel.html` | ✅ Migrado a Auth.js: `authenticatedFetch()`, `logout()`, `requireRole(['admin'])` |
+| `FrontEnd/event-selection.html` | ✅ Migrado a Auth.js: `authenticatedFetch()`, `logout()`, auth check |
+| `FrontEnd/js/core.js` | ✅ Agregado soporte dual: Auth.js + fallback legacy para compatibilidad |
+| `FrontEnd/Index.html` | ✅ Agregado `<script src="js/auth.js">` antes de `core.js` |
+
+#### Patrón de Migración
+
+**ANTES** (código legacy):
+```javascript
+// ❌ Acceso directo a localStorage con clave incorrecta
+const token = localStorage.getItem('authToken');
+if (!token) {
+    window.location.href = 'login.html';
+}
+
+const headers = {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+};
+```
+
+**DESPUÉS** (usando Auth.js):
+```javascript
+// ✅ Uso del módulo Auth.js estandarizado
+if (!Auth.isAuthenticated()) {
+    window.location.href = 'login.html';
+    return;
+}
+
+const headers = {
+    ...options.headers,
+    ...Auth.getAuthHeaders()
+};
+```
+
+#### Patrón de Fallback (core.js)
+
+Para mantener compatibilidad con código que aún no migró:
+
+```javascript
+const authenticatedFetch = async (url, options = {}) => {
+    // Si Auth.js está disponible, usarlo
+    if (typeof Auth !== 'undefined') {
+        if (!Auth.isAuthenticated()) {
+            window.location.href = 'login.html';
+            return null;
+        }
+        const headers = {
+            ...options.headers,
+            ...Auth.getAuthHeaders()
+        };
+        // ... continuar con fetch
+    } else {
+        // Fallback para código legacy
+        const token = localStorage.getItem('choosing_token');
+        if (!token) {
+            window.location.href = 'login.html';
+            return null;
+        }
+        // ... continuar con fetch
+    }
+};
+```
+
+### Validación y Testing
+
+**Usuarios de prueba creados**:
+```bash
+# Admin
+Username: superadmin
+Password: Admin123
+ID: 3003
+
+# Organizador
+Username: org_test
+Password: Org123
+ID: 3004
+```
+
+**Flujos validados**:
+1. ✅ Login admin → redirige a `/admin-panel.html` → NO expulsa
+2. ✅ Login organizador → redirige a `/organizador-dashboard.html` → NO expulsa
+3. ✅ Navegación a `Index.html` → verifica auth → NO expulsa
+4. ✅ Navegación a `event-selection.html` → verifica auth → NO expulsa
+5. ✅ Token expirado → redirige a login con mensaje
+
+### Clave de localStorage Estándar
+
+**IMPORTANTE**: A partir de ahora, SIEMPRE usar estas claves:
+
+```javascript
+// ✅ CORRECTO - Definido en auth.js
+TOKEN_KEY: 'choosing_token'
+USER_KEY: 'choosing_user'
+
+// ❌ INCORRECTO - No usar
+'authToken'
+'token'
+'jwt'
+```
+
+### Próximos Pasos
+
+- [ ] Migrar páginas restantes a Auth.js (`stats.html`, `feedback.html`, `print-labels.html`)
+- [ ] Eliminar código de fallback en `core.js` una vez completada la migración
+- [ ] Agregar tests E2E para flujos de autenticación
+- [ ] Implementar refresh token (actualmente solo access token con expiración 1h)
+
+---
+
 ## ⚡ Refactorizaciones Recientes (Diciembre 2025)
 
 ### Cambios Aplicados en Guest Model

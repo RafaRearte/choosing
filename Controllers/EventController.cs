@@ -1,5 +1,6 @@
 ﻿using choosing.Context;
 using choosing.Domain;
+using choosing.Domain.Dtos;
 using choosing.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,12 +12,12 @@ namespace choosing.Controllers
     public class EventController : ControllerBase
     {
         private readonly IEventService _eventService;
-        private readonly DbHotelContext _context;
+        private readonly DbChoosingContext _choosingContext;
 
-        public EventController(IEventService eventService, DbHotelContext context)
+        public EventController(IEventService eventService, DbChoosingContext choosingContext)
         {
             _eventService = eventService;
-            _context = context;
+            _choosingContext = choosingContext;
         }
 
         // Obtener todos los eventos
@@ -25,6 +26,49 @@ namespace choosing.Controllers
         {
             var events = await _eventService.GetAllEventsAsync();
             return Ok(events);
+        }
+
+        // Obtener MIS eventos (del organizador logueado)
+        [HttpGet("mis-eventos")]
+        public async Task<IActionResult> GetMyEvents()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                    return Unauthorized(new { error = "Token inválido o no autenticado" });
+
+                int usuarioId = int.Parse(userIdClaim.Value);
+                var myEvents = await _eventService.GetEventsByOrganizadorIdAsync(usuarioId);
+
+                // Mapear a DTO para evitar referencias circulares
+                var eventosDTO = myEvents.Select(e => new EventoResponseDTO
+                {
+                    Id = e.Id,
+                    Nombre = e.Nombre,
+                    Descripcion = e.Descripcion,
+                    FechaInicio = e.FechaInicio,
+                    FechaFin = e.FechaFin,
+                    Ubicacion = e.Ubicacion,
+                    Activo = e.Activo,
+                    ConfiguracionJson = e.ConfiguracionJson,
+                    PermitirAccesoPostEvento = e.PermitirAccesoPostEvento,
+                    OrganizadorId = e.OrganizadorId,
+                    VentaPublica = e.VentaPublica,
+                    PrecioEntrada = e.PrecioEntrada,
+                    CapacidadMaxima = e.CapacidadMaxima,
+                    EntradasVendidas = e.EntradasVendidas,
+                    Estado = e.Estado,
+                    ConfigTabla = e.ConfigTabla,
+                    ConfigEtiqueta = e.ConfigEtiqueta
+                }).ToList();
+
+                return Ok(eventosDTO);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
         }
 
         // Obtener un evento por ID
@@ -39,15 +83,94 @@ namespace choosing.Controllers
 
         // Crear un nuevo evento
         [HttpPost("create")]
-        public async Task<IActionResult> CreateEvent([FromBody] EventModel newEvent)
+        public async Task<IActionResult> CreateEvent([FromBody] CrearEventoDTO eventoDTO)
         {
-            if (newEvent == null)
+            if (eventoDTO == null)
                 return BadRequest("Datos de evento inválidos");
 
             try
             {
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                var roleClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Role);
+
+                if (userIdClaim == null || roleClaim == null)
+                    return Unauthorized(new { error = "Debe estar autenticado para crear eventos" });
+
+                int usuarioId = int.Parse(userIdClaim.Value);
+                string userRole = roleClaim.Value;
+
+                // Solo organizadores y admins pueden crear eventos
+                if (userRole != "organizador" && userRole != "admin")
+                    return Forbid();
+
+                // Mapear DTO a EventModel
+                var newEvent = new EventModel
+                {
+                    Nombre = eventoDTO.Nombre,
+                    Descripcion = eventoDTO.Descripcion,
+                    FechaInicio = eventoDTO.FechaInicio,
+                    FechaFin = eventoDTO.FechaFin,
+                    Ubicacion = eventoDTO.Ubicacion,
+                    Activo = eventoDTO.Activo,
+                    PermitirAccesoPostEvento = eventoDTO.PermitirAccesoPostEvento,
+                    VentaPublica = eventoDTO.VentaPublica,
+                    PrecioEntrada = eventoDTO.PrecioEntrada,
+                    CapacidadMaxima = eventoDTO.CapacidadMaxima,
+                    ConfigTabla = eventoDTO.ConfigTabla,
+                    ConfigEtiqueta = eventoDTO.ConfigEtiqueta
+                };
+
+                // Si es organizador, validar límite de eventos y auto-asignar OrganizadorId
+                if (userRole == "organizador")
+                {
+                    var usuario = await _choosingContext.Users.FindAsync(usuarioId);
+                    if (usuario == null)
+                        return NotFound("Usuario no encontrado");
+
+                    // Contar eventos del organizador
+                    var eventosActuales = await _choosingContext.Events.CountAsync(e => e.OrganizadorId == usuarioId);
+
+                    // Validar límite según plan
+                    if (usuario.EventosPermitidos.HasValue && eventosActuales >= usuario.EventosPermitidos.Value)
+                    {
+                        return BadRequest(new
+                        {
+                            error = $"Has alcanzado el límite de {usuario.EventosPermitidos} eventos de tu plan '{usuario.PlanSuscripcion}'",
+                            eventosActuales = eventosActuales,
+                            limite = usuario.EventosPermitidos,
+                            plan = usuario.PlanSuscripcion
+                        });
+                    }
+
+                    // Auto-asignar OrganizadorId
+                    newEvent.OrganizadorId = usuarioId;
+                }
+
                 await _eventService.CreateEventAsync(newEvent);
-                return CreatedAtAction(nameof(GetEventById), new { id = newEvent.Id }, newEvent);
+
+                // Devolver DTO en lugar del modelo completo
+                var responseDTO = new EventoResponseDTO
+                {
+                    Id = newEvent.Id,
+                    Nombre = newEvent.Nombre,
+                    Descripcion = newEvent.Descripcion,
+                    FechaInicio = newEvent.FechaInicio,
+                    FechaFin = newEvent.FechaFin,
+                    Ubicacion = newEvent.Ubicacion,
+                    Activo = newEvent.Activo,
+                    ConfiguracionJson = newEvent.ConfiguracionJson,
+                    PermitirAccesoPostEvento = newEvent.PermitirAccesoPostEvento,
+                    OrganizadorId = newEvent.OrganizadorId,
+                    VentaPublica = newEvent.VentaPublica,
+                    PrecioEntrada = newEvent.PrecioEntrada,
+                    CapacidadMaxima = newEvent.CapacidadMaxima,
+                    EntradasVendidas = newEvent.EntradasVendidas,
+                    Estado = newEvent.Estado,
+                    ConfigTabla = newEvent.ConfigTabla,
+                    ConfigEtiqueta = newEvent.ConfigEtiqueta
+                };
+
+                return CreatedAtAction(nameof(GetEventById), new { id = newEvent.Id }, responseDTO);
             }
             catch (Exception ex)
             {
@@ -68,6 +191,20 @@ namespace choosing.Controllers
                 if (existingEvent == null)
                     return NotFound($"No se encontró un evento con el ID {id}");
 
+                // Validar acceso: solo organizador dueño o admin pueden editar
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                var roleClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Role);
+
+                if (userIdClaim != null && roleClaim != null)
+                {
+                    int usuarioId = int.Parse(userIdClaim.Value);
+                    string userRole = roleClaim.Value;
+
+                    bool canModify = await _eventService.CanUserModifyEventAsync(id, usuarioId, userRole);
+                    if (!canModify)
+                        return Forbid(); // 403 si no tiene permiso
+                }
+
                 updatedEvent.Id = id; // Asegurar que el ID sea correcto
                 await _eventService.UpdateEventAsync(updatedEvent);
                 return Ok(updatedEvent);
@@ -87,6 +224,20 @@ namespace choosing.Controllers
                 var existingEvent = await _eventService.GetEventByIdAsync(id);
                 if (existingEvent == null)
                     return NotFound($"No se encontró un evento con el ID {id}");
+
+                // Validar acceso
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                var roleClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Role);
+
+                if (userIdClaim != null && roleClaim != null)
+                {
+                    int usuarioId = int.Parse(userIdClaim.Value);
+                    string userRole = roleClaim.Value;
+
+                    bool canModify = await _eventService.CanUserModifyEventAsync(id, usuarioId, userRole);
+                    if (!canModify)
+                        return Forbid();
+                }
 
                 await _eventService.DeleteEventAsync(id);
                 return Ok($"Evento con ID {id} eliminado correctamente");
@@ -129,8 +280,8 @@ namespace choosing.Controllers
 
                 foreach (var evt in events)
                 {
-                    var totalGuests = await _context.Guests.CountAsync(g => g.EventoId == evt.Id);
-                    var accreditedGuests = await _context.Guests.CountAsync(g => g.EventoId == evt.Id && g.EstaAcreditado);
+                    var totalGuests = await _choosingContext.Guests.CountAsync(g => g.EventoId == evt.Id);
+                    var accreditedGuests = await _choosingContext.Guests.CountAsync(g => g.EventoId == evt.Id && g.EstaAcreditado);
 
                     eventsWithStats.Add(new
                     {
@@ -142,9 +293,6 @@ namespace choosing.Controllers
                         evt.Ubicacion,
                         evt.Activo,
                         evt.ConfiguracionJson,
-                        evt.CodigoAcceso,
-                        evt.CodigoAdmin,
-                        evt.CodigoStats,
                         evt.PermitirAccesoPostEvento,
                         Stats = new
                         {
@@ -188,95 +336,8 @@ namespace choosing.Controllers
                 return StatusCode(500, $"Error interno: {ex.Message}");
             }
         }
-
-        // PUT: api/Event/update-codes/{id}
-        [HttpPut("update-codes/{id}")]
-        public async Task<IActionResult> UpdateEventCodes(int id, UpdateCodesRequest request)
-        {
-            try
-            {
-                var existingEvent = await _eventService.GetEventByIdAsync(id);
-                if (existingEvent == null)
-                    return NotFound($"No se encontró un evento con el ID {id}");
-
-                existingEvent.CodigoAcceso = request.CodigoAcceso;
-                existingEvent.CodigoAdmin = request.CodigoAdmin;
-                existingEvent.CodigoStats = request.CodigoStats;
-                existingEvent.PermitirAccesoPostEvento = request.PermitirAccesoPostEvento;
-
-                await _eventService.UpdateEventAsync(existingEvent);
-
-                return Ok(existingEvent);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno: {ex.Message}");
-            }
-        }
-
-        // POST: api/Event/duplicate/{id}
-        [HttpPost("duplicate/{id}")]
-        public async Task<IActionResult> DuplicateEvent(int id, DuplicateEventRequest request)
-        {
-            try
-            {
-                var originalEvent = await _eventService.GetEventByIdAsync(id);
-                if (originalEvent == null)
-                    return NotFound($"No se encontró un evento con el ID {id}");
-
-                var duplicatedEvent = new EventModel
-                {
-                    Nombre = request.NuevoNombre,
-                    Descripcion = originalEvent.Descripcion,
-                    FechaInicio = request.NuevaFechaInicio,
-                    FechaFin = request.NuevaFechaFin,
-                    Ubicacion = originalEvent.Ubicacion,
-                    Activo = false,
-                    ConfiguracionJson = originalEvent.ConfiguracionJson,
-                    CodigoAcceso = GenerateRandomCode(),
-                    CodigoAdmin = GenerateRandomCode(),
-                    CodigoStats = GenerateRandomCode(),
-                    PermitirAccesoPostEvento = false
-                };
-
-                var createdEvent = await _eventService.CreateEventAsync(duplicatedEvent);
-                return CreatedAtAction(nameof(GetEventById), new { id = createdEvent.Id }, createdEvent);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno: {ex.Message}");
-            }
-        }
-
-        // POST: api/Event/generate-codes/{id}
-        [HttpPost("generate-codes/{id}")]
-        public async Task<IActionResult> GenerateNewCodes(int id)
-        {
-            try
-            {
-                var existingEvent = await _eventService.GetEventByIdAsync(id);
-                if (existingEvent == null)
-                    return NotFound($"No se encontró un evento con el ID {id}");
-
-                existingEvent.CodigoAcceso = GenerateRandomCode();
-                existingEvent.CodigoAdmin = GenerateRandomCode();
-                existingEvent.CodigoStats = GenerateRandomCode();
-
-                await _eventService.UpdateEventAsync(existingEvent);
-
-                return Ok(new
-                {
-                    mensaje = "Códigos regenerados correctamente",
-                    codigoAcceso = existingEvent.CodigoAcceso,
-                    codigoAdmin = existingEvent.CodigoAdmin,
-                    codigoStats = existingEvent.CodigoStats
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno: {ex.Message}");
-            }
-        }
+        
+        
 
         // GET: api/Event/publicos - Eventos con venta pública habilitada
         [HttpGet("publicos")]
@@ -284,8 +345,8 @@ namespace choosing.Controllers
         {
             try
             {
-                var events = await _context.Events
-                    .Where(e => e.VentaPublica && e.Activo && e.FechaInicio > DateTime.Now)
+                var events = await _choosingContext.Events
+                    .Where(e => e.VentaPublica && e.Activo)
                     .OrderBy(e => e.FechaInicio)
                     .ToListAsync();
 
@@ -329,20 +390,5 @@ namespace choosing.Controllers
         }
     }
 
-    // ✅ REQUEST CLASSES (agregar al final del archivo)
-    public class UpdateCodesRequest
-    {
-        public string CodigoAcceso { get; set; } = "";
-        public string? CodigoAdmin { get; set; } = "";
-        public string? CodigoStats { get; set; } = "";
-        public bool PermitirAccesoPostEvento { get; set; } = false;
-    }
-
-    public class DuplicateEventRequest
-    {
-        public string NuevoNombre { get; set; } = "";
-        public DateTime NuevaFechaInicio { get; set; }
-        public DateTime NuevaFechaFin { get; set; }
-    }
 }
 

@@ -10,7 +10,7 @@ using choosing.Context;
 
 namespace choosing.Migrations
 {
-    [DbContext(typeof(DbHotelContext))]
+    [DbContext(typeof(DbChoosingContext))]
     partial class DbHotelContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
@@ -94,21 +94,6 @@ namespace choosing.Migrations
 
                     b.Property<int?>("CapacidadMaxima")
                         .HasColumnType("int");
-
-                    b.Property<string>("CodigoAcceso")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasDefaultValue("");
-
-                    b.Property<string>("CodigoAdmin")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("CodigoStats")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("ConfigEtiqueta")
                         .HasColumnType("nvarchar(max)");

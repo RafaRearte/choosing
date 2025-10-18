@@ -20,7 +20,7 @@ namespace choosing.Controllers
         /// Crear una nueva compra (pre-pago)
         /// </summary>
         [HttpPost("crear")]
-        [Authorize(Roles = "comprador")]
+        //[Authorize(Roles = "comprador")]
         public async Task<IActionResult> CrearCompra([FromBody] CrearCompraDTO dto)
         {
             try
@@ -58,7 +58,7 @@ namespace choosing.Controllers
         /// Obtener compras del usuario logueado
         /// </summary>
         [HttpGet("mis-compras")]
-        [Authorize(Roles = "comprador")]
+        //[Authorize(Roles = "comprador")]
         public async Task<IActionResult> ObtenerMisCompras()
         {
             try
@@ -84,7 +84,7 @@ namespace choosing.Controllers
         /// Obtener compra por ID
         /// </summary>
         [HttpGet("{id}")]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> ObtenerCompraPorId(int id)
         {
             try
@@ -119,7 +119,7 @@ namespace choosing.Controllers
         /// Obtener compras de un evento (solo para organizador del evento)
         /// </summary>
         [HttpGet("evento/{eventoId}")]
-        [Authorize(Roles = "organizador,admin")]
+        //[Authorize(Roles = "organizador,admin")]
         public async Task<IActionResult> ObtenerComprasPorEvento(int eventoId)
         {
             try
@@ -137,7 +137,7 @@ namespace choosing.Controllers
         /// Agregar invitados a una compra
         /// </summary>
         [HttpPost("{compraId}/agregar-invitados")]
-        [Authorize(Roles = "comprador")]
+        //[Authorize(Roles = "comprador")]
         public async Task<IActionResult> AgregarInvitados(int compraId, [FromBody] AgregarInvitadosDTO dto)
         {
             try
@@ -159,7 +159,7 @@ namespace choosing.Controllers
         /// Actualizar estado de compra (para testing - en producción solo webhook)
         /// </summary>
         [HttpPut("{compraId}/estado")]
-        [Authorize(Roles = "admin")]
+        //[Authorize(Roles = "admin")]
         public async Task<IActionResult> ActualizarEstado(int compraId, [FromBody] ActualizarEstadoDTO dto)
         {
             try

@@ -11,18 +11,18 @@ namespace choosing.Repository.Impl
 {
     public class EventRepository : IEventRepository
     {
-        private readonly DbHotelContext _context;
+        private readonly DbChoosingContext _choosingContext;
 
-        public EventRepository(DbHotelContext context)
+        public EventRepository(DbChoosingContext choosingContext)
         {
-            _context = context;
+            _choosingContext = choosingContext;
         }
 
         public async Task<List<EventModel>> GetAllAsync()
         {
             try
             {
-                return await _context.Events.ToListAsync();
+                return await _choosingContext.Events.ToListAsync();
             }
             catch (Exception ex)
             {
@@ -34,7 +34,7 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                return await _context.Events.FindAsync(id);
+                return await _choosingContext.Events.FindAsync(id);
             }
             catch (Exception ex)
             {
@@ -49,8 +49,8 @@ namespace choosing.Repository.Impl
                 newEvent.FechaInicio = newEvent.FechaInicio.ToLocalTime();
                 newEvent.FechaFin = newEvent.FechaFin.ToLocalTime();
 
-                await _context.Events.AddAsync(newEvent);
-                await _context.SaveChangesAsync();
+                await _choosingContext.Events.AddAsync(newEvent);
+                await _choosingContext.SaveChangesAsync();
                 return newEvent;
             }
             catch (Exception ex)
@@ -64,7 +64,7 @@ namespace choosing.Repository.Impl
             try
             {
                 // Obtener el evento existente
-                var existingEvent = await _context.Events.FindAsync(updatedEvent.Id);
+                var existingEvent = await _choosingContext.Events.FindAsync(updatedEvent.Id);
                 if (existingEvent == null)
                     throw new Exception($"Event with ID {updatedEvent.Id} not found");
 
@@ -75,16 +75,13 @@ namespace choosing.Repository.Impl
                 existingEvent.FechaInicio = updatedEvent.FechaInicio.ToLocalTime();
                 existingEvent.FechaFin = updatedEvent.FechaFin.ToLocalTime();
                 existingEvent.Activo = updatedEvent.Activo;
-                existingEvent.CodigoAcceso = updatedEvent.CodigoAcceso;
-                existingEvent.CodigoAdmin = updatedEvent.CodigoAdmin;
-                existingEvent.CodigoStats = updatedEvent.CodigoStats;
                 existingEvent.PermitirAccesoPostEvento = updatedEvent.PermitirAccesoPostEvento;
 
                 // Solo actualizar ConfiguracionJson si viene con datos
                 if (!string.IsNullOrEmpty(updatedEvent.ConfiguracionJson))
                     existingEvent.ConfiguracionJson = updatedEvent.ConfiguracionJson;
 
-                await _context.SaveChangesAsync();
+                await _choosingContext.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -96,16 +93,32 @@ namespace choosing.Repository.Impl
         {
             try
             {
-                var eventToDelete = await _context.Events.FindAsync(id);
+                var eventToDelete = await _choosingContext.Events.FindAsync(id);
                 if (eventToDelete != null)
                 {
-                    _context.Events.Remove(eventToDelete);
-                    await _context.SaveChangesAsync();
+                    _choosingContext.Events.Remove(eventToDelete);
+                    await _choosingContext.SaveChangesAsync();
                 }
             }
             catch (Exception ex)
             {
                 throw new Exception($"Error deleting event with ID {id}", ex);
+            }
+        }
+
+        // Obtener eventos de un organizador específico
+        public async Task<List<EventModel>> GetByOrganizadorIdAsync(int organizadorId)
+        {
+            try
+            {
+                return await _choosingContext.Events
+                    .Where(e => e.OrganizadorId == organizadorId)
+                    .OrderByDescending(e => e.FechaInicio)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error retrieving events for organizador {organizadorId}", ex);
             }
         }
     }

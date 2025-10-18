@@ -12,8 +12,8 @@ using choosing.Context;
 namespace choosing.Migrations
 {
     [DbContext(typeof(DbChoosingContext))]
-    [Migration("20251011150923_CompletarConfiguracionUser")]
-    partial class CompletarConfiguracionUser
+    [Migration("20251015010920_RefactorUserGuestCompraFase1")]
+    partial class RefactorUserGuestCompraFase1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -10,25 +10,25 @@ namespace choosing.Services.Impl
     public class CompraService : ICompraService
     {
         private readonly ICompraRepository _compraRepository;
-        private readonly DbHotelContext _context;
+        private readonly DbChoosingContext _choosingContext;
         private readonly IEmailService _emailService;
 
-        public CompraService(ICompraRepository compraRepository, DbHotelContext context, IEmailService emailService)
+        public CompraService(ICompraRepository compraRepository, DbChoosingContext choosingContext, IEmailService emailService)
         {
             _compraRepository = compraRepository;
-            _context = context;
+            _choosingContext = choosingContext;
             _emailService = emailService;
         }
 
         public async Task<Compra> CrearCompraAsync(CrearCompraDTO dto)
         {
             // Validar que el evento exista
-            var evento = await _context.Events.FindAsync(dto.EventoId);
+            var evento = await _choosingContext.Events.FindAsync(dto.EventoId);
             if (evento == null)
                 throw new Exception("Evento no encontrado");
 
             // Validar que el usuario exista
-            var usuario = await _context.Users.FindAsync(dto.UsuarioId);
+            var usuario = await _choosingContext.Users.FindAsync(dto.UsuarioId);
             if (usuario == null)
                 throw new Exception("Usuario no encontrado");
 
@@ -40,7 +40,7 @@ namespace choosing.Services.Impl
                     throw new Exception($"Solo quedan {entradasDisponibles} entradas disponibles");
             }
 
-            // Crear compra
+            // Crear compra (HARDCODEADO: auto-aprobada para MVP)
             var compra = new Compra
             {
                 UsuarioId = dto.UsuarioId,
@@ -48,10 +48,18 @@ namespace choosing.Services.Impl
                 CantidadEntradas = dto.CantidadEntradas,
                 MontoTotal = dto.MontoTotal,
                 FechaCompra = DateTime.Now,
-                Estado = "pendiente"
+                Estado = "pagado", // 🔥 HARDCODEADO para MVP
+                MetodoPago = "hardcoded_mvp",
+                TransaccionId = $"MVP-{Guid.NewGuid().ToString("N")[..12].ToUpper()}",
+                FechaPago = DateTime.Now
             };
 
             var compraCreada = await _compraRepository.CreateAsync(compra);
+
+            // Incrementar entradas vendidas del evento
+            evento.EntradasVendidas += dto.CantidadEntradas;
+            _choosingContext.Events.Update(evento);
+            await _choosingContext.SaveChangesAsync();
 
             // Si vienen invitados, guardarlos automáticamente
             if (dto.Invitados != null && dto.Invitados.Count > 0)
@@ -92,15 +100,15 @@ namespace choosing.Services.Impl
                         guest.Telefono = invitadoDto.Telefono;
                     }
 
-                    _context.Guests.Add(guest);
+                    _choosingContext.Guests.Add(guest);
                 }
 
-                await _context.SaveChangesAsync();
+                await _choosingContext.SaveChangesAsync();
 
                 // Enviar emails con QR a cada invitado
                 foreach (var invitadoDto in dto.Invitados)
                 {
-                    var guestCreado = await _context.Guests
+                    var guestCreado = await _choosingContext.Guests
                         .FirstOrDefaultAsync(g => g.CompraId == compraCreada.Id && g.Email == invitadoDto.Email);
 
                     if (guestCreado != null)
@@ -142,7 +150,7 @@ namespace choosing.Services.Impl
             if (compra == null)
                 throw new Exception("Compra no encontrada");
 
-            var usuario = await _context.Users.FindAsync(compra.UsuarioId);
+            var usuario = await _choosingContext.Users.FindAsync(compra.UsuarioId);
             if (usuario == null)
                 throw new Exception("Usuario no encontrado");
 
@@ -179,10 +187,10 @@ namespace choosing.Services.Impl
                     guest.Telefono = invitadoDto.Telefono;
                 }
 
-                _context.Guests.Add(guest);
+                _choosingContext.Guests.Add(guest);
             }
 
-            await _context.SaveChangesAsync();
+            await _choosingContext.SaveChangesAsync();
 
             return await _compraRepository.GetByIdAsync(compraId) ?? compra;
         }
@@ -201,23 +209,23 @@ namespace choosing.Services.Impl
                 compra.TransaccionId = transaccionId;
 
                 // Incrementar entradas vendidas del evento
-                var evento = await _context.Events.FindAsync(compra.EventoId);
+                var evento = await _choosingContext.Events.FindAsync(compra.EventoId);
                 if (evento != null)
                 {
                     evento.EntradasVendidas += compra.CantidadEntradas;
-                    _context.Events.Update(evento);
+                    _choosingContext.Events.Update(evento);
                 }
             }
 
             await _compraRepository.UpdateAsync(compra);
-            await _context.SaveChangesAsync();
+            await _choosingContext.SaveChangesAsync();
 
             return compra;
         }
 
         public async Task<List<Guest>> ObtenerInvitadosPorCompraIdAsync(int compraId)
         {
-            return await _context.Guests
+            return await _choosingContext.Guests
                 .Where(g => g.CompraId == compraId)
                 .ToListAsync();
         }
