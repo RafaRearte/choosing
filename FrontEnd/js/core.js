@@ -14,113 +14,82 @@ const eventIdFromUrl = urlParams.get('eventId');
 // Si viene eventId en la URL, guardarlo en localStorage
 if (eventIdFromUrl) {
     localStorage.setItem('currentEventId', eventIdFromUrl);
-    // El nombre lo obtendremos de la API
 
-    // Si el usuario es organizador o admin, darle acceso completo
-    if (typeof Auth !== 'undefined' && Auth.isAuthenticated()) {
-        const user = Auth.getUser();
-        if (user && (user.tipoUsuario === 'organizador' || user.tipoUsuario === 'admin')) {
-            localStorage.setItem('currentEventAccess', JSON.stringify({
-                tipoAcceso: user.tipoUsuario === 'admin' ? 'Admin' : 'Organizador',
-                permisos: {
-                    puedeAcreditar: true,
-                    puedeEditarInvitados: true,
-                    puedeVerEstadisticas: true,
-                    puedeConfigurar: true
-                }
-            }));
+    // Dar acceso automático (para que funcione sin códigos)
+    localStorage.setItem('currentEventAccess', JSON.stringify({
+        tipoAcceso: 'Organizador',
+        permisos: {
+            puedeAcreditar: true,
+            puedeEditarInvitados: true,
+            puedeVerEstadisticas: true,
+            puedeConfigurar: true
         }
-    }
+    }));
 }
 
 // Verificar que se ha seleccionado un evento
 const currentEventId = localStorage.getItem('currentEventId');
 const currentEventName = localStorage.getItem('currentEventName');
 
-// Verificar autenticación usando Auth.js
-if (typeof Auth !== 'undefined' && !Auth.isAuthenticated()) {
+// Verificar token (soporte para ambos sistemas)
+const token = localStorage.getItem('choosing_token') || localStorage.getItem('authToken');
+if (!token) {
     window.location.href = 'login.html';
 }
 
-// Ya no redirigimos automáticamente si no hay evento
-// Cada página decidirá qué hacer si falta el evento
-// if (!currentEventId) {
-//     window.location.href = 'event-selection.html';
-// }
+if (!currentEventId) {
+    window.location.href = 'event-selection.html';
+}
 // Actualizar cada 30 segundos
 const fetchInterval = 30000; 
 // Función para cerrar sesión
 const logout = () => {
-    if (typeof Auth !== 'undefined') {
-        Auth.logout();
-    } else {
-        // Fallback si Auth.js no está disponible
-        localStorage.removeItem('choosing_token');
-        localStorage.removeItem('choosing_user');
-        localStorage.removeItem('currentEventId');
-        localStorage.removeItem('currentEventName');
-        localStorage.removeItem('isGlobalAdmin');
-        localStorage.removeItem('eventCodes');
-        localStorage.removeItem('currentEventAccess');
-        window.location.href = 'login.html';
-    }
+    // Limpiar todo (ambos sistemas)
+    localStorage.removeItem('choosing_token');
+    localStorage.removeItem('choosing_user');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('currentEventId');
+    localStorage.removeItem('currentEventName');
+    localStorage.removeItem('isGlobalAdmin');
+    localStorage.removeItem('eventCodes');
+    localStorage.removeItem('currentEventAccess');
+    window.location.href = 'login.html';
 };
 // Función helper para hacer peticiones autenticadas
 const authenticatedFetch = async (url, options = {}) => {
-    // Si Auth.js está disponible, usarlo
-    if (typeof Auth !== 'undefined') {
-        if (!Auth.isAuthenticated()) {
-            window.location.href = 'login.html';
+    // Soporte para ambos tokens
+    const token = localStorage.getItem('choosing_token') || localStorage.getItem('authToken');
+
+    // Si no hay token, redirigir al login
+    if (!token) {
+        window.location.href = 'login.html';
+        return null;
+    }
+
+    // Configurar headers con autenticación
+    const headers = {
+        ...options.headers,
+        'Authorization': `Bearer ${token}`
+    };
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers
+        });
+
+        // Si hay error de autenticación, redirigir al login
+        if (response.status === 401) {
+            toast.error('Sesión expirada. Por favor inicie sesión nuevamente');
+            logout();
             return null;
         }
 
-        const headers = {
-            ...options.headers,
-            ...Auth.getAuthHeaders()
-        };
-
-        try {
-            const response = await fetch(url, { ...options, headers });
-
-            if (response.status === 401) {
-                toast.error('Sesión expirada. Por favor inicie sesión nuevamente');
-                Auth.logout();
-                return null;
-            }
-
-            return response;
-        } catch (error) {
-            console.error('Error en la petición:', error);
-            throw error;
-        }
-    } else {
-        // Fallback si Auth.js no está disponible (compatible con código viejo)
-        const token = localStorage.getItem('choosing_token');
-
-        if (!token) {
-            window.location.href = 'login.html';
-            return null;
-        }
-
-        const headers = {
-            ...options.headers,
-            'Authorization': `Bearer ${token}`
-        };
-
-        try {
-            const response = await fetch(url, { ...options, headers });
-
-            if (response.status === 401) {
-                toast.error('Sesión expirada. Por favor inicie sesión nuevamente');
-                logout();
-                return null;
-            }
-
-            return response;
-        } catch (error) {
-            console.error('Error en la petición:', error);
-            throw error;
-        }
+        return response;
+    } catch (error) {
+        console.error('Error en la petición:', error);
+        throw error;
     }
 };
 // Función para mostrar/ocultar el indicador de carga
