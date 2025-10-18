@@ -268,7 +268,8 @@
             const currentEventId = localStorage.getItem('currentEventId');
             const currentEventName = localStorage.getItem('currentEventName');
             if (!currentEventId) {
-                window.location.href = 'event-selection.html';
+                alert('Por favor selecciona un evento primero desde el dashboard');
+                // Ya no redirigimos automáticamente
                 return;
             }
             
@@ -294,8 +295,8 @@
                 })
                 .catch(error => {
                     console.error('Error al iniciar:', error);
-                    toast.error('Error al cargar los datos del evento. Redirigiendo a la selección de eventos');
-                    window.location.href = 'event-selection.html';
+                    alert('Error al cargar los datos del evento: ' + error.message);
+                    // Ya no redirigimos automáticamente
                 });
             
             // Agregar evento al botón de cerrar sesión

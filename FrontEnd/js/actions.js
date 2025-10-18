@@ -420,16 +420,11 @@ document.addEventListener("DOMContentLoaded", function() {
     document.querySelectorAll('.open-add-guest-btn').forEach(btn => {
         btn.addEventListener('click', openAddGuestModal);
     });
-    
-    // Verificar si tiene acceso al evento actual
+
+    // Ya no verificamos eventAccess aquí
+    // Los organizadores/admins tienen acceso automático vía Auth.js
     const currentEventId = localStorage.getItem('currentEventId');
     const eventAccess = localStorage.getItem('currentEventAccess');
-    
-    if (currentEventId && !eventAccess) {
-        toast.warning('Necesita un código de acceso para este evento');
-        window.location.href = 'event-selection.html';
-        return;
-    }
     
     // Configurar permisos en la UI
     configurarElementosSegunPermisos();

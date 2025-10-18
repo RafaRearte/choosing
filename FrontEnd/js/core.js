@@ -42,9 +42,11 @@ if (typeof Auth !== 'undefined' && !Auth.isAuthenticated()) {
     window.location.href = 'login.html';
 }
 
-if (!currentEventId) {
-    window.location.href = 'event-selection.html';
-}
+// Ya no redirigimos automáticamente si no hay evento
+// Cada página decidirá qué hacer si falta el evento
+// if (!currentEventId) {
+//     window.location.href = 'event-selection.html';
+// }
 // Actualizar cada 30 segundos
 const fetchInterval = 30000; 
 // Función para cerrar sesión

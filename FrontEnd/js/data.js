@@ -30,7 +30,9 @@ const fetchEventData = async () => {
         return eventData;
     } catch (error) {
         console.error('Error fetching event data:', error);
-        window.location.href = 'event-selection.html';
+        toast.error('Error al cargar datos del evento: ' + error.message);
+        // Ya no redirigimos automáticamente
+        return null;
     }
 }
 
