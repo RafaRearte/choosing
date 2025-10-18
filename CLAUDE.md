@@ -132,6 +132,243 @@ USER_KEY: 'choosing_user'
 
 ---
 
+## 🎨 Rediseño Visual y UX del Frontend Público (18 Oct 2025)
+
+### Objetivo
+
+Unificar la estética visual de todas las páginas públicas (landing, eventos-publicos, evento-detalle) siguiendo el diseño de la landing page con:
+- **Paleta de colores consistente**: Gradiente azul (#1e3c72 → #2a5298) reemplazando morado/violeta
+- **Detección de autenticación**: Mostrar información del usuario cuando está logeado
+- **Bootstrap Icons**: Uso de iconos vectoriales en lugar de emojis
+- **Experiencia fluida**: Navegación coherente entre todas las páginas
+
+### Páginas Rediseñadas
+
+#### 1. `FrontEnd/eventos-publicos.html`
+
+**Cambios aplicados**:
+- ✅ **Paleta de colores**: Cambio completo de morado (#667eea, #764ba2) a azul (#1e3c72, #2a5298)
+- ✅ **CSS Variables**: Implementadas `:root { --primary: #1e3c72; --secondary: #2a5298; }`
+- ✅ **Background gradient**: `linear-gradient(135deg, #1e3c72 0%, #2a5298 60%, #7e8ba3 100%)`
+- ✅ **Tarjetas de eventos modernizadas**:
+  - Sombras suaves: `box-shadow: 0 10px 30px rgba(0,0,0,0.1)`
+  - Hover effect: `transform: translateY(-10px)` con sombra aumentada
+  - Bordes redondeados: `border-radius: 20px`
+  - Bootstrap Icons: Reemplazados emojis por `<i class="bi bi-calendar-event"></i>`
+- ✅ **Navbar dinámica con detección de usuario**:
+  ```javascript
+  if (Auth.isAuthenticated()) {
+      const user = Auth.getUser();
+      // Mostrar dropdown con nombre, badge de rol, link a dashboard, logout
+  } else {
+      // Mostrar "Iniciar Sesión"
+  }
+  ```
+- ✅ **Badges de rol con colores**:
+  - Admin: `bg-danger` (rojo)
+  - Organizador: `bg-primary` (azul)
+  - Comprador: `bg-success` (verde)
+- ✅ **Barra de búsqueda rediseñada**: Estilo pill con sombra y foco mejorado
+- ✅ **Info de eventos con iconos**: `bi-geo-alt-fill`, `bi-ticket-perforated-fill`
+
+**Código clave agregado** (líneas 360-414):
+```javascript
+document.addEventListener('DOMContentLoaded', function() {
+    const authButtonsContainer = document.getElementById('authButtons');
+
+    if (typeof Auth !== 'undefined' && Auth.isAuthenticated()) {
+        const user = Auth.getUser();
+        const userName = user.nombre || user.username || 'Usuario';
+        const tipoUsuario = user.tipoUsuario || 'usuario';
+
+        // Determinar badge y dashboard según rol
+        let badgeClass = 'bg-secondary';
+        let dashboardUrl = '/landing.html';
+
+        if (tipoUsuario === 'admin') {
+            badgeClass = 'bg-danger';
+            dashboardUrl = '/admin-panel.html';
+        } else if (tipoUsuario === 'organizador') {
+            badgeClass = 'bg-primary';
+            dashboardUrl = '/organizador-dashboard.html';
+        } else if (tipoUsuario === 'comprador') {
+            badgeClass = 'bg-success';
+        }
+
+        // Renderizar dropdown con info de usuario
+        authButtonsContainer.innerHTML = `
+            <div class="dropdown">
+                <a class="nav-link dropdown-toggle" href="#" ...>
+                    <i class="bi bi-person-circle"></i> ${userName}
+                    <span class="badge ${badgeClass} ms-1">${tipoUsuario}</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="${dashboardUrl}">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" onclick="logout()">
+                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                    </a></li>
+                </ul>
+            </div>
+        `;
+    } else {
+        authButtonsContainer.innerHTML = `
+            <a class="nav-link" href="/login.html">
+                <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+            </a>
+        `;
+    }
+});
+```
+
+#### 2. `FrontEnd/evento-detalle.html`
+
+**Cambios aplicados**:
+- ✅ **Misma paleta azul** que eventos-publicos.html
+- ✅ **Bootstrap Icons agregado**: `<link rel="stylesheet" href="https://cdn.../bootstrap-icons@1.11.1/font/bootstrap-icons.css">`
+- ✅ **Header del evento**: Icono `bi-calendar-event-fill` en lugar de emoji 🎭
+- ✅ **Iconos en info cards**:
+  - Fecha: `bi-calendar3`
+  - Ubicación: `bi-geo-alt-fill`
+  - Capacidad: `bi-people-fill`
+  - Duración: `bi-clock-fill`
+- ✅ **Info icons con gradiente**: `background: linear-gradient(135deg, var(--primary), var(--secondary))`
+- ✅ **Tarjeta de compra rediseñada**:
+  - Gradiente azul en lugar de verde
+  - Sombra mejorada: `box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3)`
+  - Botón blanco con hover effect: `transform: translateY(-2px)`
+- ✅ **Barra de progreso de capacidad dinámica**:
+  ```javascript
+  if (porcentajeDisponible > 50) {
+      progressBar.style.background = 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)';
+  } else if (porcentajeDisponible > 20) {
+      progressBar.style.background = '#ffc107'; // Amarillo
+  } else {
+      progressBar.style.background = '#dc3545'; // Rojo
+  }
+  ```
+- ✅ **Navbar con logo Choosing**: Link a `/landing.html` + botón "Volver a Eventos"
+- ✅ **Mismo sistema de detección de usuario** que eventos-publicos.html
+- ✅ **Botón de compra mejorado**: `<i class="bi bi-cart-fill me-2"></i>Comprar Entradas`
+
+#### 3. `FrontEnd/landing.html` (completado en sesión anterior)
+
+**Funcionalidad agregada**:
+- ✅ Detección de usuario logeado en navbar
+- ✅ Dropdown con nombre y dashboard según rol
+- ✅ Botón "Iniciar Sesión" si no está logeado
+
+### Patrón de Navbar Dinámica
+
+Este patrón se repite en **eventos-publicos.html** y **evento-detalle.html**:
+
+**HTML**:
+```html
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+        <a class="navbar-brand" href="/landing.html">
+            <i class="bi bi-star-fill me-2"></i>Choosing
+        </a>
+        <!-- ... -->
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item" id="authButtons">
+                <!-- Dinamically populated by JS -->
+            </li>
+        </ul>
+    </div>
+</nav>
+```
+
+**JavaScript**:
+```javascript
+document.addEventListener('DOMContentLoaded', function() {
+    const authButtonsContainer = document.getElementById('authButtons');
+
+    if (typeof Auth !== 'undefined' && Auth.isAuthenticated()) {
+        // Mostrar dropdown con usuario
+    } else {
+        // Mostrar botón "Iniciar Sesión"
+    }
+});
+
+function logout() {
+    Auth.logout();
+    window.location.href = '/landing.html';
+}
+```
+
+### Paleta de Colores Estándar
+
+**IMPORTANTE**: A partir de ahora, SIEMPRE usar estas variables CSS en páginas públicas:
+
+```css
+:root {
+    --primary: #1e3c72;    /* Azul oscuro */
+    --secondary: #2a5298;  /* Azul medio */
+}
+
+/* Gradientes */
+background: linear-gradient(135deg, #1e3c72 0%, #2a5298 60%, #7e8ba3 100%); /* Fondo principal */
+background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); /* Elementos */
+```
+
+**❌ NO USAR**:
+- Morado/Violeta: `#667eea`, `#764ba2`
+- Verde para cards principales (solo para badges de comprador)
+
+### Iconos Bootstrap
+
+**Iconos usados en el diseño**:
+- `bi-star-fill`: Logo Choosing
+- `bi-calendar-event`, `bi-calendar-event-fill`: Eventos
+- `bi-geo-alt-fill`: Ubicación
+- `bi-ticket-perforated-fill`, `bi-ticket-detailed`: Entradas
+- `bi-people-fill`: Capacidad/Asistentes
+- `bi-clock-fill`: Duración/Hora
+- `bi-calendar3`: Fecha
+- `bi-person-circle`: Usuario
+- `bi-speedometer2`: Dashboard
+- `bi-box-arrow-right`: Cerrar sesión
+- `bi-box-arrow-in-right`: Iniciar sesión
+- `bi-cart-fill`: Comprar
+- `bi-arrow-left-circle`: Volver
+
+### Consistencia Visual Lograda
+
+| Página | Colores | Navbar Dinámica | Bootstrap Icons | Estado |
+|--------|---------|----------------|-----------------|--------|
+| `landing.html` | ✅ Azul | ✅ Sí | ✅ Sí | ✅ Completo |
+| `eventos-publicos.html` | ✅ Azul | ✅ Sí | ✅ Sí | ✅ Completo |
+| `evento-detalle.html` | ✅ Azul | ✅ Sí | ✅ Sí | ✅ Completo |
+| `login.html` | ✅ Azul | ➖ N/A | ✅ Sí | ✅ Completo |
+| `checkout.html` | ⚠️ Pendiente | ⚠️ Pendiente | ⚠️ Pendiente | 🔴 No existe |
+| `mis-entradas.html` | ⚠️ Pendiente | ⚠️ Pendiente | ⚠️ Pendiente | 🔴 No existe |
+
+### Flujo de Usuario Completado
+
+```
+Landing Page (landing.html)
+    ↓ (Eventos públicos disponibles detectados)
+Ver Eventos (eventos-publicos.html)
+    ↓ (Click en tarjeta de evento)
+Detalle del Evento (evento-detalle.html)
+    ↓ (Click "Comprar Entradas")
+[Si no está logeado] → Login (login.html) → [Vuelve al detalle]
+[Si está logeado] → Checkout (checkout.html) ⚠️ PENDIENTE CREAR
+```
+
+### Próximos Pasos
+
+- [ ] Crear `checkout.html` con mismo diseño azul y navbar dinámica
+- [ ] Crear `mis-entradas.html` para que compradores vean sus QR codes
+- [ ] Unificar diseño de dashboards (organizador, admin) con misma paleta
+- [ ] Agregar animaciones de transición entre páginas
+- [ ] Implementar modo oscuro (opcional)
+
+---
+
 ## ⚡ Refactorizaciones Recientes (Diciembre 2025)
 
 ### Cambios Aplicados en Guest Model

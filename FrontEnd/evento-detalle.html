@@ -5,12 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalle del Evento - Choosing</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
+        :root {
+            --primary: #1e3c72;
+            --secondary: #2a5298;
+        }
+
         .navbar-custom {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         }
         .event-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             padding: 60px 0;
             position: relative;
@@ -58,18 +64,20 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #f8f9fa;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
             border-radius: 10px;
             margin-right: 15px;
         }
         .price-card {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
             border-radius: 15px;
             padding: 30px;
             text-align: center;
             position: sticky;
             top: 20px;
+            box-shadow: 0 10px 30px rgba(30, 60, 114, 0.3);
         }
         .price-amount {
             font-size: 48px;
@@ -96,7 +104,7 @@
         }
         .quantity-btn:hover {
             background: white;
-            color: #28a745;
+            color: var(--primary);
         }
         .quantity-display {
             font-size: 32px;
@@ -110,9 +118,10 @@
             border-radius: 20px;
             font-weight: bold;
             margin-bottom: 20px;
+            font-size: 0.9rem;
         }
         .status-disponible {
-            background: #28a745;
+            background: rgba(255, 255, 255, 0.3);
             color: white;
         }
         .status-pocos {
@@ -122,6 +131,19 @@
         .status-agotado {
             background: #dc3545;
             color: white;
+        }
+        .btn-comprar {
+            background: white;
+            color: var(--primary);
+            border: none;
+            font-weight: 600;
+            padding: 12px 30px;
+            transition: all 0.3s;
+        }
+        .btn-comprar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.3);
+            color: var(--primary);
         }
         .capacity-bar {
             background: rgba(255, 255, 255, 0.3);
@@ -145,19 +167,37 @@
 </head>
 <body class="bg-light">
     <!-- Navbar -->
-    <nav class="navbar navbar-dark navbar-custom">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
         <div class="container">
-            <a class="navbar-brand" href="/eventos-publicos.html">
-                <h4 class="mb-0">← Volver a Eventos</h4>
+            <a class="navbar-brand" href="/landing.html">
+                <i class="bi bi-star-fill me-2"></i>Choosing
             </a>
-            <div id="user-info"></div>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/eventos-publicos.html">
+                            <i class="bi bi-arrow-left-circle"></i> Volver a Eventos
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item" id="authButtons">
+                        <!-- Dinamically populated by JS -->
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
     <!-- Event Header -->
     <div class="event-header">
         <div class="container text-center position-relative">
-            <div class="event-icon" id="eventIcon">🎭</div>
+            <div class="event-icon">
+                <i class="bi bi-calendar-event-fill"></i>
+            </div>
             <h1 id="eventName">Cargando...</h1>
             <p class="lead" id="eventLocation"></p>
         </div>
@@ -183,7 +223,9 @@
 
                         <!-- Info adicional -->
                         <div class="info-item">
-                            <div class="info-icon">📅</div>
+                            <div class="info-icon">
+                                <i class="bi bi-calendar3"></i>
+                            </div>
                             <div>
                                 <strong>Fecha y Hora</strong><br>
                                 <span id="eventDate" class="text-muted"></span>
@@ -191,7 +233,9 @@
                         </div>
 
                         <div class="info-item">
-                            <div class="info-icon">📍</div>
+                            <div class="info-icon">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </div>
                             <div>
                                 <strong>Ubicación</strong><br>
                                 <span id="eventLocationFull" class="text-muted"></span>
@@ -199,18 +243,22 @@
                         </div>
 
                         <div class="info-item" id="capacityInfo">
-                            <div class="info-icon">👥</div>
+                            <div class="info-icon">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
                             <div style="flex: 1;">
                                 <strong>Capacidad</strong><br>
                                 <span id="eventCapacity" class="text-muted"></span>
-                                <div class="progress mt-2" style="height: 8px;">
-                                    <div id="capacityProgress" class="progress-bar bg-success" style="width: 0%"></div>
+                                <div class="progress mt-2" style="height: 8px; background: rgba(30, 60, 114, 0.2);">
+                                    <div id="capacityProgress" class="progress-bar" style="width: 0%;"></div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="info-item">
-                            <div class="info-icon">⏰</div>
+                            <div class="info-icon">
+                                <i class="bi bi-clock-fill"></i>
+                            </div>
                             <div>
                                 <strong>Duración</strong><br>
                                 <span id="eventDuration" class="text-muted"></span>
@@ -264,12 +312,12 @@
                         <div style="font-size: 32px; font-weight: bold;" id="totalAmount">$0</div>
                     </div>
 
-                    <button class="btn btn-light btn-lg w-100" onclick="comprarEntradas()" id="buyButton">
-                        Comprar Entradas
+                    <button class="btn btn-comprar btn-lg w-100" onclick="comprarEntradas()" id="buyButton">
+                        <i class="bi bi-cart-fill me-2"></i>Comprar Entradas
                     </button>
 
-                    <small class="d-block mt-3" style="opacity: 0.8;">
-                        Confirmarás los datos de los asistentes en el siguiente paso
+                    <small class="d-block mt-3" style="opacity: 0.9;">
+                        <i class="bi bi-info-circle me-1"></i>Confirmarás los datos de los asistentes en el siguiente paso
                     </small>
                 </div>
 
@@ -288,14 +336,63 @@
     <script src="/js/config.js"></script>
     <script src="/js/auth.js"></script>
     <script>
-        // Mostrar info del usuario si está logueado (pero no requerir login)
-        if (Auth.isAuthenticated()) {
-            Auth.displayUserInfo('user-info');
-        }
-
         let currentEvent = null;
         let quantity = 1;
         let maxQuantity = 10;
+
+        // Configurar navbar según autenticación
+        document.addEventListener('DOMContentLoaded', function() {
+            const authButtonsContainer = document.getElementById('authButtons');
+
+            if (typeof Auth !== 'undefined' && Auth.isAuthenticated()) {
+                const user = Auth.getUser();
+                const userName = user.nombre || user.username || 'Usuario';
+                const tipoUsuario = user.tipoUsuario || 'usuario';
+
+                // Badge color según rol
+                let badgeClass = 'bg-secondary';
+                let dashboardUrl = '/landing.html';
+
+                if (tipoUsuario === 'admin') {
+                    badgeClass = 'bg-danger';
+                    dashboardUrl = '/admin-panel.html';
+                } else if (tipoUsuario === 'organizador') {
+                    badgeClass = 'bg-primary';
+                    dashboardUrl = '/organizador-dashboard.html';
+                } else if (tipoUsuario === 'comprador') {
+                    badgeClass = 'bg-success';
+                }
+
+                authButtonsContainer.innerHTML = `
+                    <div class="dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i> ${userName}
+                            <span class="badge ${badgeClass} ms-1">${tipoUsuario}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="${dashboardUrl}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout(); return false;">
+                                <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                            </a></li>
+                        </ul>
+                    </div>
+                `;
+            } else {
+                authButtonsContainer.innerHTML = `
+                    <a class="nav-link" href="/login.html">
+                        <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                    </a>
+                `;
+            }
+        });
+
+        function logout() {
+            Auth.logout();
+            window.location.href = '/landing.html';
+        }
 
         // Obtener ID del evento desde URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -381,7 +478,17 @@
             if (e.capacidadMaxima) {
                 document.getElementById('eventCapacity').textContent =
                     `${disponibles} de ${e.capacidadMaxima} disponibles`;
-                document.getElementById('capacityProgress').style.width = porcentajeDisponible + '%';
+                const progressBar = document.getElementById('capacityProgress');
+                progressBar.style.width = porcentajeDisponible + '%';
+
+                // Color de barra según disponibilidad
+                if (porcentajeDisponible > 50) {
+                    progressBar.style.background = 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)';
+                } else if (porcentajeDisponible > 20) {
+                    progressBar.style.background = '#ffc107';
+                } else {
+                    progressBar.style.background = '#dc3545';
+                }
             } else {
                 document.getElementById('capacityInfo').style.display = 'none';
             }
