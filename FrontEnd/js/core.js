@@ -6,6 +6,17 @@ let dataTable;
 let eventData = null;
 let eventoActivo = false;
 let currentFilter = ""; // "" = todos
+
+// Leer eventId de la URL si existe
+const urlParams = new URLSearchParams(window.location.search);
+const eventIdFromUrl = urlParams.get('eventId');
+
+// Si viene eventId en la URL, guardarlo en localStorage
+if (eventIdFromUrl) {
+    localStorage.setItem('currentEventId', eventIdFromUrl);
+    // El nombre lo obtendremos de la API
+}
+
 // Verificar que se ha seleccionado un evento
 const currentEventId = localStorage.getItem('currentEventId');
 const currentEventName = localStorage.getItem('currentEventName');

@@ -199,8 +199,6 @@
 
                 const createdEvent = await response.json();
 
-                alert(`✅ Evento creado exitosamente!\n\nID: ${createdEvent.id}\nNombre: ${createdEvent.nombre}\n\nCódigos generados:\n- Acceso: ${createdEvent.codigoAcceso}\n- Admin: ${createdEvent.codigoAdmin}\n- Stats: ${createdEvent.codigoStats}`);
-
                 // Redirigir al dashboard
                 window.location.href = '/organizador-dashboard.html';
 
